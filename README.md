@@ -1,18 +1,22 @@
-# React + Vite
+# Конструктор streamlit приложений
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Функциональные требования к проекту:  
+Ф1 Система должна позволять создавать, редактировать и удалять проекты (дашборды)  
+Ф2 Поддержка загрузки файлов через интерфейс: CSV, Excel  
+Ф3 Наличие визуального холста, на который можно перетаскивать компоненты (Drag-and-Drop)  
+Ф4 Возможность выделить компонент, удалить его или дублировать     
+Ф5 Графики: line_chart, bar_chart, area_chart, scatter_plot, metric
 
-Currently, two official plugins are available:
+Кто будет пользоваться:
+1. Аналитик: Понимает цифры, тащит данные из Excel, но писать код не хочет и не умеет.
+2. Разработчик: Тот, кто потом будет это хостить у себя на сервере и править код, если что-то пойдет не так.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
-
-Note: This will impact Vite dev & build performances.
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Что нужно Аналитику:
+1. Вход в систему. Авторизация
+2. Старт с готового примера.
+3. Добавить файл как в мессенджере.
+5. Настроить оси простым выбором. (Картинки графиков на кнопках)
+6. Добавить фильтры. Как срез в сводной таблице Excel. Автоматическая работа
+7. Всё видно сразу. Загрузка графиков.
+8. Выложить в один клик.
+9. Скачать код
