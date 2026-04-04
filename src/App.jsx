@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import ProjectsPage from './pages/ProjectsPage';
+import ProjectsPage from './pages/ProjectsPage/ProjectsPage.jsx';
 import AuthPage from './pages/AuthPage';
 import DemoPage from './DemoPage';
 import EditorPage from "./pages/EditorPage/EditorPage.jsx";
