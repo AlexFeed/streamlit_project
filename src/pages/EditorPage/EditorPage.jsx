@@ -15,6 +15,9 @@ const createComponentFromPaletteItem = (paletteItem, index) => {
 // Ключ хранения состояния в localStorage
 const STORAGE_KEY = 'editor_state_v1';
 
+// Тестовые данные "колонок датасета" для возможности выбора в панели свойств
+const availableFields = ['date', 'sales', 'department', 'revenue', 'profit'];
+
 // Сборка схемы дашборда
 const buildDashboardSchema = (components) => {
     return {
@@ -142,6 +145,7 @@ const EditorPage = () => {
                             selectedComponent={selectedComponent}
                             onUpdateComponent={handleUpdateComponent}
                             onDeleteSelected={handleDeleteSelected}
+                            availableFields={availableFields}
                         />
                     </div>
                 </div>
