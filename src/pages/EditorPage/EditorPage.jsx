@@ -4,14 +4,6 @@ import Canvas from './components/Canvas';
 import PropertiesPanel from './components/PropertiesPanel';
 import EditorHeader from './components/EditorHeader.jsx';
 
-const createComponentFromPaletteItem = (paletteItem, index) => {
-    return {
-        id: `${paletteItem.type}-${Date.now()}-${index}`,
-        type: paletteItem.type,
-        props: {...paletteItem.defaultProps},
-    };
-};
-
 // Ключ хранения состояния в localStorage
 const STORAGE_KEY = 'editor_state_v1';
 
@@ -24,7 +16,57 @@ const buildDashboardSchema = (components) => {
         version: 1,
         title: 'Untitled dashboard',
         exportedAt: new Date().toISOString(),
+        dataSource: {
+            type: 'mock',
+            fields: availableFields,
+        },
         components,
+    };
+};
+
+// Проверка правильности схемы
+const validateSchema = (components) => {
+    const errors = [];
+
+    if (!components.length) {
+        errors.push('Холст пуст. Добавьте хотя бы один компонент.');
+    }
+
+    components.forEach((component, index) => {
+        const name = component.props?.title || component.type || `component-${index + 1}`;
+
+        if (component.type === 'selectbox') {
+            if (!component.props?.field) {
+                errors.push(`Компонент "${name}": не выбрано поле данных для фильтра.`);
+            }
+        }
+
+        if (component.type === 'line_chart' || component.type === 'bar_chart') {
+            if (!component.props?.xField) {
+                errors.push(`Компонент "${name}": не выбрано поле X.`);
+            }
+
+            if (!component.props?.yField) {
+                errors.push(`Компонент "${name}": не выбрано поле Y.`);
+            }
+        }
+
+        if (component.type === 'metric') {
+            if (!component.props?.valueField) {
+                errors.push(`Компонент "${name}": не выбрано поле значения.`);
+            }
+        }
+    });
+
+    return errors;
+};
+
+// Создание компоненты для холста
+const createComponentFromPaletteItem = (paletteItem, index) => {
+    return {
+        id: `${paletteItem.type}-${Date.now()}-${index}`,
+        type: paletteItem.type,
+        props: {...paletteItem.defaultProps},
     };
 };
 
@@ -72,13 +114,36 @@ const EditorPage = () => {
 
     // Handling functions
 
-    // Функция генерации дашборда (бета версия, реализована только генерация json-схемы в консоль)
-    const handleGenerateDashboard = () => {
+    // Функция генерации дашборда (бета-версия, реализована только генерация json-схемы в консоль)
+    const handleGenerateDashboard = async () => {
         try {
+            const validationErrors = validateSchema(components);
+
+            if (validationErrors.length > 0) {
+                console.error('Schema validation failed:');
+                validationErrors.forEach((error) => console.error(`• ${error}`));
+                return;
+            }
+
             const schema = buildDashboardSchema(components);
-            console.log('Generated dashboard schema:', schema);
+
+            console.log('READY TO SEND TO BACKEND:');
+            console.log(schema);
+            console.log(JSON.stringify(schema, null, 2));
+
+            // Здесь позже будет запрос на backend:
+            // const response = await fetch('/generate', {
+            //   method: 'POST',
+            //   headers: {
+            //     'Content-Type': 'application/json',
+            //   },
+            //   body: JSON.stringify(schema),
+            // });
+            //
+            // const result = await response.blob();
+            // ...
         } catch (error) {
-            console.error('Ошибка генерации схемы дашборда:', error);
+            console.error('Ошибка генерации дашборда:', error);
         }
     };
 
