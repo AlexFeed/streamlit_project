@@ -1,4 +1,4 @@
-import {useMemo, useState} from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import ComponentsPalette from './components/ComponentsPalette.jsx';
 import Canvas from './components/Canvas';
 import PropertiesPanel from './components/PropertiesPanel';
@@ -13,13 +13,44 @@ const createComponentFromPaletteItem = (paletteItem, index) => {
 };
 
 const EditorPage = () => {
-    const [components, setComponents] = useState([]);
+    const STORAGE_KEY = 'editor_state_v1';
+
+    const [components, setComponents] = useState(() => {
+        try {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (!saved) return [];
+
+            const parsed = JSON.parse(saved);
+
+            return parsed.components || [];
+        } catch (e) {
+            console.error('Ошибка чтения localStorage', e);
+            return [];
+        }
+    });
+    useEffect(() => {
+        const timeout = setTimeout(() => {
+            try {
+                localStorage.setItem(
+                    STORAGE_KEY,
+                    JSON.stringify({ components })
+                );
+            } catch (e) {
+                console.error(e);
+            }
+        }, 300);
+
+        return () => clearTimeout(timeout);
+    }, [components]);
+
     const [selectedId, setSelectedId] = useState(null);
 
     const selectedComponent = useMemo(
         () => components.find((item) => item.id === selectedId) || null,
         [components, selectedId]
     );
+
+
 
     const handleAddComponent = (paletteItem) => {
         const newComponent = createComponentFromPaletteItem(paletteItem, components.length + 1);
@@ -54,6 +85,8 @@ const EditorPage = () => {
     const handleClearCanvas = () => {
         setComponents([]);
         setSelectedId(null);
+
+        localStorage.removeItem(STORAGE_KEY);
     };
 
     return (
