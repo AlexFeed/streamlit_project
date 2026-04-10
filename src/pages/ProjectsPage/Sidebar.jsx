@@ -4,13 +4,6 @@ import { BookOpen, Folder, Settings, User, Zap, Sparkles, Cpu } from 'lucide-rea
 const Sidebar = ({ projectsCount = 0 }) => {
   return (
     <aside className="w-72 bg-black border-r border-orange-900/30 flex flex-col relative overflow-hidden h-full shadow-2xl shadow-orange-900/10">
-      
-      {/* Фоновая надпись "STREAMLIT" (Декор) */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
-        <div className="text-[10rem] font-black text-orange-900/5 rotate-12 select-none whitespace-nowrap tracking-tighter">
-          STREAMLIT
-        </div>
-      </div>
 
       {/* Верхняя часть: Логотип и название */}
       <div className="relative z-10 p-6 flex flex-col items-center border-b border-orange-900/20">
@@ -24,7 +17,7 @@ const Sidebar = ({ projectsCount = 0 }) => {
         {/* Новая подпись: no-code конструктор */}
         <div className="mt-4 flex items-center gap-2 px-3 py-1 rounded bg-black/50 border border-orange-500/50 shadow-[0_0_10px_rgba(249,115,22,0.3)] backdrop-blur-sm group cursor-default">
           <Cpu size={12} className="text-orange-500 animate-pulse" />
-          <span className="text-[10px] font-bold text-orange-400 uppercase tracking-widest border-r border-orange-500/30 pr-2">System</span>
+          <span className="text-[10px] font-bold text-orange-400 uppercase tracking-widest border-r border-orange-500/30 pr-2">Python</span>
           <span className="text-xs font-mono text-orange-200">no-code builder</span>
         </div>
       </div>
