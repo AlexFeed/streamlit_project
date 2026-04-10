@@ -12,9 +12,23 @@ const createComponentFromPaletteItem = (paletteItem, index) => {
     };
 };
 
-const EditorPage = () => {
-    const STORAGE_KEY = 'editor_state_v1';
+// Ключ хранения состояния в localStorage
+const STORAGE_KEY = 'editor_state_v1';
 
+// Сборка схемы дашборда
+const buildDashboardSchema = (components) => {
+    return {
+        version: 1,
+        title: 'Untitled dashboard',
+        exportedAt: new Date().toISOString(),
+        components,
+    };
+};
+
+const EditorPage = () => {
+    // HOOKS
+
+    // Управление состоянием компонентов
     const [components, setComponents] = useState(() => {
         try {
             const saved = localStorage.getItem(STORAGE_KEY);
@@ -28,6 +42,8 @@ const EditorPage = () => {
             return [];
         }
     });
+
+    // При каждом изменении components, будет обновляться localStorage
     useEffect(() => {
         const timeout = setTimeout(() => {
             try {
@@ -43,6 +59,7 @@ const EditorPage = () => {
         return () => clearTimeout(timeout);
     }, [components]);
 
+    // Управление состоянием выбранного элемента на холсте
     const [selectedId, setSelectedId] = useState(null);
 
     const selectedComponent = useMemo(
@@ -50,8 +67,19 @@ const EditorPage = () => {
         [components, selectedId]
     );
 
+    // Handling functions
 
+    // Функция генерации дашборда (бета версия, реализована только генерация json-схемы в консоль)
+    const handleGenerateDashboard = () => {
+        try {
+            const schema = buildDashboardSchema(components);
+            console.log('Generated dashboard schema:', schema);
+        } catch (error) {
+            console.error('Ошибка генерации схемы дашборда:', error);
+        }
+    };
 
+    // Добавление компонента на холст
     const handleAddComponent = (paletteItem) => {
         const newComponent = createComponentFromPaletteItem(paletteItem, components.length + 1);
 
@@ -59,16 +87,19 @@ const EditorPage = () => {
         setSelectedId(newComponent.id);
     };
 
+    // Выбор текущего компонента на холсте
     const handleSelectComponent = (id) => {
         setSelectedId(id);
     };
 
+    // Изменение данных в компоненте на холсте (например название графика)
     const handleUpdateComponent = (id, newProps) => {
         setComponents((prev) =>
             prev.map((item) => (item.id === id ? {...item, props: newProps} : item))
         );
     };
 
+    // Удаление компонента с холста
     const handleDeleteComponent = (id) => {
         setComponents((prev) => prev.filter((item) => item.id !== id));
 
@@ -77,11 +108,13 @@ const EditorPage = () => {
         }
     };
 
+    // Удаление выбранного компонента с холста
     const handleDeleteSelected = () => {
         if (!selectedId) return;
         handleDeleteComponent(selectedId);
     };
 
+    // Очистка холста целиком
     const handleClearCanvas = () => {
         setComponents([]);
         setSelectedId(null);
@@ -95,7 +128,7 @@ const EditorPage = () => {
                 <ComponentsPalette onAddComponent={handleAddComponent} />
 
                 <div className="flex flex-col">
-                    <EditorHeader onClearCanvas={handleClearCanvas} />
+                    <EditorHeader onClearCanvas={handleClearCanvas} onGenerateDashboard={handleGenerateDashboard}/>
 
                     <div className="grid gap-4 p-4 2xl:grid-cols-[minmax(0,1fr)_320px]">
                         <Canvas
