@@ -3,70 +3,70 @@ import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
 
 const AuthForm = ({ isLogin, showPassword, setShowPassword, formData, handleInputChange, handleSubmit, setIsLogin }) => {
   return (
-    <div className="w-full max-w-md">
+    <div className="form-container">
       {/* Форма */}
-      <div className="bg-gray-900/50 border border-gray-700 rounded-xl shadow-2xl shadow-orange-900/20 p-8 backdrop-blur-sm">
-        <div className="text-center mb-8">
-          <h3 className="text-2xl font-bold text-white mb-2">
+      <div className="form-wrapper">
+        <div className="form-header">
+          <h3 className="form-title">
             {isLogin ? 'Вход в аккаунт' : 'Регистрация'}
           </h3>
-          <p className="text-gray-400 text-sm">
+          <p className="form-subtitle">
             {isLogin ? 'Введите свои данные для входа' : 'Заполните форму для создания аккаунта'}
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="form">
           {!isLogin && (
-            <div>
-              <label className="block text-sm font-medium text-gray-400 mb-2">Имя</label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={18} />
+            <div className="input-group">
+              <label className="input-label">Имя</label>
+              <div className="input-wrapper">
+                <User className="input-icon" size={18} />
                 <input
                   type="text"
                   name="name"
                   value={formData.name}
                   onChange={handleInputChange}
                   placeholder="Ваше имя"
-                  className="w-full bg-black border border-gray-700 text-white pl-10 pr-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all placeholder-gray-600"
+                  className="input-field"
                   required={!isLogin}
                 />
               </div>
             </div>
           )}
 
-          <div>
-            <label className="block text-sm font-medium text-gray-400 mb-2">Email</label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={18} />
+          <div className="input-group">
+            <label className="input-label">Email</label>
+            <div className="input-wrapper">
+              <Mail className="input-icon" size={18} />
               <input
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
                 placeholder="your@email.com"
-                className="w-full bg-black border border-gray-700 text-white pl-10 pr-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all placeholder-gray-600"
+                className="input-field"
                 required
               />
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-400 mb-2">Пароль</label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={18} />
+          <div className="input-group">
+            <label className="input-label">Пароль</label>
+            <div className="input-wrapper">
+              <Lock className="input-icon" size={18} />
               <input
                 type={showPassword ? 'text' : 'password'}
                 name="password"
                 value={formData.password}
                 onChange={handleInputChange}
                 placeholder="••••••••"
-                className="w-full bg-black border border-gray-700 text-white pl-10 pr-12 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all placeholder-gray-600"
+                className="input-field password-input"
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                className="password-toggle"
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
@@ -75,16 +75,16 @@ const AuthForm = ({ isLogin, showPassword, setShowPassword, formData, handleInpu
 
           <button
             type="submit"
-            className="w-full bg-orange-600 hover:bg-orange-700 text-white py-3 rounded-lg font-medium transition-all shadow-lg shadow-orange-600/20 hover:shadow-orange-600/30"
+            className="submit-button"
           >
             {isLogin ? 'Войти' : 'Создать аккаунт'}
           </button>
         </form>
 
-        <div className="text-center mt-6">
+        <div className="switch-container">
           <button
             onClick={() => setIsLogin(!isLogin)}
-            className="text-orange-400 hover:text-orange-300 text-sm transition-colors"
+            className="switch-button"
           >
             {isLogin ? 'Нет аккаунта? Зарегистрироваться' : 'Уже есть аккаунт? Войти'}
           </button>
