@@ -3,7 +3,7 @@ import ProjectsPage from './pages/ProjectsPage/ProjectsPage.jsx';
 import AuthPage from './pages/AuthPage';
 import DemoPage from './DemoPage';
 import EditorPage from "./pages/EditorPage/EditorPage.jsx";
-import ExtensionsPage from './pages/ExtensionsPage/extensions.jsx';
+import ExtensionsPage from './pages/ExtensionsPage/ExtensionsPage.jsx';
 
 function App() {
   return (
