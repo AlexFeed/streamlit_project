@@ -1,18 +1,17 @@
-// Сборка схемы дашборда
 export const buildDashboardSchema = (components, availableFields = []) => {
     return {
         version: 1,
         title: 'Untitled dashboard',
         exportedAt: new Date().toISOString(),
         dataSource: {
-            type: 'mock',
+            type: 'csv_upload',
+            name: 'main_dataset',
             fields: availableFields,
         },
         components,
     };
 };
 
-// Проверка правильности схемы
 export const validateSchema = (components) => {
     const errors = [];
 

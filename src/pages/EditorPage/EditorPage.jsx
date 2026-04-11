@@ -7,8 +7,10 @@ import {
     buildDashboardSchema,
     validateSchema,
 } from './services/editorSchema';
+import {useState} from "react";
 
 const EditorPage = () => {
+    // Названия полей для тестирования
     const availableFields = ['date', 'sales', 'department', 'revenue', 'profit'];
 
     const {
@@ -23,15 +25,21 @@ const EditorPage = () => {
         clearCanvas,
     } = useEditorState();
 
+    // Управление состоянием ошибок JSON-схемы
+    const [validationErrors, setValidationErrors] = useState([]);
+
     const handleGenerateDashboard = async () => {
         try {
-            const validationErrors = validateSchema(components);
+            const errors = validateSchema(components);
 
-            if (validationErrors.length > 0) {
-                console.error('Schema validation failed:');
-                validationErrors.forEach((error) => console.error(`• ${error}`));
+            // Если ошибки есть добавляем в state
+            if (errors.length > 0) {
+                setValidationErrors(errors);
+                console.error('Schema validation failed:', errors);
                 return;
             }
+
+            setValidationErrors([]);
 
             const schema = buildDashboardSchema(components, availableFields);
 
@@ -39,7 +47,7 @@ const EditorPage = () => {
             console.log(schema);
             console.log(JSON.stringify(schema, null, 2));
 
-            // Здесь позже будет запрос на backend
+            // Следующий этап:
             // const response = await fetch('/generate', {
             //   method: 'POST',
             //   headers: {
@@ -47,10 +55,18 @@ const EditorPage = () => {
             //   },
             //   body: JSON.stringify(schema),
             // });
+            //
+            // if (!response.ok) {
+            //   throw new Error('Ошибка запроса на backend');
+            // }
+            //
+            // const result = await response.blob();
+            // дальше обработка результата
         } catch (error) {
             console.error('Ошибка генерации дашборда:', error);
+            setValidationErrors(['Во время генерации произошла непредвиденная ошибка.']);
         }
-    };
+    }
 
     return (
         <div className="min-h-screen bg-zinc-950 text-white overflow-auto">
@@ -62,6 +78,23 @@ const EditorPage = () => {
                         onClearCanvas={clearCanvas}
                         onGenerateDashboard={handleGenerateDashboard}
                     />
+
+                    {/* Вывод ошибок в UI */}
+                    {validationErrors.length > 0 && (
+                        <div className="px-4 pt-4">
+                            <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-4">
+                                <p className="mb-2 text-sm font-semibold text-red-300">
+                                    Исправьте ошибки перед генерацией
+                                </p>
+
+                                <ul className="list-disc space-y-1 pl-5 text-sm text-red-200">
+                                    {validationErrors.map((error, index) => (
+                                        <li key={index}>{error}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+                    )}
 
                     <div className="grid gap-4 p-4 2xl:grid-cols-[minmax(0,1fr)_320px]">
                         <Canvas
