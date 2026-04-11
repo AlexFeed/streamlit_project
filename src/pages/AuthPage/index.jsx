@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Sidebar from './components/Sidebar';
 import AuthForm from './components/AuthForm';
+import './AuthPage.css';
 
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -25,14 +26,14 @@ const AuthPage = () => {
   };
 
   return (
-    <div className="flex h-screen bg-black text-white font-sans overflow-hidden selection:bg-orange-500 selection:text-white">
+    <div className="auth-page">
       <Sidebar isLogin={isLogin} />
 
       {/* Основная область */}
-      <div className="flex-1 flex flex-col min-w-0 relative">
-        <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-orange-900/10 to-transparent pointer-events-none z-0" />
+      <div className="main-area">
+        <div className="gradient-bg" />
 
-        <main className="flex-1 flex items-center justify-center p-8 relative z-10">
+        <main className="main-content">
           <AuthForm
             isLogin={isLogin}
             showPassword={showPassword}
