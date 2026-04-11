@@ -53,7 +53,7 @@ const EditorPage = () => {
     };
 
     return (
-        <div className="min-h-screen bg-zinc-950 text-white">
+        <div className="min-h-screen bg-zinc-950 text-white overflow-auto">
             <div className="grid grid-cols-[260px_minmax(0,1fr)]">
                 <ComponentPalette onAddComponent={addComponent} />
 
