@@ -1,14 +1,21 @@
 export const buildDashboardSchema = (components, availableFields = []) => {
     return {
         version: 1,
-        title: 'Untitled dashboard',
-        exportedAt: new Date().toISOString(),
+        dashboard: {
+            title: 'Untitled dashboard',
+        },
         dataSource: {
             type: 'csv_upload',
             name: 'main_dataset',
             fields: availableFields,
         },
-        components,
+        components: components.map((component, index) => ({
+            id: component.id,
+            type: component.type,
+            order: index + 1,
+            config: component.config,
+            bindings: component.bindings,
+        })),
     };
 };
 
@@ -23,23 +30,23 @@ export const validateSchema = (components) => {
         const name = component.props?.title || component.type || `component-${index + 1}`;
 
         if (component.type === 'selectbox') {
-            if (!component.props?.field) {
+            if (!component.bindings?.field) {
                 errors.push(`Компонент "${name}": не выбрано поле данных для фильтра.`);
             }
         }
 
         if (component.type === 'line_chart' || component.type === 'bar_chart') {
-            if (!component.props?.xField) {
+            if (!component.bindings?.xField) {
                 errors.push(`Компонент "${name}": не выбрано поле X.`);
             }
 
-            if (!component.props?.yField) {
+            if (!component.bindings?.yField) {
                 errors.push(`Компонент "${name}": не выбрано поле Y.`);
             }
         }
 
         if (component.type === 'metric') {
-            if (!component.props?.valueField) {
+            if (!component.bindings?.valueField) {
                 errors.push(`Компонент "${name}": не выбрано поле значения.`);
             }
         }

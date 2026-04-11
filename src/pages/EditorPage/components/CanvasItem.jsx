@@ -26,8 +26,12 @@ const CanvasItem = ({ item, isSelected, onSelect, onDelete }) => {
                     </div>
 
                     <div>
-                        <h3 className="font-medium text-white">{item.props.title || item.type}</h3>
-                        <p className="text-xs uppercase tracking-wide text-zinc-400">{item.type}</p>
+                        <h3 className="font-medium text-white">
+                            {item.config?.title || item.type}
+                        </h3>
+                        <p className="text-xs uppercase tracking-wide text-zinc-400">
+                            {item.type}
+                        </p>
                     </div>
                 </div>
 
@@ -46,29 +50,29 @@ const CanvasItem = ({ item, isSelected, onSelect, onDelete }) => {
             <div className="space-y-1 text-sm text-zinc-400">
                 {item.type === 'selectbox' && (
                     <>
-                        <p>Поле: {item.props.field || 'не выбрано'}</p>
-                        <p>Placeholder: {item.props.placeholder || '—'}</p>
+                        <p>Поле: {item.bindings?.field || 'не выбрано'}</p>
+                        <p>Подсказка: {item.config?.placeholder || '—'}</p>
                     </>
                 )}
 
                 {item.type === 'line_chart' && (
                     <>
-                        <p>X: {item.props.xField || 'не выбрано'}</p>
-                        <p>Y: {item.props.yField || 'не выбрано'}</p>
+                        <p>X: {item.bindings?.xField || 'не выбрано'}</p>
+                        <p>Y: {item.bindings?.yField || 'не выбрано'}</p>
                     </>
                 )}
 
                 {item.type === 'bar_chart' && (
                     <>
-                        <p>X: {item.props.xField || 'не выбрано'}</p>
-                        <p>Y: {item.props.yField || 'не выбрано'}</p>
+                        <p>X: {item.bindings?.xField || 'не выбрано'}</p>
+                        <p>Y: {item.bindings?.yField || 'не выбрано'}</p>
                     </>
                 )}
 
                 {item.type === 'metric' && (
                     <>
-                        <p>Поле значения: {item.props.valueField || 'не выбрано'}</p>
-                        <p>Описание: {item.props.description || '—'}</p>
+                        <p>Поле значения: {item.bindings?.valueField || 'не выбрано'}</p>
+                        <p>Описание: {item.config?.description || '—'}</p>
                     </>
                 )}
             </div>

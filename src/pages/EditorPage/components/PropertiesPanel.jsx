@@ -16,10 +16,12 @@ const FieldSelect = ({
                          label,
                          value,
                          onChange,
-                         options,
-                         placeholder,
+                         options = [],
+                         placeholder = 'Выберите значение',
                          helperText,
                      }) => {
+    const isDisabled = !options.length;
+
     return (
         <div className={panelSectionClassName}>
             <label className={labelClassName}>{label}</label>
@@ -28,10 +30,11 @@ const FieldSelect = ({
                 <select
                     value={value || ''}
                     onChange={(e) => onChange(e.target.value)}
-                    className={selectClassName}
+                    className={`${selectClassName} ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    disabled={isDisabled}
                 >
                     <option value="" disabled className="text-zinc-500">
-                        {placeholder}
+                        {isDisabled ? 'Нет доступных полей' : placeholder}
                     </option>
 
                     {options.map((field) => (
@@ -105,14 +108,28 @@ const PropertiesPanel = ({
         );
     }
 
-    const { type, props } = selectedComponent;
+    const { type, config, bindings } = selectedComponent;
 
-    // Обновление данных в компоненте
-    const updateProp = (key, value) => {
-        onUpdateComponent(selectedComponent.id, {
-            ...props,
-            [key]: value,
-        });
+    // Обновление значений конфига в схеме (название схемы)
+    const updateConfig = (key, value) => {
+        onUpdateComponent(selectedComponent.id, (component) => ({
+            ...component,
+            config: {
+                ...component.config,
+                [key]: value,
+            },
+        }));
+    };
+
+    // Обновление значений полей в схеме
+    const updateBinding = (key, value) => {
+        onUpdateComponent(selectedComponent.id, (component) => ({
+            ...component,
+            bindings: {
+                ...component.bindings,
+                [key]: value,
+            },
+        }));
     };
 
     return (
@@ -121,7 +138,8 @@ const PropertiesPanel = ({
                 <div>
                     <h2 className="text-lg font-semibold text-white">Свойства</h2>
                     <p className="mt-1 text-sm text-zinc-400">
-                        Тип элемента: <span className="font-medium text-zinc-200">{type}</span>
+                        Тип элемента:{' '}
+                        <span className="font-medium text-zinc-200">{type}</span>
                     </p>
                 </div>
 
@@ -137,29 +155,29 @@ const PropertiesPanel = ({
             <div className="space-y-3">
                 <TextField
                     label="Заголовок"
-                    value={props.title || ''}
-                    onChange={(value) => updateProp('title', value)}
-                    placeholder="Введите заголовок элемента"
-                    helperText="Этот текст будет отображаться на карточке или графике."
+                    value={config.title || ''}
+                    onChange={(value) => updateConfig('title', value)}
+                    placeholder="Введите заголовок компонента"
+                    helperText="Отображается над графиком или элементом"
                 />
 
                 {type === 'selectbox' && (
                     <>
                         <FieldSelect
                             label="Поле данных"
-                            value={props.field || ''}
-                            onChange={(value) => updateProp('field', value)}
+                            value={bindings.field || ''}
+                            onChange={(value) => updateBinding('field', value)}
                             options={availableFields}
                             placeholder="Выберите поле"
-                            helperText="По этому полю будет формироваться список значений для фильтра."
+                            helperText="Поле, по которому строится список значений"
                         />
 
                         <TextField
                             label="Подсказка"
-                            value={props.placeholder || ''}
-                            onChange={(value) => updateProp('placeholder', value)}
+                            value={config.placeholder || ''}
+                            onChange={(value) => updateConfig('placeholder', value)}
                             placeholder="Например: Выберите отдел"
-                            helperText="Этот текст увидит пользователь до выбора значения."
+                            helperText="Отображается до выбора значения"
                         />
                     </>
                 )}
@@ -168,20 +186,20 @@ const PropertiesPanel = ({
                     <>
                         <FieldSelect
                             label="Поле X"
-                            value={props.xField || ''}
-                            onChange={(value) => updateProp('xField', value)}
+                            value={bindings.xField || ''}
+                            onChange={(value) => updateBinding('xField', value)}
                             options={availableFields}
                             placeholder="Выберите поле X"
-                            helperText="Поле, которое будет использоваться как горизонтальная ось графика."
+                            helperText="Горизонтальная ось графика"
                         />
 
                         <FieldSelect
                             label="Поле Y"
-                            value={props.yField || ''}
-                            onChange={(value) => updateProp('yField', value)}
+                            value={bindings.yField || ''}
+                            onChange={(value) => updateBinding('yField', value)}
                             options={availableFields}
                             placeholder="Выберите поле Y"
-                            helperText="Поле, значения которого будут построены на графике."
+                            helperText="Значения, отображаемые на графике"
                         />
                     </>
                 )}
@@ -190,19 +208,19 @@ const PropertiesPanel = ({
                     <>
                         <FieldSelect
                             label="Поле значения"
-                            value={props.valueField || ''}
-                            onChange={(value) => updateProp('valueField', value)}
+                            value={bindings.valueField || ''}
+                            onChange={(value) => updateBinding('valueField', value)}
                             options={availableFields}
                             placeholder="Выберите поле"
-                            helperText="Из этого поля будет рассчитываться или отображаться метрика."
+                            helperText="Поле, из которого берётся значение метрики"
                         />
 
                         <TextField
                             label="Описание"
-                            value={props.description || ''}
-                            onChange={(value) => updateProp('description', value)}
+                            value={config.description || ''}
+                            onChange={(value) => updateConfig('description', value)}
                             placeholder="Например: Общая выручка"
-                            helperText="Короткое пояснение для пользователя."
+                            helperText="Краткое пояснение для пользователя"
                         />
                     </>
                 )}
