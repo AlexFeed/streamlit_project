@@ -1,0 +1,889 @@
+/* ProjectsPage.css — стили с префиксом sp- в единой стилистике с ExtensionsPage */
+
+/* ==================== ОСНОВНЫЕ СТИЛИ ==================== */
+.sp-projects-page {
+  display: flex;
+  height: 100vh;
+  background-color: #131313;
+  color: white;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  overflow: hidden;
+}
+
+.sp-projects-page ::selection {
+  background-color: #f97316;
+  color: white;
+}
+
+/* ==================== СКРОЛЛБАР ==================== */
+.sp-custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.sp-custom-scrollbar::-webkit-scrollbar-track {
+  background: #1f1f24;
+  border-radius: 4px;
+}
+
+.sp-custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #2b2b2b;
+  border-radius: 4px;
+}
+
+.sp-custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #ea580c;
+}
+
+/* ==================== САЙДБАР ==================== */
+.sp-projects-sidebar {
+  width: 288px;
+  background-color: #131313;
+  border-right: 2px solid rgba(249, 115, 22, 0.6);  /* более яркая и толстая граница */
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  height: 100%;
+  box-shadow: 4px 0 15px -5px rgba(249, 115, 22, 0.3); /* тень вправо */
+  border-radius: 0; /* убираем скругление, чтобы граница была чёткой */
+  margin: 0;        /* убираем отступы, чтобы сайдбар прилегал плотно */
+  backdrop-filter: blur(4px);
+}
+
+.sp-sidebar-logo {
+  position: relative;
+  z-index: 10;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-bottom: 1px solid rgba(249, 115, 22, 0.5);
+  border-radius: 24px;
+}
+
+.sp-logo-icon {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(to bottom right, #f97316, #c2410c);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 15px -3px rgba(249, 115, 22, 0.2);
+  margin-bottom: 16px;
+  cursor: pointer;
+  transition: transform 0.3s;
+}
+
+.sp-logo-icon:hover {
+  transform: rotate(6deg);
+}
+
+.sp-logo-icon svg {
+  width: 32px;
+  height: 32px;
+  color: white;
+}
+
+.sp-logo-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: white;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.sp-logo-title span {
+  color: #f97316;
+}
+
+.sp-badge {
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  border-radius: 8px;
+  background-color: #1a1a1a;
+  border: 1px solid rgba(249, 115, 22, 0.3);
+  box-shadow: 0 0 10px rgba(249, 115, 22, 0.3);
+  backdrop-filter: blur(4px);
+}
+
+.sp-badge-text {
+  font-size: 0.75rem;
+  font-family: monospace;
+  color: #fed7aa;
+}
+
+.sp-sidebar-menu {
+  position: relative;
+  z-index: 10;
+  flex: 1;
+  padding: 24px;
+}
+
+.sp-menu-section {
+  margin-bottom: 24px;
+}
+
+.sp-menu-section-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #9ca3af;
+  margin-bottom: 12px;
+}
+
+.sp-menu-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: all 0.2s;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: #9ca3af;
+}
+
+.sp-menu-button:hover {
+  background: #2a2a2a;
+  box-shadow: 0 0 12px rgba(249, 115, 22, 0.9), 0 0 4px rgba(251, 190, 36, 0.9);
+  transform: translateY(-1px);
+  color: white;
+  border: 1px solid rgba(249, 115, 22, 0.7);
+}
+
+.sp-menu-button.sp-active {
+  background: linear-gradient(90deg, rgba(249, 115, 22, 0.3), rgba(251, 190, 36, 0.3));
+  border-left: 3px solid #f97316;
+  color: #f97316;
+}
+
+.sp-menu-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sp-menu-icon {
+  padding: 0;
+  background: none;
+  color: inherit;
+}
+
+.sp-menu-badge {
+  font-size: 0.75rem;
+  background-color: rgba(249, 115, 22, 0.2);
+  padding: 2px 8px;
+  border-radius: 12px;
+  color: #f97316;
+}
+
+.sp-menu-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #4b5563;
+}
+
+.sp-tools-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.sp-tool-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px;
+  background-color: #1a1a1a;
+  border: 1px solid rgba(249, 115, 22, 0.3);
+  border-radius: 8px;
+  color: #9ca3af;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.sp-tool-button:hover {
+  background-color: #2a2a2a;
+  border-color: rgba(249, 115, 22, 0.5);
+  color: #fb923c;
+  transform: translateY(-2px);
+}
+
+.sp-tool-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.sp-tool-label {
+  font-size: 0.7rem;
+}
+
+/* ==================== ОСНОВНАЯ ОБЛАСТЬ ==================== */
+.sp-projects-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  position: relative;
+  background-color: #131313;
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.2);
+}
+
+.sp-gradient-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 384px;
+  background: #131313;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ==================== ХЕДЕР ==================== */
+.sp-projects-header {
+  position: relative;
+  z-index: 10;
+  background-color: #1a1a1a;  /* светлее, чем основной фон */
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 32px;
+}
+
+.sp-search-wrapper {
+  flex: 1;
+  max-width: 448px;
+  position: relative;
+}
+
+.sp-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+  width: 18px;
+  height: 18px;
+}
+
+.sp-search-input {
+  width: 100%;
+  background-color: #1a1a1a;
+  color: white;
+  padding: 8px 16px 8px 40px;
+  border-radius: 8px;
+  border: 1px solid rgba(249, 115, 22, 0.3);
+  transition: all 0.2s;
+}
+
+.sp-search-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #f97416a1;
+  border-color: transparent;
+}
+
+.sp-search-input::placeholder {
+  color: #9ca3af;
+}
+
+.sp-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sp-view-toggle {
+  display: flex;
+  background-color: #1a1a1a;
+  border-radius: 8px;
+  padding: 4px;
+  border: 1px solid rgba(249, 115, 22, 0.3);
+}
+
+.sp-view-btn {
+  padding: 6px;
+  border-radius: 6px;
+  background: none;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sp-view-btn.sp-active {
+  background-color: #2a2a2a;
+  color: #f97316;
+}
+
+.sp-view-btn:not(.sp-active):hover {
+  color: white;
+  background-color: #2a2a2a;
+}
+
+
+
+
+
+/* ==================== КОНТЕНТ ==================== */
+.sp-projects-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 32px;
+  position: relative;
+  z-index: 10;
+  background-color: #151515;
+}
+
+.sp-section-header {
+  margin-bottom: 24px;
+}
+
+.sp-section-title {
+  font-size: 1.875rem;
+  font-weight: bold;
+  color: white;
+  margin-bottom: 8px;
+}
+
+.sp-section-subtitle {
+  color: #9ca3af;
+}
+
+/* ==================== СЕТКА / СПИСОК ==================== */
+.sp-projects-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+
+@media (min-width: 768px) {
+  .sp-projects-grid.sp-grid-mode {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .sp-projects-grid.sp-grid-mode {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.sp-projects-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ==================== КАРТОЧКА (СЕТКА) ==================== */
+.sp-project-card-grid {
+  background: rgba(23, 23, 23, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 20px;
+  padding: 0;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.sp-project-card-grid:hover {
+  border-color: rgba(255, 186, 13, 0.4);
+  background: rgba(23, 23, 23, 0.55);
+  backdrop-filter: blur(16px);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 20px -8px rgba(249, 115, 22, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.sp-card-banner {
+  height: 128px;
+  background-color: #000000;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid rgba(249, 115, 22, 0.2);
+}
+
+.sp-banner-watermark {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.1;
+  pointer-events: none;
+}
+
+.sp-banner-watermark span {
+  font-size: 3rem;
+  font-weight: bold;
+  color: #f97316;
+  letter-spacing: 0.1em;
+  transform: rotate(-12deg);
+}
+
+.sp-banner-gradient {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom right, #131313, #000000);
+  opacity: 0.8;
+  z-index: 0;
+}
+
+.sp-card-crown {
+  position: relative;
+  z-index: 10;
+  color: #4b5563;
+  transition: all 0.3s;
+  width: 40px;
+  height: 40px;
+}
+
+.sp-project-card-grid:hover .sp-card-crown {
+  color: #f97316;
+}
+
+.sp-card-body {
+  flex: 1;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.sp-card-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.sp-card-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: white;
+  transition: color 0.2s;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.sp-project-card-grid:hover .sp-card-title {
+  color: #f97316;
+}
+
+.sp-edit-title-btn, .sp-edit-desc-btn {
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.sp-edit-title-btn:hover, .sp-edit-desc-btn:hover {
+  color: #f97316;
+  background-color: #2a2a2a;
+}
+
+.sp-card-desc-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.sp-card-desc {
+  color: #9ca3af;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  flex: 1;
+}
+
+.sp-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid rgba(249, 115, 22, 0.2);
+}
+
+.sp-project-date {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.sp-delete-card-btn {
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.sp-delete-card-btn:hover {
+  color: #f87171;
+  background-color: rgba(248, 113, 113, 0.1);
+}
+
+/* ==================== КАРТОЧКА (СПИСОК) ==================== */
+.sp-project-card-list {
+  background: rgba(23, 23, 23, 0.45);
+  backdrop-filter: blur(12px);
+  border-radius: 20px;
+  padding: 16px;
+  transition: all 0.3s;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.sp-project-card-list:hover {
+  border-color: rgba(255, 186, 13, 0.4);
+  background: rgba(23, 23, 23, 0.55);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 20px -8px rgba(249, 115, 22, 0.25);
+}
+
+.sp-list-accent {
+  width: 4px;
+  height: 48px;
+  background-color: #f97316;
+  border-radius: 2px;
+}
+
+.sp-list-content {
+  flex: 1;
+}
+
+.sp-list-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.sp-list-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: white;
+  transition: color 0.2s;
+}
+
+.sp-project-card-list:hover .sp-list-title {
+  color: #f97316;
+}
+
+.sp-list-desc-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sp-list-desc {
+  font-size: 0.875rem;
+  color: #9ca3af;
+}
+
+.sp-delete-list-btn {
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.sp-delete-list-btn:hover {
+  color: #f87171;
+  background-color: rgba(248, 113, 113, 0.1);
+}
+
+/* ==================== ПУСТОЕ СОСТОЯНИЕ ==================== */
+.sp-empty-state {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.sp-empty-icon-wrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  background-color: #1a1a1a;
+  border-radius: 40px;
+  margin-bottom: 24px;
+}
+
+.sp-empty-icon {
+  width: 40px;
+  height: 40px;
+  color: #6b7280;
+}
+
+.sp-empty-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: white;
+  margin-bottom: 12px;
+}
+
+.sp-empty-text {
+  color: #9ca3af;
+  max-width: 400px;
+  margin: 0 auto 24px;
+}
+
+/* ==================== МОДАЛЬНОЕ ОКНО ==================== */
+.sp-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(19, 19, 19, 0.95);
+  backdrop-filter: blur(4px);
+  animation: sp-fadeIn 0.2s ease-in;
+}
+
+@keyframes sp-fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.sp-modal-container {
+  background-color: #1a1a1a;
+  border: 1px solid rgba(249, 115, 22, 0.3);
+  border-radius: 20px;
+  box-shadow: 0 25px 50px -12px rgba(249, 115, 22, 0.2);
+  width: 100%;
+  max-width: 448px;
+  padding: 24px;
+  transform: scale(1);
+  transition: all 0.2s;
+  animation: sp-slideIn 0.3s ease-out;
+}
+
+@keyframes sp-slideIn {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.sp-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.sp-modal-title {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: white;
+}
+
+.sp-modal-close {
+  color: #9ca3af;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.sp-modal-close:hover {
+  color: white;
+}
+
+.sp-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sp-form-group {
+  margin-bottom: 0;
+}
+
+.sp-form-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #9ca3af;
+  margin-bottom: 8px;
+}
+
+.sp-modal-input, .sp-modal-textarea {
+  width: 100%;
+  background-color: #151515;
+  border: 1px solid rgba(249, 115, 22, 0.3);
+  color: white;
+  padding: 12px 16px;
+  border-radius: 8px;
+  transition: all 0.2s;
+  font-size: 1rem;
+}
+
+.sp-modal-input:focus, .sp-modal-textarea:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #f97316;
+  border-color: transparent;
+}
+
+.sp-modal-textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.sp-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.sp-cancel-btn {
+  padding: 8px 16px;
+  color: #9ca3af;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.sp-cancel-btn:hover {
+  color: white;
+}
+
+.sp-submit-btn {
+  padding: 8px 24px;
+  background-color: #1f1f1f;
+  border: 1px solid rgba(249, 115, 22, 0.3);
+  border-radius: 8px;
+  font-weight: 500;
+  color: #fb923c;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sp-submit-btn:hover:not(:disabled) {
+  background-color: #2a2a2a;
+  border-color: rgba(249, 115, 22, 0.5);
+  transform: translateY(-1px);
+}
+
+.sp-submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ==================== РЕДАКТИРУЕМЫЕ ПОЛЯ ==================== */
+.sp-edit-title-input, .sp-edit-desc-input {
+  background-color: #151515;
+  border: 1px solid #f97316;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: inherit;
+  font-family: inherit;
+  width: 100%;
+}
+
+.sp-edit-title-input:focus, .sp-edit-desc-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #f97316;
+}
+
+/* ==================== АНИМАЦИИ ==================== */
+.sp-animate-fade-in {
+  animation: sp-fadeIn 0.3s ease-out;
+}
+
+
+/* Фоновый текст для пустого состояния */
+.sp-empty-state {
+  position: relative;
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.sp-empty-bg-text {
+  position: absolute;
+  top: 65%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 200px;
+  font-weight: 900;
+  color: white;
+  opacity: 0.03;
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+  z-index: 0;
+  font-family: inherit;
+}
+
+/* Кнопка "Новый проект" — оранжевая */
+.sp-create-btn {
+  background: linear-gradient(135deg, #f97316, #ea580c) !important;
+  border: none !important;
+  color: white !important;
+  padding: 8px 16px !important;
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.sp-create-btn:hover {
+  background: linear-gradient(135deg, #ea580c, #c2410c) !important;
+
+
+}
+

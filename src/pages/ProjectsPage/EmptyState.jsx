@@ -1,20 +1,19 @@
-
 import React from 'react';
-import { FolderOpen } from 'lucide-react'; // Используем иконку папки вместо сетки
+import { FolderOpen } from 'lucide-react';
 
 const EmptyState = ({ onCreateProject }) => (
-  <div className="flex flex-col items-center justify-center py-24 text-center animate-fade-in">
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-[200px] font-black text-white opacity-[0.03] pointer-events-none select-none whitespace-nowrap z-0">
+  <div className="sp-empty-state sp-animate-fade-in">
+    {/* Фоновая надпись STREAMLIT */}
+    <div className="sp-empty-bg-text">
       STREAMLIT
     </div>
-    <div className="w-24 h-24 bg-gray-800 rounded-full flex items-center justify-center mb-6 shadow-2xl shadow-orange-900/20">
-      <FolderOpen size={40} className="text-gray-600" />
+    <div className="sp-empty-icon-wrapper">
+      <FolderOpen size={40} className="sp-empty-icon" />
     </div>
-    <h2 className="text-2xl font-bold text-white mb-2">У вас пока нет проектов</h2>
-    <p className="text-gray-400 max-w-md mb-8 text-lg">
+    <h2 className="sp-empty-title">У вас пока нет проектов</h2>
+    <p className="sp-empty-text">
       Создайте своё первое no-code приложение на базе Streamlit за пару минут.
     </p>
-    {/* Кнопка убрана, так как есть общая в хедере */}
   </div>
 );
 
