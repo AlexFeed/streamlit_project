@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 
+// Hook отвечает за управление состоянием внутри CRUD компонентов дашборда, их загрузка в LocalStorage
+
 // Ключ хранения состояния в localStorage
 const STORAGE_KEY = 'editor_state_v1';
 
