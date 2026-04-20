@@ -8,6 +8,7 @@ import {
     buildDashboardSchema,
     validateSchema,
 } from './services/editorSchema';
+import { downloadPythonFile } from './utils/downloadPythonFile';
 import {useState} from "react";
 
 const EditorPage = () => {
@@ -38,6 +39,10 @@ const EditorPage = () => {
     // Управление состоянием ошибок JSON-схемы
     const [validationErrors, setValidationErrors] = useState([]);
 
+    // Состояние генерации кода
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [generationError, setGenerationError] = useState('');
+
     // Вызывается при нажатии на кнопку "Generate"
     const handleGenerateDashboard = async () => {
         try {
@@ -45,20 +50,36 @@ const EditorPage = () => {
 
             if (errors.length > 0) {
                 setValidationErrors(errors);
-                console.error('Schema validation failed:', errors);
+                setGenerationError('');
                 return;
             }
 
             setValidationErrors([]);
+            setGenerationError('');
+            setIsGenerating(true);
 
             const schema = buildDashboardSchema(components, availableFields, datasetMeta);
 
-            console.log('READY TO SEND TO BACKEND:');
-            console.log(schema);
-            console.log(JSON.stringify(schema, null, 2));
+            const response = await fetch('http://localhost:8000/generate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(schema),
+            });
+
+            if (!response.ok) {
+                throw new Error(`Ошибка backend: ${response.status}`);
+            }
+
+            const generatedCode = await response.text();
+
+            downloadPythonFile(generatedCode, 'generated_dashboard.py');
         } catch (error) {
             console.error('Ошибка генерации дашборда:', error);
-            setValidationErrors(['Во время генерации произошла непредвиденная ошибка.']);
+            setGenerationError('Не удалось сгенерировать Streamlit-файл.');
+        } finally {
+            setIsGenerating(false);
         }
     };
 
@@ -74,6 +95,7 @@ const EditorPage = () => {
                         onFileUpload={handleFileUpload}
                         datasetMeta={datasetMeta}
                         onClearDataset={clearDataset}
+                        isGenerating={isGenerating}
                     />
 
                     {/* Вывод ошибок в UI */}
@@ -118,6 +140,14 @@ const EditorPage = () => {
                                         <li key={index}>{error}</li>
                                     ))}
                                 </ul>
+                            </div>
+                        </div>
+                    )}
+
+                    {generationError && (
+                        <div className="px-4 pt-4">
+                            <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200">
+                                {generationError}
                             </div>
                         </div>
                     )}
