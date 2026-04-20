@@ -1,42 +1,50 @@
 export const paletteItems = [
     {
         type: 'selectbox',
-        label: 'Filter / Selectbox',
-        description: 'Фильтр по одному полю',
-        defaultProps: {
-            title: 'Выберите значение',
-            field: '',
+        label: 'Фильтр',
+        description: 'Фильтрация данных по выбранному полю',
+        defaultConfig: {
+            title: 'Фильтр',
             placeholder: 'Выберите значение',
+        },
+        defaultBindings: {
+            field: '',
         },
     },
     {
         type: 'line_chart',
-        label: 'Line Chart',
-        description: 'Линейный график',
-        defaultProps: {
+        label: 'Линейный график',
+        description: 'Отображение изменения показателя во времени',
+        defaultConfig: {
             title: 'Линейный график',
+        },
+        defaultBindings: {
             xField: '',
             yField: '',
         },
     },
     {
         type: 'bar_chart',
-        label: 'Bar Chart',
-        description: 'Столбчатый график',
-        defaultProps: {
+        label: 'Столбчатый график',
+        description: 'Сравнение значений между категориями',
+        defaultConfig: {
             title: 'Столбчатый график',
+        },
+        defaultBindings: {
             xField: '',
             yField: '',
         },
     },
     {
         type: 'metric',
-        label: 'Metric',
-        description: 'Карточка метрики',
-        defaultProps: {
-            title: 'KPI',
-            valueField: '',
+        label: 'Метрика',
+        description: 'Отображение агрегированного значения',
+        defaultConfig: {
+            title: 'Метрика',
             description: '',
+        },
+        defaultBindings: {
+            valueField: '',
         },
     },
 ];

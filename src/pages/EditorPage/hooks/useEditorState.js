@@ -8,7 +8,8 @@ const createComponentFromPaletteItem = (paletteItem, index) => {
     return {
         id: `${paletteItem.type}-${Date.now()}-${index}`,
         type: paletteItem.type,
-        props: { ...paletteItem.defaultProps },
+        config: { ...paletteItem.defaultConfig },
+        bindings: { ...paletteItem.defaultBindings },
     };
 };
 
@@ -68,9 +69,11 @@ export const useEditorState = () => {
     };
 
     // Изменение данных в компоненте на холсте (например название графика)
-    const updateComponent = (id, newProps) => {
+    const updateComponent = (id, updater) => {
         setComponents((prev) =>
-            prev.map((item) => (item.id === id ? { ...item, props: newProps } : item))
+            prev.map((item) =>
+                item.id === id ? updater(item) : item
+            )
         );
     };
 
