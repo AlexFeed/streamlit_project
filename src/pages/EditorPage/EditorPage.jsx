@@ -3,6 +3,7 @@ import Canvas from './components/Canvas';
 import PropertiesPanel from './components/PropertiesPanel';
 import EditorHeader from './components/EditorHeader';
 import { useEditorState } from './hooks/useEditorState';
+import { useDatasetState } from './hooks/useDatasetState';
 import {
     buildDashboardSchema,
     validateSchema,
@@ -10,9 +11,7 @@ import {
 import {useState} from "react";
 
 const EditorPage = () => {
-    // Названия полей для тестирования
-    const availableFields = ['date', 'sales', 'department', 'revenue', 'profit'];
-
+    // Получения данных связанных с компонентами
     const {
         components,
         selectedId,
@@ -25,14 +24,25 @@ const EditorPage = () => {
         clearCanvas,
     } = useEditorState();
 
+    // Получение данных связанных с датасетом
+    const {
+        availableFields,
+        datasetMeta,
+        datasetWarning,
+        datasetError,
+        handleFileUpload,
+        clearDataset,
+        dismissDatasetWarning,
+    } = useDatasetState();
+
     // Управление состоянием ошибок JSON-схемы
     const [validationErrors, setValidationErrors] = useState([]);
 
+    // Вызывается при нажатии на кнопку "Generate"
     const handleGenerateDashboard = async () => {
         try {
             const errors = validateSchema(components);
 
-            // Если ошибки есть добавляем в state
             if (errors.length > 0) {
                 setValidationErrors(errors);
                 console.error('Schema validation failed:', errors);
@@ -41,32 +51,16 @@ const EditorPage = () => {
 
             setValidationErrors([]);
 
-            const schema = buildDashboardSchema(components, availableFields);
+            const schema = buildDashboardSchema(components, availableFields, datasetMeta);
 
             console.log('READY TO SEND TO BACKEND:');
             console.log(schema);
             console.log(JSON.stringify(schema, null, 2));
-
-            // Следующий этап:
-            // const response = await fetch('/generate', {
-            //   method: 'POST',
-            //   headers: {
-            //     'Content-Type': 'application/json',
-            //   },
-            //   body: JSON.stringify(schema),
-            // });
-            //
-            // if (!response.ok) {
-            //   throw new Error('Ошибка запроса на backend');
-            // }
-            //
-            // const result = await response.blob();
-            // дальше обработка результата
         } catch (error) {
             console.error('Ошибка генерации дашборда:', error);
             setValidationErrors(['Во время генерации произошла непредвиденная ошибка.']);
         }
-    }
+    };
 
     return (
         <div className="min-h-screen bg-zinc-950 text-white overflow-auto">
@@ -77,9 +71,41 @@ const EditorPage = () => {
                     <EditorHeader
                         onClearCanvas={clearCanvas}
                         onGenerateDashboard={handleGenerateDashboard}
+                        onFileUpload={handleFileUpload}
+                        datasetMeta={datasetMeta}
+                        onClearDataset={clearDataset}
                     />
 
                     {/* Вывод ошибок в UI */}
+                    {datasetWarning && (
+                        <div className="px-4 pt-4">
+                            <div className="rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-4">
+                                <div className="flex items-center justify-between gap-3">
+                                    <p className="text-sm text-yellow-200">
+                                        Поля датасета восстановлены из localStorage, но сам файл после перезагрузки страницы недоступен.
+                                        При необходимости загрузите CSV заново.
+                                    </p>
+
+                                    <button
+                                        type="button"
+                                        onClick={dismissDatasetWarning}
+                                        className="rounded-lg border border-yellow-500/30 px-3 py-1.5 text-xs text-yellow-200 transition hover:bg-yellow-500/10"
+                                    >
+                                        Скрыть
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {datasetError && (
+                        <div className="px-4 pt-4">
+                            <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200">
+                                {datasetError}
+                            </div>
+                        </div>
+                    )}
+
                     {validationErrors.length > 0 && (
                         <div className="px-4 pt-4">
                             <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-4">
