@@ -1,14 +1,19 @@
 // Файл с созданием итоговой Json схемы
 
-export const buildDashboardSchema = (components, availableFields = [], datasetMeta = null) => {
+export const buildDashboardSchema = (
+    components,
+    availableFields = [],
+    datasetMeta = null
+) => {
     return {
         version: 1,
         dashboard: {
             title: 'Untitled dashboard',
         },
         dataSource: {
-            type: 'csv_upload',
-            name: datasetMeta?.name || 'dataset.csv',
+            type: 'backend_dataset',
+            datasetId: datasetMeta?.datasetId || null,
+            name: datasetMeta?.name || 'data.csv',
             fields: availableFields,
         },
         components: components.map((component, index) => ({

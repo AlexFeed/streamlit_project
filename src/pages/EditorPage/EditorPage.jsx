@@ -8,7 +8,6 @@ import {
     buildDashboardSchema,
     validateSchema,
 } from './services/editorSchema';
-import { downloadPythonFile } from './utils/downloadPythonFile';
 import {useState} from "react";
 
 const EditorPage = () => {
@@ -27,13 +26,13 @@ const EditorPage = () => {
 
     // Получение данных связанных с датасетом
     const {
-        availableFields,
         datasetMeta,
-        datasetWarning,
+        availableFields,
         datasetError,
+        isDatasetUploading,
+        isDatasetClearing,
         handleFileUpload,
         clearDataset,
-        dismissDatasetWarning,
     } = useDatasetState();
 
     // Управление состоянием ошибок JSON-схемы
@@ -58,6 +57,12 @@ const EditorPage = () => {
             setGenerationError('');
             setIsGenerating(true);
 
+            // Проверка есть ли файл датасета на сервере
+            if (!datasetMeta?.datasetId) {
+                setGenerationError('Сначала загрузите CSV-файл.');
+                return;
+            }
+
             const schema = buildDashboardSchema(components, availableFields, datasetMeta);
 
             const response = await fetch('http://localhost:8000/generate', {
@@ -65,16 +70,31 @@ const EditorPage = () => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(schema),
+                body: JSON.stringify({
+                    schema,
+                    datasetId: datasetMeta.datasetId,
+                }),
             });
+
+            if (response.status === 404) {
+                setGenerationError('Датасет не найден на backend. Загрузите CSV заново.');
+                return;
+            }
 
             if (!response.ok) {
                 throw new Error(`Ошибка backend: ${response.status}`);
             }
 
-            const generatedCode = await response.text();
+            const blob = await response.blob();
 
-            downloadPythonFile(generatedCode, 'generated_dashboard.py');
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'dashboard_project.zip';
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(url);
         } catch (error) {
             console.error('Ошибка генерации дашборда:', error);
             setGenerationError('Не удалось сгенерировать Streamlit-файл.');
@@ -95,30 +115,12 @@ const EditorPage = () => {
                         onFileUpload={handleFileUpload}
                         datasetMeta={datasetMeta}
                         onClearDataset={clearDataset}
+                        isDatasetUploading={isDatasetUploading}
+                        isDatasetClearing={isDatasetClearing}
                         isGenerating={isGenerating}
                     />
 
                     {/* Вывод ошибок в UI */}
-                    {datasetWarning && (
-                        <div className="px-4 pt-4">
-                            <div className="rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-4">
-                                <div className="flex items-center justify-between gap-3">
-                                    <p className="text-sm text-yellow-200">
-                                        Поля датасета восстановлены из localStorage, но сам файл после перезагрузки страницы недоступен.
-                                        При необходимости загрузите CSV заново.
-                                    </p>
-
-                                    <button
-                                        type="button"
-                                        onClick={dismissDatasetWarning}
-                                        className="rounded-lg border border-yellow-500/30 px-3 py-1.5 text-xs text-yellow-200 transition hover:bg-yellow-500/10"
-                                    >
-                                        Скрыть
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
 
                     {datasetError && (
                         <div className="px-4 pt-4">
