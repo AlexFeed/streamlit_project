@@ -39,6 +39,7 @@ export const useDatasetState = () => {
 
     const availableFields = datasetMeta?.fields || [];
 
+    // Фиксируем каждое обновление данных о датасете в LocalStorage
     useEffect(() => {
         try {
             localStorage.setItem(
@@ -52,6 +53,7 @@ export const useDatasetState = () => {
         }
     }, [datasetMeta]);
 
+    // Обработчик загрузки датасета
     const handleFileUpload = async (event) => {
         const file = event.target.files?.[0];
         if (!file) return;
@@ -92,6 +94,7 @@ export const useDatasetState = () => {
         }
     };
 
+    // Удаление загруженного датасета
     const clearDataset = async () => {
         if (!datasetMeta?.datasetId) {
             setDatasetMeta(null);

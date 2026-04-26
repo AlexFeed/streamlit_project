@@ -1,4 +1,4 @@
-// Файл с созданием итоговой Json схемы
+// Файл с созданием итоговой Json схемы для отправки на сервер
 
 export const buildDashboardSchema = (
     components,
@@ -26,6 +26,7 @@ export const buildDashboardSchema = (
     };
 };
 
+// Проверка JSON-схемы на правильность
 export const validateSchema = (components) => {
     const errors = [];
 
@@ -33,6 +34,7 @@ export const validateSchema = (components) => {
         errors.push('Холст пуст. Добавьте хотя бы один компонент.');
     }
 
+    // Проверка заполненности полей и свойств каждого компонента
     components.forEach((component, index) => {
         const name = component.props?.title || component.type || `component-${index + 1}`;
 

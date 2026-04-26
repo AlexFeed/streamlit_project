@@ -85,6 +85,7 @@ const EditorPage = () => {
                 throw new Error(`Ошибка backend: ${response.status}`);
             }
 
+            // Скачивание сгенерированного дашборда с сервера
             const blob = await response.blob();
 
             const url = URL.createObjectURL(blob);
