@@ -1,13 +1,19 @@
+// Editor components
 import ComponentPalette from './components/ComponentsPalette';
 import Canvas from './components/Canvas';
 import PropertiesPanel from './components/PropertiesPanel';
 import EditorHeader from './components/EditorHeader';
+import PreviewModal from './components/PreviewModal';
+
+// State hooks
+import { usePreviewState } from './hooks/usePreviewState';
 import { useEditorState } from './hooks/useEditorState';
 import { useDatasetState } from './hooks/useDatasetState';
 import {
     buildDashboardSchema,
     validateSchema,
 } from './services/editorSchema';
+
 import {useState} from "react";
 
 const EditorPage = () => {
@@ -35,12 +41,38 @@ const EditorPage = () => {
         clearDataset,
     } = useDatasetState();
 
+    // Получение данных связанных с preview дашборда
+    const {
+        previewUrl,
+        isPreviewLoading,
+        previewError,
+        isPreviewOpen,
+        generatePreview,
+        closePreview,
+    } = usePreviewState();
+
     // Управление состоянием ошибок JSON-схемы
     const [validationErrors, setValidationErrors] = useState([]);
 
     // Состояние генерации кода
     const [isGenerating, setIsGenerating] = useState(false);
     const [generationError, setGenerationError] = useState('');
+
+    // Вызывается при нажатии кнопки preview
+    const handlePreview = async () => {
+        const schema = buildDashboardSchema(
+            components,
+            availableFields,
+            datasetMeta
+        );
+
+        console.log(schema)
+
+        await generatePreview({
+            schema,
+            datasetId: datasetMeta?.datasetId,
+        });
+    };
 
     // Вызывается при нажатии на кнопку "Generate"
     const handleGenerateDashboard = async () => {
@@ -64,6 +96,7 @@ const EditorPage = () => {
             }
 
             const schema = buildDashboardSchema(components, availableFields, datasetMeta);
+            console.log(schema)
 
             const response = await fetch('http://localhost:8000/generate', {
                 method: 'POST',
@@ -119,6 +152,8 @@ const EditorPage = () => {
                         isDatasetUploading={isDatasetUploading}
                         isDatasetClearing={isDatasetClearing}
                         isGenerating={isGenerating}
+                        isPreviewLoading={isPreviewLoading}
+                        onPreview={handlePreview}
                     />
 
                     {/* Вывод ошибок в UI */}
@@ -127,6 +162,14 @@ const EditorPage = () => {
                         <div className="px-4 pt-4">
                             <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200">
                                 {datasetError}
+                            </div>
+                        </div>
+                    )}
+
+                    {previewError && (
+                        <div className="px-4 pt-4">
+                            <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200">
+                                {previewError}
                             </div>
                         </div>
                     )}
@@ -172,6 +215,11 @@ const EditorPage = () => {
                     </div>
                 </div>
             </div>
+            <PreviewModal
+                isOpen={isPreviewOpen}
+                previewUrl={previewUrl}
+                onClose={closePreview}
+            />
         </div>
     );
 };

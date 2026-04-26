@@ -5,6 +5,61 @@ export const buildDashboardSchema = (
     availableFields = [],
     datasetMeta = null
 ) => {
+    // Тестовая версия схемы с разделением на фильтры и графики, для более удобного рендера в backend
+    const filters = [];
+    const views = [];
+
+    components.forEach((component, index) => {
+        const base = {
+            id: component.id,
+            type: component.type,
+            order: index + 1,
+        };
+
+        if (component.type === 'selectbox') {
+            filters.push({
+                ...base,
+                title: component.config?.title || 'Фильтр',
+                field: component.bindings?.field || '',
+                scope: 'global',
+            });
+
+            return;
+        }
+
+        if (component.type === 'line_chart') {
+            views.push({
+                ...base,
+                title: component.config?.title || 'Линейный график',
+                x: component.bindings?.xField || '',
+                y: component.bindings?.yField || '',
+            });
+
+            return;
+        }
+
+        if (component.type === 'bar_chart') {
+            views.push({
+                ...base,
+                title: component.config?.title || 'Столбчатый график',
+                x: component.bindings?.xField || '',
+                y: component.bindings?.yField || '',
+            });
+
+            return;
+        }
+
+        if (component.type === 'metric') {
+            views.push({
+                ...base,
+                title: component.config?.title || 'Метрика',
+                description: component.config?.description || '',
+                field: component.bindings?.valueField || '',
+                aggregation: 'sum',
+            });
+        }
+    });
+
     return {
         version: 1,
         dashboard: {
@@ -16,13 +71,8 @@ export const buildDashboardSchema = (
             name: datasetMeta?.name || 'data.csv',
             fields: availableFields,
         },
-        components: components.map((component, index) => ({
-            id: component.id,
-            type: component.type,
-            order: index + 1,
-            config: component.config,
-            bindings: component.bindings,
-        })),
+        filters,
+        views,
     };
 };
 
