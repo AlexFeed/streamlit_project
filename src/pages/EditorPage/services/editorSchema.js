@@ -1,14 +1,19 @@
-// Файл с созданием итоговой Json схемы
+// Файл с созданием итоговой Json схемы для отправки на сервер
 
-export const buildDashboardSchema = (components, availableFields = [], datasetMeta = null) => {
+export const buildDashboardSchema = (
+    components,
+    availableFields = [],
+    datasetMeta = null
+) => {
     return {
         version: 1,
         dashboard: {
             title: 'Untitled dashboard',
         },
         dataSource: {
-            type: 'csv_upload',
-            name: datasetMeta?.name || 'dataset.csv',
+            type: 'backend_dataset',
+            datasetId: datasetMeta?.datasetId || null,
+            name: datasetMeta?.name || 'data.csv',
             fields: availableFields,
         },
         components: components.map((component, index) => ({
@@ -21,6 +26,7 @@ export const buildDashboardSchema = (components, availableFields = [], datasetMe
     };
 };
 
+// Проверка JSON-схемы на правильность
 export const validateSchema = (components) => {
     const errors = [];
 
@@ -28,6 +34,7 @@ export const validateSchema = (components) => {
         errors.push('Холст пуст. Добавьте хотя бы один компонент.');
     }
 
+    // Проверка заполненности полей и свойств каждого компонента
     components.forEach((component, index) => {
         const name = component.props?.title || component.type || `component-${index + 1}`;
 

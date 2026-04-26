@@ -1,30 +1,39 @@
-const EditorHeader = ({ onClearCanvas,
+const EditorHeader = ({
+                          onClearCanvas,
                           onGenerateDashboard,
                           onFileUpload,
                           datasetMeta,
-                          onClearDataset, isGenerating}) => {
+                          onClearDataset,
+                          isDatasetUploading,
+                          isDatasetClearing,
+                          isGenerating,
+                      }) => {
     return (
         <div className="flex items-center justify-between border-b border-zinc-800 bg-zinc-950 px-4 py-4">
             <h1 className="text-sm font-semibold text-white my-3">Streamlit Constructor</h1>
 
             <div className="flex items-center gap-3">
                 <label className="cursor-pointer rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2 text-sm font-medium text-zinc-200 transition hover:bg-zinc-800">
-                    Upload CSV
+                    {isDatasetUploading ? 'Uploading...' : 'Upload CSV'}
                     <input
                         type="file"
                         accept=".csv"
                         onChange={onFileUpload}
                         className="hidden"
+                        disabled={isDatasetUploading}
                     />
                 </label>
 
                 {datasetMeta && (
                     <div className="flex items-center gap-2 rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-300">
-                        <span>{datasetMeta.name}</span>
+                        <span className="max-w-[180px] truncate">{datasetMeta.name}</span>
+
                         <button
                             type="button"
                             onClick={onClearDataset}
-                            className="text-zinc-500 transition hover:text-red-400"
+                            disabled={isDatasetClearing}
+                            className="text-zinc-500 transition hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-50"
+                            title="Удалить датасет"
                         >
                             ×
                         </button>

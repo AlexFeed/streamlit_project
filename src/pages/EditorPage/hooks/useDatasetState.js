@@ -3,144 +3,131 @@ import Papa from 'papaparse';
 
 // Hook отвечает за управление состоянием с датасетом
 
-const DATASET_STORAGE_KEY = 'dataset_state_v1';
+const DATASET_STORAGE_KEY = 'dataset_state_v2';
+const API_BASE_URL = 'http://localhost:8000';
 
-// Для MVP максимальный размер файлов, чтобы не было проблем с производительностью (frontend file upload)
-const MAX_FILE_SIZE_MB = 10;
-
-// Определение начальных значений состояний из LocalStorage (либо null)
-const getInitialState = () => {
+// Определение начальных значений состояний датасета из LocalStorage (либо null)
+const getInitialDatasetState = () => {
     try {
         const saved = localStorage.getItem(DATASET_STORAGE_KEY);
         if (!saved) {
             return {
-                availableFields: [],
                 datasetMeta: null,
-                datasetWarning: false,
             };
         }
 
         const parsed = JSON.parse(saved);
 
         return {
-            availableFields: parsed.availableFields || [],
             datasetMeta: parsed.datasetMeta || null,
-            // ⚠️ файл не восстанавливается → показываем warning
-            datasetWarning: !!parsed.availableFields?.length,
         };
     } catch (error) {
         console.error('Ошибка восстановления dataset state:', error);
         return {
-            availableFields: [],
             datasetMeta: null,
-            datasetWarning: false,
         };
     }
 };
 
 export const useDatasetState = () => {
-    // --- INIT STATE ---
-    const initial = getInitialState();
+    const initial = getInitialDatasetState();
 
-    const [availableFields, setAvailableFields] = useState(initial.availableFields);
     const [datasetMeta, setDatasetMeta] = useState(initial.datasetMeta);
-    const [datasetWarning, setDatasetWarning] = useState(initial.datasetWarning);
     const [datasetError, setDatasetError] = useState('');
+    const [isDatasetUploading, setIsDatasetUploading] = useState(false);
+    const [isDatasetClearing, setIsDatasetClearing] = useState(false);
 
-    // --- При обновлении данных обновляется LocalStorage ---
+    const availableFields = datasetMeta?.fields || [];
+
+    // Фиксируем каждое обновление данных о датасете в LocalStorage
     useEffect(() => {
         try {
             localStorage.setItem(
                 DATASET_STORAGE_KEY,
                 JSON.stringify({
-                    availableFields,
                     datasetMeta,
                 })
             );
         } catch (error) {
             console.error('Ошибка сохранения dataset state:', error);
         }
-    }, [availableFields, datasetMeta]);
+    }, [datasetMeta]);
 
-    // --- Обработчик загрузки датасета ---
-    const handleFileUpload = (event) => {
+    // Обработчик загрузки датасета
+    const handleFileUpload = async (event) => {
         const file = event.target.files?.[0];
         if (!file) return;
 
         setDatasetError('');
 
-        // Проверка расширения
         if (!file.name.toLowerCase().endsWith('.csv')) {
             setDatasetError('Поддерживаются только CSV-файлы.');
             return;
         }
 
-        // Проверка размера
-        if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
-            setDatasetError(
-                `Файл слишком большой. Максимальный размер: ${MAX_FILE_SIZE_MB} MB.`
-            );
+        try {
+            setIsDatasetUploading(true);
+
+            const formData = new FormData();
+            formData.append('dataset', file);
+
+            // Отправка датасета на сервер
+            const response = await fetch(`${API_BASE_URL}/datasets/upload`, {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response.ok) {
+                throw new Error(`Ошибка загрузки датасета: ${response.status}`);
+            }
+
+            // Получение мета данных датасета с сервера (в том числе названия столбцов)
+            const meta = await response.json();
+            setDatasetMeta(meta);
+
+            event.target.value = '';
+        } catch (error) {
+            console.error('Ошибка загрузки CSV:', error);
+            setDatasetError('Не удалось загрузить CSV на backend.');
+        } finally {
+            setIsDatasetUploading(false);
+        }
+    };
+
+    // Удаление загруженного датасета
+    const clearDataset = async () => {
+        if (!datasetMeta?.datasetId) {
+            setDatasetMeta(null);
+            localStorage.removeItem(DATASET_STORAGE_KEY);
             return;
         }
 
         try {
-            Papa.parse(file, {
-                header: true,
-                preview: 1, // читаем только первую строку
-                skipEmptyLines: true,
+            setIsDatasetClearing(true);
 
-                complete: (result) => {
-                    const columns = result.meta.fields || [];
-
-                    if (!columns.length) {
-                        setDatasetError('Не удалось извлечь названия колонок.');
-                        return;
-                    }
-
-                    setAvailableFields(columns);
-
-                    setDatasetMeta({
-                        name: file.name,
-                        size: file.size,
-                    });
-
-                    setDatasetWarning(false);
-                },
-
-                error: (error) => {
-                    console.error('Ошибка парсинга CSV:', error);
-                    setDatasetError('Ошибка при чтении CSV-файла.');
-                },
+            await fetch(`${API_BASE_URL}/datasets/${datasetMeta.datasetId}`, {
+                method: 'DELETE',
             });
+
+            setDatasetMeta(null);
+            setDatasetError('');
+            localStorage.removeItem(DATASET_STORAGE_KEY);
         } catch (error) {
-            console.error('Ошибка чтения CSV:', error);
-            setDatasetError('Ошибка при чтении CSV-файла.');
+            console.error('Ошибка удаления датасета:', error);
+            setDatasetError('Не удалось удалить датасет на backend.');
+        } finally {
+            setIsDatasetClearing(false);
         }
     };
 
-    // --- CLEAR DATASET ---
-    const clearDataset = () => {
-        setAvailableFields([]);
-        setDatasetMeta(null);
-        setDatasetWarning(false);
-        setDatasetError('');
-
-        localStorage.removeItem(DATASET_STORAGE_KEY);
-    };
-
-    // --- DISMISS WARNING ---
-    const dismissDatasetWarning = () => {
-        setDatasetWarning(false);
-    };
-
     return {
-        availableFields,
         datasetMeta,
-        datasetWarning,
+        availableFields,
         datasetError,
+        isDatasetUploading,
+        isDatasetClearing,
 
         handleFileUpload,
         clearDataset,
-        dismissDatasetWarning,
     };
 };
