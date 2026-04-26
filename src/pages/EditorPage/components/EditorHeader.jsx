@@ -7,12 +7,28 @@ const EditorHeader = ({
                           isDatasetUploading,
                           isDatasetClearing,
                           isGenerating,
+                          onPreview,
+                          isPreviewLoading
                       }) => {
     return (
         <div className="flex items-center justify-between border-b border-zinc-800 bg-zinc-950 px-4 py-4">
             <h1 className="text-sm font-semibold text-white my-3">Streamlit Constructor</h1>
 
             <div className="flex items-center gap-3">
+                <button
+                    type="button"
+                    onClick={onPreview}
+                    disabled={isPreviewLoading}
+                    className={`rounded-xl px-4 py-2 text-sm font-medium transition ${
+                        isPreviewLoading
+                            ? 'cursor-not-allowed border border-purple-500/20 bg-purple-500/5 text-purple-200/60'
+                            : 'border border-purple-500/40 bg-purple-500/10 text-purple-300 hover:bg-purple-500/20'
+                    }`}
+                >
+                    {isPreviewLoading ? 'Preview...' : 'Preview'}
+                </button>
+
+
                 <label className="cursor-pointer rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2 text-sm font-medium text-zinc-200 transition hover:bg-zinc-800">
                     {isDatasetUploading ? 'Uploading...' : 'Upload CSV'}
                     <input
