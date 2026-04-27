@@ -77,36 +77,57 @@ export const buildDashboardSchema = (
 };
 
 // Проверка JSON-схемы на правильность
-export const validateSchema = (components) => {
+export const validateSchema = (components, availableFields = [], datasetMeta = null,) => {
     const errors = [];
 
     if (!components.length) {
         errors.push('Холст пуст. Добавьте хотя бы один компонент.');
     }
 
+    if (!datasetMeta?.datasetId) {
+        errors.push('Не загружен CSV-файл.');
+    }
+
+    // Проверка того, что поле реально есть в availableFields
+    const hasField = (field) => availableFields.includes(field);
+
     // Проверка заполненности полей и свойств каждого компонента
     components.forEach((component, index) => {
-        const name = component.props?.title || component.type || `component-${index + 1}`;
+        const name = component.config?.title  || component.type || `component-${index + 1}`;
 
         if (component.type === 'selectbox') {
-            if (!component.bindings?.field) {
+            const field = component.bindings?.field;
+            if (!field) {
                 errors.push(`Компонент "${name}": не выбрано поле данных для фильтра.`);
+            } else if (!hasField(field)) {
+                errors.push(`Компонент "${name}": поле "${field}" отсутствует в текущем датасете.`);
             }
         }
 
         if (component.type === 'line_chart' || component.type === 'bar_chart') {
-            if (!component.bindings?.xField) {
+            const xField = component.bindings?.xField;
+            const yField = component.bindings?.yField;
+
+            if (!xField) {
                 errors.push(`Компонент "${name}": не выбрано поле X.`);
+            } else if (!hasField(xField)) {
+                errors.push(`Компонент "${name}": поле X "${xField}" отсутствует в текущем датасете.`);
             }
 
-            if (!component.bindings?.yField) {
+            if (!yField) {
                 errors.push(`Компонент "${name}": не выбрано поле Y.`);
+            } else if (!hasField(yField)) {
+                errors.push(`Компонент "${name}": поле Y "${yField}" отсутствует в текущем датасете.`);
             }
         }
 
         if (component.type === 'metric') {
-            if (!component.bindings?.valueField) {
+            const valueField = component.bindings?.valueField;
+
+            if (!valueField) {
                 errors.push(`Компонент "${name}": не выбрано поле значения.`);
+            } else if (!hasField(valueField)) {
+                errors.push(`Компонент "${name}": поле "${valueField}" отсутствует в текущем датасете.`);
             }
         }
     });
