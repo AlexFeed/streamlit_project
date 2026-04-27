@@ -18,6 +18,7 @@ import {
 } from './services/editorSchema';
 
 import {useEffect, useState} from "react";
+import {authFetch} from "../api/apiClient.js";
 
 const EditorPage = () => {
     // Получение из адресной строки параметров конкретного проекта
@@ -73,7 +74,7 @@ const EditorPage = () => {
 
         const loadProject = async () => {
             try {
-                const response = await fetch(`http://localhost:8000/projects/${projectId}`);
+                const response = await authFetch(`/projects/${projectId}`);
 
                 if (!response.ok) {
                     throw new Error('Project not found');
@@ -122,13 +123,13 @@ const EditorPage = () => {
         };
 
         const url = projectId
-            ? `http://localhost:8000/projects/${projectId}`
-            : 'http://localhost:8000/projects';
+            ? `/projects/${projectId}`
+            : '/projects';
 
         const method = projectId ? 'PUT' : 'POST';
 
         try {
-            const response = await fetch(url, {
+            const response = await authFetch(url, {
                 method,
                 headers: {
                     'Content-Type': 'application/json',
