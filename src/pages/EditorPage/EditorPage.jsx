@@ -60,6 +60,15 @@ const EditorPage = () => {
 
     // Вызывается при нажатии кнопки preview
     const handlePreview = async () => {
+        const errors = validateSchema(components, availableFields, datasetMeta);
+
+        if (errors.length > 0) {
+            setValidationErrors(errors);
+            return;
+        }
+
+        setValidationErrors([]);
+
         const schema = buildDashboardSchema(
             components,
             availableFields,
@@ -77,7 +86,7 @@ const EditorPage = () => {
     // Вызывается при нажатии на кнопку "Generate"
     const handleGenerateDashboard = async () => {
         try {
-            const errors = validateSchema(components);
+            const errors = validateSchema(components, availableFields, datasetMeta);
 
             if (errors.length > 0) {
                 setValidationErrors(errors);
@@ -88,12 +97,6 @@ const EditorPage = () => {
             setValidationErrors([]);
             setGenerationError('');
             setIsGenerating(true);
-
-            // Проверка есть ли файл датасета на сервере
-            if (!datasetMeta?.datasetId) {
-                setGenerationError('Сначала загрузите CSV-файл.');
-                return;
-            }
 
             const schema = buildDashboardSchema(components, availableFields, datasetMeta);
             console.log(schema)
