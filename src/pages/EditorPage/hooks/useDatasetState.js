@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import Papa from 'papaparse';
+import {authFetch} from "../../api/apiClient.js";
 
 // Hook отвечает за управление состоянием с датасетом
 
 export const DATASET_DRAFT_STORAGE_KEY = 'streamlit-editor-dataset-draft';
-const API_BASE_URL = 'http://localhost:8000';
 
 // Определение начальных значений состояний датасета из LocalStorage (либо null)
 const loadDraftDatasetMeta = () => {
@@ -81,7 +81,7 @@ export const useDatasetState = ({ useDraftStorage = true }) => {
             formData.append('dataset', file);
 
             // Отправка датасета на сервер
-            const response = await fetch(`${API_BASE_URL}/datasets/upload`, {
+            const response = await authFetch(`$/datasets/upload`, {
                 method: 'POST',
                 body: formData,
             });
@@ -118,7 +118,7 @@ export const useDatasetState = ({ useDraftStorage = true }) => {
         try {
             setIsDatasetClearing(true);
 
-            await fetch(`${API_BASE_URL}/datasets/${datasetMeta.datasetId}`, {
+            await authFetch(`/datasets/${datasetMeta.datasetId}`, {
                 method: 'DELETE',
             });
 
