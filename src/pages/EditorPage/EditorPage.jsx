@@ -18,7 +18,7 @@ import {
 } from './services/editorSchema';
 
 import {useEffect, useState} from "react";
-import {authFetch} from "../api/apiClient.js";
+import {authFetch} from "../../api/apiClient.js";
 
 const EditorPage = () => {
     // Получение из адресной строки параметров конкретного проекта

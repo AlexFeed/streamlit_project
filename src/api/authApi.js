@@ -1,4 +1,4 @@
-import { authFetch } from './apiClient';
+import { authFetch } from './apiClient.js';
 
 export const register = async ({ email, password }) => {
     const response = await authFetch('/auth/register', {

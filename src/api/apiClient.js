@@ -1,4 +1,4 @@
-import { getAuthToken } from './authStorage';
+import { getAuthToken } from './authStorage.js';
 
 export const API_BASE_URL = 'http://localhost:8000';
 

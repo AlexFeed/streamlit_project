@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
-import Papa from 'papaparse';
-import {authFetch} from "../../api/apiClient.js";
+import {authFetch} from "../../../api/apiClient.js";
 
 // Hook отвечает за управление состоянием с датасетом
 
