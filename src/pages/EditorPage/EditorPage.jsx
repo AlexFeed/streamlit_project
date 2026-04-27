@@ -4,22 +4,33 @@ import Canvas from './components/Canvas';
 import PropertiesPanel from './components/PropertiesPanel';
 import EditorHeader from './components/EditorHeader';
 import PreviewModal from './components/PreviewModal';
+import { useParams, useNavigate } from 'react-router-dom';
+
+import { EDITOR_DRAFT_STORAGE_KEY } from './hooks/useEditorState';
 
 // State hooks
 import { usePreviewState } from './hooks/usePreviewState';
 import { useEditorState } from './hooks/useEditorState';
-import { useDatasetState } from './hooks/useDatasetState';
+import {DATASET_DRAFT_STORAGE_KEY, useDatasetState} from './hooks/useDatasetState';
 import {
     buildDashboardSchema,
     validateSchema,
 } from './services/editorSchema';
 
-import {useState} from "react";
+import {useEffect, useState} from "react";
 
 const EditorPage = () => {
+    // Получение из адресной строки параметров конкретного проекта
+    const { projectId } = useParams();
+    const navigate = useNavigate();
+
+    // Черновик это или уже сохранённый проект (Для управления localStorage)
+    const isDraftMode = !(projectId);
+    
     // Получения данных связанных с компонентами
     const {
         components,
+        setComponents,
         selectedId,
         selectedComponent,
         addComponent,
@@ -28,18 +39,23 @@ const EditorPage = () => {
         deleteComponent,
         deleteSelectedComponent,
         clearCanvas,
-    } = useEditorState();
+    } = useEditorState({
+        useDraftStorage: isDraftMode,
+    });
 
     // Получение данных связанных с датасетом
     const {
         datasetMeta,
+        setDatasetMeta,
         availableFields,
         datasetError,
         isDatasetUploading,
         isDatasetClearing,
         handleFileUpload,
         clearDataset,
-    } = useDatasetState();
+    } = useDatasetState({
+        useDraftStorage: isDraftMode,
+    });
 
     // Получение данных связанных с preview дашборда
     const {
@@ -50,6 +66,31 @@ const EditorPage = () => {
         generatePreview,
         closePreview,
     } = usePreviewState();
+    
+
+    useEffect(() => {
+        if (!projectId) return;
+
+        const loadProject = async () => {
+            try {
+                const response = await fetch(`http://localhost:8000/projects/${projectId}`);
+
+                if (!response.ok) {
+                    throw new Error('Project not found');
+                }
+
+                const project = await response.json();
+
+                setComponents(project.editorState?.components || [])
+                setDatasetMeta(project.datasetMeta || null)
+
+            } catch (error) {
+                console.error('Ошибка загрузки проекта:', error);
+            }
+        };
+
+        loadProject();
+    }, [projectId, setComponents, setDatasetMeta]);
 
     // Управление состоянием ошибок JSON-схемы
     const [validationErrors, setValidationErrors] = useState([]);
@@ -57,6 +98,61 @@ const EditorPage = () => {
     // Состояние генерации кода
     const [isGenerating, setIsGenerating] = useState(false);
     const [generationError, setGenerationError] = useState('');
+
+    // Обработка сохранения дашборда в отдельный проект
+    const handleSaveProject = async () => {
+        const errors = validateSchema(components, availableFields, datasetMeta);
+
+        if (errors.length > 0) {
+            setValidationErrors(errors);
+            return;
+        }
+
+
+        const schema = buildDashboardSchema(components, availableFields, datasetMeta);
+
+        const payload = {
+            title: schema.dashboard.title,
+            description: '',
+            datasetMeta,
+            editorState: {
+                components,
+            },
+            schema,
+        };
+
+        const url = projectId
+            ? `http://localhost:8000/projects/${projectId}`
+            : 'http://localhost:8000/projects';
+
+        const method = projectId ? 'PUT' : 'POST';
+
+        try {
+            const response = await fetch(url, {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+
+            if (!response.ok) {
+                throw new Error('Save failed');
+            }
+
+            const savedProject = await response.json();
+
+            if (!projectId) {
+                localStorage.removeItem(EDITOR_DRAFT_STORAGE_KEY);
+                localStorage.removeItem(DATASET_DRAFT_STORAGE_KEY);
+                navigate(`/editor/${savedProject.id}`);
+            }
+
+            console.log('Проект сохранён:', savedProject);
+        } catch (error) {
+            console.error('Ошибка сохранения проекта:', error);
+        }
+    };
 
     // Вызывается при нажатии кнопки preview
     const handlePreview = async () => {
@@ -157,6 +253,7 @@ const EditorPage = () => {
                         isGenerating={isGenerating}
                         isPreviewLoading={isPreviewLoading}
                         onPreview={handlePreview}
+                        onSaveProject={handleSaveProject}
                     />
 
                     {/* Вывод ошибок в UI */}
