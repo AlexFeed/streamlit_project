@@ -3,55 +3,64 @@ import Papa from 'papaparse';
 
 // Hook отвечает за управление состоянием с датасетом
 
-const DATASET_STORAGE_KEY = 'dataset_state_v2';
+export const DATASET_DRAFT_STORAGE_KEY = 'streamlit-editor-dataset-draft';
 const API_BASE_URL = 'http://localhost:8000';
 
 // Определение начальных значений состояний датасета из LocalStorage (либо null)
-const getInitialDatasetState = () => {
+const loadDraftDatasetMeta = () => {
     try {
-        const saved = localStorage.getItem(DATASET_STORAGE_KEY);
+        const saved = localStorage.getItem(DATASET_DRAFT_STORAGE_KEY);
+
         if (!saved) {
-            return {
-                datasetMeta: null,
-            };
+            return null;
         }
 
         const parsed = JSON.parse(saved);
 
-        return {
-            datasetMeta: parsed.datasetMeta || null,
-        };
+        return parsed?.datasetMeta || null;
     } catch (error) {
-        console.error('Ошибка восстановления dataset state:', error);
-        return {
-            datasetMeta: null,
-        };
+        console.error('Ошибка восстановления dataset draft:', error);
+        return null;
     }
 };
 
-export const useDatasetState = () => {
-    const initial = getInitialDatasetState();
+export const useDatasetState = ({ useDraftStorage = true }) => {
+    const [datasetMeta, setDatasetMeta] = useState(() => {
+        if (!useDraftStorage) {
+            return null;
+        }
 
-    const [datasetMeta, setDatasetMeta] = useState(initial.datasetMeta);
+        return loadDraftDatasetMeta();
+    });
+
     const [datasetError, setDatasetError] = useState('');
     const [isDatasetUploading, setIsDatasetUploading] = useState(false);
     const [isDatasetClearing, setIsDatasetClearing] = useState(false);
 
     const availableFields = datasetMeta?.fields || [];
 
-    // Фиксируем каждое обновление данных о датасете в LocalStorage
+    // Сохраняем datasetMeta в localStorage только для /editor
     useEffect(() => {
+        if (!useDraftStorage) {
+            return;
+        }
+
         try {
+            if (!datasetMeta) {
+                localStorage.removeItem(DATASET_DRAFT_STORAGE_KEY);
+                return;
+            }
+
             localStorage.setItem(
-                DATASET_STORAGE_KEY,
+                DATASET_DRAFT_STORAGE_KEY,
                 JSON.stringify({
                     datasetMeta,
                 })
             );
         } catch (error) {
-            console.error('Ошибка сохранения dataset state:', error);
+            console.error('Ошибка сохранения dataset draft:', error);
         }
-    }, [datasetMeta]);
+    }, [datasetMeta, useDraftStorage]);
 
     // Обработчик загрузки датасета
     const handleFileUpload = async (event) => {
@@ -98,7 +107,11 @@ export const useDatasetState = () => {
     const clearDataset = async () => {
         if (!datasetMeta?.datasetId) {
             setDatasetMeta(null);
-            localStorage.removeItem(DATASET_STORAGE_KEY);
+
+            if (useDraftStorage) {
+                localStorage.removeItem(DATASET_DRAFT_STORAGE_KEY);
+            }
+
             return;
         }
 
@@ -111,7 +124,10 @@ export const useDatasetState = () => {
 
             setDatasetMeta(null);
             setDatasetError('');
-            localStorage.removeItem(DATASET_STORAGE_KEY);
+
+            if (useDraftStorage) {
+                localStorage.removeItem(DATASET_DRAFT_STORAGE_KEY);
+            }
         } catch (error) {
             console.error('Ошибка удаления датасета:', error);
             setDatasetError('Не удалось удалить датасет на backend.');
@@ -122,6 +138,7 @@ export const useDatasetState = () => {
 
     return {
         datasetMeta,
+        setDatasetMeta,
         availableFields,
         datasetError,
         isDatasetUploading,

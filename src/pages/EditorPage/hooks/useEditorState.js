@@ -3,7 +3,28 @@ import { useEffect, useMemo, useState } from 'react';
 // Hook отвечает за управление состоянием локальных компонентов дашборда, их загрузка в LocalStorage
 
 // Ключ хранения состояния в localStorage
-const STORAGE_KEY = 'editor_state_v1';
+export const EDITOR_DRAFT_STORAGE_KEY = 'streamlit-editor-draft';
+
+const loadDraftComponents = () => {
+    try {
+        const saved = localStorage.getItem(EDITOR_DRAFT_STORAGE_KEY);
+
+        if (!saved) {
+            return [];
+        }
+
+        const parsed = JSON.parse(saved);
+
+        if (!Array.isArray(parsed)) {
+            return [];
+        }
+
+        return parsed;
+    } catch (error) {
+        console.error('Ошибка чтения черновика editor из localStorage:', error);
+        return [];
+    }
+};
 
 // Создание компоненты для холста
 const createComponentFromPaletteItem = (paletteItem, index) => {
@@ -16,37 +37,34 @@ const createComponentFromPaletteItem = (paletteItem, index) => {
 };
 
 // Управление всем состоянием редактора
-export const useEditorState = () => {
+export const useEditorState = ({ useDraftStorage = true }) => {
     // Управление состоянием компонентов
     const [components, setComponents] = useState(() => {
-        try {
-            const saved = localStorage.getItem(STORAGE_KEY);
-            if (!saved) return [];
-
-            const parsed = JSON.parse(saved);
-            return parsed.components || [];
-        } catch (error) {
-            console.error('Ошибка чтения localStorage:', error);
+        if (!useDraftStorage) {
             return [];
         }
+
+        return loadDraftComponents();
     });
 
     // Управление состоянием выбранного элемента на холсте
     const [selectedId, setSelectedId] = useState(null);
 
-    // При каждом изменении components, будет обновляться localStorage
+    // При изменении components сохраняем draft только для /editor
     useEffect(() => {
+        if (!useDraftStorage) {
+            return;
+        }
+
         try {
             localStorage.setItem(
-                STORAGE_KEY,
-                JSON.stringify({
-                    components,
-                })
+                EDITOR_DRAFT_STORAGE_KEY,
+                JSON.stringify(components)
             );
         } catch (error) {
-            console.error('Ошибка сохранения localStorage:', error);
+            console.error('Ошибка сохранения черновика editor в localStorage:', error);
         }
-    }, [components]);
+    }, [components, useDraftStorage]);
 
 
     const selectedComponent = useMemo(() => {
@@ -98,11 +116,15 @@ export const useEditorState = () => {
     const clearCanvas = () => {
         setComponents([]);
         setSelectedId(null);
-        localStorage.removeItem(STORAGE_KEY);
+
+        if (useDraftStorage) {
+            localStorage.removeItem(EDITOR_DRAFT_STORAGE_KEY);
+        }
     };
 
     return {
         components,
+        setComponents,
         selectedId,
         selectedComponent,
         addComponent,
