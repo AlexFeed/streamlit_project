@@ -9,7 +9,8 @@ const EditorHeader = ({
                           isGenerating,
                           onPreview,
                           isPreviewLoading,
-                          onSaveProject
+                          onSaveProject,
+                          onLogout
                       }) => {
     return (
         <div className="flex items-center justify-between border-b border-zinc-800 bg-zinc-950 px-4 py-4">
@@ -83,6 +84,14 @@ const EditorHeader = ({
                     className="rounded-xl text-sm border border-red-500/40 bg-red-500/10 px-4 py-2 font-medium text-red-300 transition hover:bg-red-500/20"
                 >
                     Очистить холст
+                </button>
+
+                <button
+                    type="button"
+                    onClick={onLogout}
+                    className="rounded-xl text-sm border border-gray-500/40 bg-gray-500/10 px-4 py-2 font-medium text-gray-300 transition hover:bg-gray-500/20"
+                >
+                    Выйти
                 </button>
             </div>
         </div>

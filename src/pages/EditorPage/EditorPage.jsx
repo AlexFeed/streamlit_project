@@ -19,11 +19,17 @@ import {
 
 import {useEffect, useState} from "react";
 import {authFetch} from "../../api/apiClient.js";
+import { logout } from '../../api/authApi.js';
 
 const EditorPage = () => {
     // Получение из адресной строки параметров конкретного проекта
     const { projectId } = useParams();
     const navigate = useNavigate();
+
+    const handleLogout = () => {
+        logout();
+        navigate('/auth', { replace: true });
+    };
 
     // Черновик это или уже сохранённый проект (Для управления localStorage)
     const isDraftMode = !(projectId);
@@ -255,6 +261,7 @@ const EditorPage = () => {
                         isPreviewLoading={isPreviewLoading}
                         onPreview={handlePreview}
                         onSaveProject={handleSaveProject}
+                        onLogout={handleLogout}
                     />
 
                     {/* Вывод ошибок в UI */}

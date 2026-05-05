@@ -1,5 +1,7 @@
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Zap } from 'lucide-react';
+import { logout } from '../../api/authApi.js';
 import Sidebar from './Sidebar';
 import ExtensionHeader from './ExtensionHeader';
 import ExtensionGrid from './ExtensionGrid';
@@ -8,6 +10,12 @@ import ConfigModal from './ConfigModal';
 import './ExtensionsPage.css';
 
 const ExtensionsPage = () => {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/auth', { replace: true });
+  };
   const [extensions, setExtensions] = useState([
     {
       id: 1,
@@ -119,6 +127,7 @@ const ExtensionsPage = () => {
         activeCount={activeCount}
         totalCount={extensions.length}
         onAddClick={() => setIsAddModalOpen(true)}
+        onLogout={handleLogout}
       />
 
       <div className="main-content">

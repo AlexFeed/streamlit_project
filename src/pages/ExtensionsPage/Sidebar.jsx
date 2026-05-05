@@ -1,8 +1,8 @@
 import React from 'react';
-import { Plus, Zap } from 'lucide-react';
+import { Plus, Zap, LogOut } from 'lucide-react';
 import * as Icons from 'lucide-react';
 
-const Sidebar = ({ categories, selectedCategory, onSelectCategory, activeCount, totalCount, onAddClick }) => {
+const Sidebar = ({ categories, selectedCategory, onSelectCategory, activeCount, totalCount, onAddClick, onLogout }) => {
   const getIconComponent = (iconName) => {
     const IconComponent = Icons[iconName];
     return IconComponent ? <IconComponent size={16} /> : null;
@@ -43,6 +43,11 @@ const Sidebar = ({ categories, selectedCategory, onSelectCategory, activeCount, 
         <button className="add-button" onClick={onAddClick}>
           <Plus size={18} />
           <span>Добавить расширение</span>
+        </button>
+
+        <button className="logout-button" onClick={onLogout}>
+          <LogOut size={18} />
+          <span>Выйти</span>
         </button>
       </div>
     </aside>

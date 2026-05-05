@@ -791,3 +791,27 @@
   color: #6b7280;
   padding: 32px 0;
 }
+
+/* ==================== LOGOUT КНОПКА ==================== */
+.logout-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background-color: #1f1f1f;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
+  font-weight: 500;
+  color: #ef4444;
+  cursor: pointer;
+  transition: all 0.5s;
+  margin-top: 16px;
+}
+
+.logout-button:hover {
+  background-color: #2a2a2a;
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #fca5a5;
+}

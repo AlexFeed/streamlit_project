@@ -1,5 +1,7 @@
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { X } from 'lucide-react';
+import { logout } from '../../api/authApi.js';
 import EmptyState from './EmptyState';
 import Header from './Header';
 import ProjectCard from './ProjectCard';
@@ -12,12 +14,18 @@ const initialProjects = [
 ];
 
 const ProjectsPage = () => {
+  const navigate = useNavigate();
   const [projects, setProjects] = useState(initialProjects);
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState('grid');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [newProjectTitle, setNewProjectTitle] = useState('');
   const [newProjectDesc, setNewProjectDesc] = useState('');
+
+  const handleLogout = () => {
+    logout();
+    navigate('/auth', { replace: true });
+  };
 
   const filteredProjects = useMemo(() => {
     return projects.filter(project => 
@@ -95,7 +103,7 @@ const ProjectsPage = () => {
 
   return (
     <div className="sp-projects-page">
-      <Sidebar projectsCount={projects.length} />
+      <Sidebar projectsCount={projects.length} onLogout={handleLogout} />
       <div className="sp-projects-main">
         <div className="sp-gradient-overlay" />
         <Header

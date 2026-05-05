@@ -1,7 +1,7 @@
 import React from 'react';
 import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
 
-const AuthForm = ({ isLogin, showPassword, setShowPassword, formData, handleInputChange, handleSubmit, setIsLogin }) => {
+const AuthForm = ({ isLogin, showPassword, setShowPassword, formData, handleInputChange, handleSubmit, setIsLogin, error, loading }) => {
   return (
     <div className="form-container">
       {/* Форма */}
@@ -73,16 +73,20 @@ const AuthForm = ({ isLogin, showPassword, setShowPassword, formData, handleInpu
             </div>
           </div>
 
+          {error && <div className="form-error">{error}</div>}
+
           <button
             type="submit"
             className="submit-button"
+            disabled={loading}
           >
-            {isLogin ? 'Войти' : 'Создать аккаунт'}
+            {loading ? (isLogin ? 'Входим...' : 'Создаём...') : isLogin ? 'Войти' : 'Создать аккаунт'}
           </button>
         </form>
 
         <div className="switch-container">
           <button
+            type="button"
             onClick={() => setIsLogin(!isLogin)}
             className="switch-button"
           >

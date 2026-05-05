@@ -1,7 +1,7 @@
 import React from 'react';
-import { BookOpen, Folder, Settings, User, Zap, Cpu } from 'lucide-react';
+import { BookOpen, Folder, Settings, User, Zap, Cpu, LogOut } from 'lucide-react';
 
-const Sidebar = ({ projectsCount = 0 }) => {
+const Sidebar = ({ projectsCount = 0, onLogout }) => {
   return (
     <aside className="sp-projects-sidebar">
       <div className="sp-sidebar-logo">
@@ -50,6 +50,16 @@ const Sidebar = ({ projectsCount = 0 }) => {
               <span className="sp-tool-label">Профиль</span>
             </button>
           </div>
+        </div>
+        <div className="sp-menu-section">
+          <button onClick={onLogout} className="sp-logout-button">
+            <div className="sp-menu-left">
+              <div className="sp-menu-icon">
+                <LogOut size={20} />
+              </div>
+              <span className="sp-menu-label">Выйти</span>
+            </div>
+          </button>
         </div>
       </div>
     </aside>

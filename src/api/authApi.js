@@ -44,3 +44,9 @@ export const getMe = async () => {
 
     return response.json();
 };
+
+export const logout = () => {
+    // Просто очищаем локальное хранилище
+    localStorage.removeItem('streamlit-auth-token');
+    localStorage.removeItem('streamlit-auth-user');
+};
