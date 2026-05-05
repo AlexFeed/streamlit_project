@@ -1,7 +1,7 @@
 import React from 'react';
 import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
 
-const AuthForm = ({ isLogin, showPassword, setShowPassword, formData, handleInputChange, handleSubmit, setIsLogin }) => {
+const AuthForm = ({ isLogin, showPassword, setShowPassword, formData, handleInputChange, handleSubmit, setIsLogin, loading, error }) => {
   return (
     <div className="form-container">
       {/* Форма */}
@@ -14,6 +14,12 @@ const AuthForm = ({ isLogin, showPassword, setShowPassword, formData, handleInpu
             {isLogin ? 'Введите свои данные для входа' : 'Заполните форму для создания аккаунта'}
           </p>
         </div>
+
+        {error && (
+          <div className="error-message" style={{ color: '#ef4444', textAlign: 'center', marginBottom: '1rem' }}>
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="form">
           {!isLogin && (
@@ -29,6 +35,7 @@ const AuthForm = ({ isLogin, showPassword, setShowPassword, formData, handleInpu
                   placeholder="Ваше имя"
                   className="input-field"
                   required={!isLogin}
+                  disabled={loading}
                 />
               </div>
             </div>
@@ -46,6 +53,7 @@ const AuthForm = ({ isLogin, showPassword, setShowPassword, formData, handleInpu
                 placeholder="your@email.com"
                 className="input-field"
                 required
+                disabled={loading}
               />
             </div>
           </div>
@@ -62,11 +70,13 @@ const AuthForm = ({ isLogin, showPassword, setShowPassword, formData, handleInpu
                 placeholder="••••••••"
                 className="input-field password-input"
                 required
+                disabled={loading}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="password-toggle"
+                disabled={loading}
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
@@ -76,8 +86,9 @@ const AuthForm = ({ isLogin, showPassword, setShowPassword, formData, handleInpu
           <button
             type="submit"
             className="submit-button"
+            disabled={loading}
           >
-            {isLogin ? 'Войти' : 'Создать аккаунт'}
+            {loading ? 'Загрузка...' : (isLogin ? 'Войти' : 'Создать аккаунт')}
           </button>
         </form>
 
@@ -85,6 +96,7 @@ const AuthForm = ({ isLogin, showPassword, setShowPassword, formData, handleInpu
           <button
             onClick={() => setIsLogin(!isLogin)}
             className="switch-button"
+            disabled={loading}
           >
             {isLogin ? 'Нет аккаунта? Зарегистрироваться' : 'Уже есть аккаунт? Войти'}
           </button>

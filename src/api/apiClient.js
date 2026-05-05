@@ -13,8 +13,12 @@ export const authFetch = async (url, options = {}) => {
         headers.Authorization = `Bearer ${token}`;
     }
 
-    return fetch(`${API_BASE_URL}${url}`, {
-        ...options,
-        headers,
-    });
+    try {
+        return await fetch(`${API_BASE_URL}${url}`, {
+            ...options,
+            headers,
+        });
+    } catch (error) {
+        throw new Error('Не удалось подключиться к серверу. Проверьте, запущен ли backend на http://localhost:8000');
+    }
 };

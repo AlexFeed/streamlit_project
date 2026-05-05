@@ -1,12 +1,12 @@
 import { authFetch } from './apiClient.js';
 
-export const register = async ({ email, password }) => {
+export const register = async ({ name, email, password }) => {
     const response = await authFetch('/auth/register', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ name, email, password }),
     });
 
     if (!response.ok) {
