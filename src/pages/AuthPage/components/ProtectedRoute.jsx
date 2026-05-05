@@ -1,10 +1,14 @@
 import { Navigate } from 'react-router-dom';
-import { getAuthToken } from '../../../api/authStorage';
+import { useAuth } from '../../../contexts/AuthContext';
 
 const ProtectedRoute = ({ children }) => {
-    const token = getAuthToken();
+    const { isAuthenticated, loading } = useAuth();
 
-    if (!token) {
+    if (loading) {
+        return <div>Загрузка...</div>; // Или спиннер
+    }
+
+    if (!isAuthenticated) {
         return <Navigate to="/auth" replace />;
     }
 
