@@ -18,6 +18,9 @@ dist-ssr
 .idea
 .DS_Store
 *.suo
+
+# Backend database
+backend/users.db
 *.ntvs*
 *.njsproj
 *.sln

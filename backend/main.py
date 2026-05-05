@@ -7,6 +7,8 @@ from jose import JWTError, jwt
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 import uvicorn
+import sqlite3
+import os
 
 # Настройки
 SECRET_KEY = "your-secret-key-here"
@@ -53,7 +55,54 @@ class TokenWithUser(Token):
 class TokenData(BaseModel):
     email: Optional[str] = None
 
-# In-memory база данных (для демо)
+# База данных
+DB_FILE = "users.db"
+
+def init_db():
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            hashed_password TEXT NOT NULL
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+def load_users():
+    if not os.path.exists(DB_FILE):
+        return {}, 0
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, name, email, hashed_password FROM users")
+    rows = cursor.fetchall()
+    conn.close()
+    users = {}
+    max_id = 0
+    for row in rows:
+        users[row[2]] = {  # email as key
+            "id": row[0],
+            "name": row[1],
+            "email": row[2],
+            "hashed_password": row[3]
+        }
+        if row[0] > max_id:
+            max_id = row[0]
+    return users, max_id
+
+def save_user(name, email, hashed_password):
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO users (name, email, hashed_password) VALUES (?, ?, ?)", (name, email, hashed_password))
+    user_id = cursor.lastrowid
+    conn.commit()
+    conn.close()
+    return user_id
+
+# In-memory база данных (загружается из БД)
 users_db = {}
 user_id_counter = 1
 
@@ -111,16 +160,15 @@ async def register(user: UserCreate):
     if get_user(user.email):
         raise HTTPException(status_code=400, detail="Email already registered")
 
-    global user_id_counter
     hashed_password = get_password_hash(user.password)
+    user_id = save_user(user.name, user.email, hashed_password)
     user_dict = {
-        "id": user_id_counter,
+        "id": user_id,
         "name": user.name,
         "email": user.email,
         "hashed_password": hashed_password
     }
     users_db[user.email] = user_dict
-    user_id_counter += 1
 
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
@@ -159,6 +207,12 @@ async def read_users_me(current_user: dict = Depends(get_current_user)):
 @app.get("/")
 async def root():
     return {"message": "Streamlit Builder API"}
+
+# Инициализация БД при запуске
+init_db()
+loaded_users, max_id = load_users()
+users_db.update(loaded_users)
+user_id_counter = max_id + 1
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
