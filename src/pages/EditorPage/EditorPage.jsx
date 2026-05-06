@@ -17,10 +17,10 @@ import {
     validateSchema,
 } from './services/editorSchema';
 
-import {useState} from "react";
+import { useEffect, useState } from 'react';
 import { logout } from '../../api/authApi.js';
-import {useProjectState} from "./hooks/useProjectState.js";
-import {generateProjectZip} from "../../api/generateApi.js";
+import { useProjectState } from './hooks/useProjectState.js';
+import { generateProjectZip } from '../../api/generateApi.js';
 
 const EditorPage = () => {
     // Получение из адресной строки параметров конкретного проекта
@@ -101,6 +101,7 @@ const EditorPage = () => {
         isProjectLoading,
         isProjectSaving,
         projectError,
+        project,
         handleSaveProject,
     } = useProjectState({
         projectId,
@@ -112,6 +113,49 @@ const EditorPage = () => {
         navigate,
         setValidationErrors,
     });
+
+    const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
+    const [saveTitle, setSaveTitle] = useState('');
+    const [saveDescription, setSaveDescription] = useState('');
+    const [saveMetadataError, setSaveMetadataError] = useState('');
+
+    useEffect(() => {
+        if (!project) {
+            return;
+        }
+
+        setSaveTitle(project.title || '');
+        setSaveDescription(project.description || '');
+    }, [project]);
+
+    const handleOpenSaveModal = () => {
+        setSaveMetadataError('');
+        setSaveTitle(project?.title || '');
+        setSaveDescription(project?.description || '');
+        setIsSaveModalOpen(true);
+    };
+
+    const handleConfirmSave = async () => {
+        if (!saveTitle.trim()) {
+            setSaveMetadataError('Название проекта не может быть пустым.');
+            return;
+        }
+
+        const saved = await handleSaveProject({
+            title: saveTitle.trim(),
+            description: saveDescription.trim(),
+        });
+
+        if (saved) {
+            setIsSaveModalOpen(false);
+            navigate('/');
+        }
+    };
+
+    const handleCancelSave = () => {
+        setSaveMetadataError('');
+        setIsSaveModalOpen(false);
+    };
 
     // Вызывается при нажатии на кнопку "Generate"
     const handleGenerateDashboard = async () => {
@@ -173,7 +217,7 @@ const EditorPage = () => {
                         isGenerating={isGenerating}
                         isPreviewLoading={isPreviewLoading}
                         onPreview={handlePreview}
-                        onSaveProject={handleSaveProject}
+                        onSaveProject={handleOpenSaveModal}
                         onLogout={handleLogout}
                     />
 
@@ -223,6 +267,70 @@ const EditorPage = () => {
                         <div className="px-4 pt-4">
                             <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200">
                                 {projectError}
+                            </div>
+                        </div>
+                    )}
+
+                    {isSaveModalOpen && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6">
+                            <div className="w-full max-w-lg rounded-3xl border border-zinc-800 bg-zinc-950 p-6 shadow-2xl shadow-black/50">
+                                <div className="flex items-center justify-between gap-4">
+                                    <div>
+                                        <h2 className="text-xl font-semibold text-white">Сохранить проект</h2>
+                                        <p className="mt-1 text-sm text-zinc-400">
+                                            Укажите название и описание перед сохранением.
+                                        </p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={handleCancelSave}
+                                        className="text-zinc-400 transition hover:text-white"
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+                                <div className="mt-6 space-y-4">
+                                    <div>
+                                        <label className="mb-2 block text-sm font-medium text-zinc-300">Название проекта</label>
+                                        <input
+                                            type="text"
+                                            value={saveTitle}
+                                            onChange={(e) => setSaveTitle(e.target.value)}
+                                            className="w-full rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-white outline-none focus:border-blue-500"
+                                            autoFocus
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="mb-2 block text-sm font-medium text-zinc-300">Описание</label>
+                                        <textarea
+                                            value={saveDescription}
+                                            onChange={(e) => setSaveDescription(e.target.value)}
+                                            rows={4}
+                                            className="w-full resize-none rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-white outline-none focus:border-blue-500"
+                                        />
+                                    </div>
+                                    {saveMetadataError && (
+                                        <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+                                            {saveMetadataError}
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
+                                    <button
+                                        type="button"
+                                        onClick={handleCancelSave}
+                                        className="rounded-2xl border border-zinc-800 bg-zinc-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-zinc-800"
+                                    >
+                                        Отмена
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={handleConfirmSave}
+                                        className="rounded-2xl bg-blue-500 px-5 py-3 text-sm font-medium text-white transition hover:bg-blue-400"
+                                    >
+                                        Сохранить
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     )}

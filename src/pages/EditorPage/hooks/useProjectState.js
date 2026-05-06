@@ -19,10 +19,12 @@ export const useProjectState = ({
     const [isProjectLoading, setIsProjectLoading] = useState(false);
     const [isProjectSaving, setIsProjectSaving] = useState(false);
     const [projectError, setProjectError] = useState('');
+    const [project, setProject] = useState(null);
 
     // Загрузка сохранённого проекта при открытии /editor/:projectId
     useEffect(() => {
         if (!projectId) {
+            setProject(null);
             return;
         }
 
@@ -33,6 +35,7 @@ export const useProjectState = ({
 
                 const project = await getProject(projectId);
 
+                setProject(project);
                 setComponents(project.editorState?.components || []);
                 setDatasetMeta(project.datasetMeta || null);
             } catch (error) {
@@ -47,13 +50,13 @@ export const useProjectState = ({
     }, [projectId, setComponents, setDatasetMeta]);
 
     // Сохранение нового или существующего проекта
-    const handleSaveProject = async () => {
+    const handleSaveProject = async (metadata = {}) => {
         const errors = validateSchema(components, availableFields, datasetMeta);
 
         if (errors.length > 0) {
             setValidationErrors(errors);
             setProjectError('');
-            return;
+            return null;
         }
 
         setValidationErrors([]);
@@ -66,8 +69,8 @@ export const useProjectState = ({
         );
 
         const payload = {
-            title: schema.dashboard.title,
-            description: '',
+            title: metadata.title || schema.dashboard.title,
+            description: metadata.description ?? project?.description ?? '',
             datasetMeta,
             editorState: {
                 components,
@@ -85,9 +88,9 @@ export const useProjectState = ({
             if (!projectId) {
                 localStorage.removeItem(EDITOR_DRAFT_STORAGE_KEY);
                 localStorage.removeItem(DATASET_DRAFT_STORAGE_KEY);
-
-                navigate(`/editor/${savedProject.id}`);
             }
+
+            setProject(savedProject);
 
             console.log('Проект сохранён:', savedProject);
 
@@ -105,6 +108,7 @@ export const useProjectState = ({
         isProjectLoading,
         isProjectSaving,
         projectError,
+        project,
         handleSaveProject,
     };
 };

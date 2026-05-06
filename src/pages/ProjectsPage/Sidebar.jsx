@@ -1,7 +1,7 @@
 import React from 'react';
-import { BookOpen, Folder, Settings, User, Zap, Cpu, LogOut } from 'lucide-react';
+import { BookOpen, Folder, Settings, User, Zap, Cpu, LogOut, Puzzle } from 'lucide-react';
 
-const Sidebar = ({ projectsCount = 0, onLogout }) => {
+const Sidebar = ({ projectsCount = 0, onLogout, onExtensionsClick }) => {
   return (
     <aside className="sp-projects-sidebar">
       <div className="sp-sidebar-logo">
@@ -36,6 +36,16 @@ const Sidebar = ({ projectsCount = 0, onLogout }) => {
               <span className="sp-menu-label">Проекты</span>
             </div>
             <span className="sp-menu-badge">{projectsCount}</span>
+          </button>
+          {/* Новая кнопка Extensions в разделе Core */}
+          <button className="sp-menu-button" onClick={onExtensionsClick}>
+            <div className="sp-menu-left">
+              <div className="sp-menu-icon">
+                <Puzzle size={20} />
+              </div>
+              <span className="sp-menu-label">Extensions</span>
+            </div>
+            <div className="sp-menu-dot" />
           </button>
         </div>
         <div className="sp-menu-section">
