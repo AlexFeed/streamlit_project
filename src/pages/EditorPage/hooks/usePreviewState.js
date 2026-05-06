@@ -1,19 +1,24 @@
 import { useState } from 'react';
 
-const API_BASE_URL = 'http://localhost:8000';
-
+import { createPreview } from '../../../api/previewApi.js';
+import {
+    buildDashboardSchema,
+    validateSchema,
+} from '../services/editorSchema.js';
 
 // Файл отвечает за управление состоянием preview дашборда
-export const usePreviewState = () => {
+export const usePreviewState = ({
+                                    components,
+                                    availableFields,
+                                    datasetMeta,
+                                    setValidationErrors,
+                                }) => {
     const [previewUrl, setPreviewUrl] = useState(null);
     const [isPreviewLoading, setIsPreviewLoading] = useState(false);
     const [previewError, setPreviewError] = useState('');
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
-    const generatePreview = async ({
-                                       schema,
-                                       datasetId,
-                                   }) => {
+    const generatePreview = async ({ schema, datasetId }) => {
         if (!datasetId) {
             setPreviewError('Сначала загрузите CSV');
             return;
@@ -23,34 +28,60 @@ export const usePreviewState = () => {
             setIsPreviewLoading(true);
             setPreviewError('');
 
-            const response = await fetch(`${API_BASE_URL}/preview`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ schema, datasetId }),
+            const data = await createPreview({
+                schema,
+                datasetId,
             });
-
-            if (!response.ok) {
-                throw new Error(`Preview error: ${response.status}`);
-            }
-
-            const data = await response.json();
 
             setPreviewUrl(data.previewUrl);
             setIsPreviewOpen(true);
         } catch (error) {
-            console.error(error);
+            console.error('Ошибка preview:', error);
             setPreviewError('Не удалось загрузить preview');
         } finally {
             setIsPreviewLoading(false);
         }
     };
 
+    // Полный обработчик Preview:
+    // 1. валидирует компоненты
+    // 2. строит schema
+    // 3. создаёт preview session на backend
+    // 4. открывает preview modal
+    const handlePreview = async () => {
+        const errors = validateSchema(
+            components,
+            availableFields,
+            datasetMeta
+        );
+
+        if (errors.length > 0) {
+            setValidationErrors(errors);
+            return;
+        }
+
+        setValidationErrors([]);
+
+        const schema = buildDashboardSchema(
+            components,
+            availableFields,
+            datasetMeta
+        );
+
+        await generatePreview({
+            schema,
+            datasetId: datasetMeta?.datasetId,
+        });
+    };
+
     const openPreview = () => setIsPreviewOpen(true);
+
     const closePreview = () => setIsPreviewOpen(false);
 
     const clearPreview = () => {
         setPreviewUrl(null);
         setPreviewError('');
+        setIsPreviewOpen(false);
     };
 
     return {
@@ -59,9 +90,10 @@ export const usePreviewState = () => {
         previewError,
         isPreviewOpen,
 
+        handlePreview,
         generatePreview,
         clearPreview,
         openPreview,
-        closePreview
+        closePreview,
     };
 };

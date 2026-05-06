@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import {authFetch} from "../../../api/apiClient.js";
+import {deleteDataset, uploadDataset} from "../../../api/datasetsApi.js";
 
 // Hook отвечает за управление состоянием с датасетом
 
@@ -76,21 +76,8 @@ export const useDatasetState = ({ useDraftStorage = true }) => {
         try {
             setIsDatasetUploading(true);
 
-            const formData = new FormData();
-            formData.append('dataset', file);
-
-            // Отправка датасета на сервер
-            const response = await authFetch(`$/datasets/upload`, {
-                method: 'POST',
-                body: formData,
-            });
-
-            if (!response.ok) {
-                throw new Error(`Ошибка загрузки датасета: ${response.status}`);
-            }
-
             // Получение мета данных датасета с сервера (в том числе названия столбцов)
-            const meta = await response.json();
+            const meta = await uploadDataset(file);
             setDatasetMeta(meta);
 
             event.target.value = '';
@@ -117,9 +104,7 @@ export const useDatasetState = ({ useDraftStorage = true }) => {
         try {
             setIsDatasetClearing(true);
 
-            await authFetch(`/datasets/${datasetMeta.datasetId}`, {
-                method: 'DELETE',
-            });
+            await deleteDataset(datasetMeta.datasetId)
 
             setDatasetMeta(null);
             setDatasetError('');
