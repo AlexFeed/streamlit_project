@@ -11,15 +11,16 @@ import { EDITOR_DRAFT_STORAGE_KEY } from './hooks/useEditorState';
 // State hooks
 import { usePreviewState } from './hooks/usePreviewState';
 import { useEditorState } from './hooks/useEditorState';
-import {DATASET_DRAFT_STORAGE_KEY, useDatasetState} from './hooks/useDatasetState';
+import {useDatasetState} from './hooks/useDatasetState';
 import {
     buildDashboardSchema,
     validateSchema,
 } from './services/editorSchema';
 
-import {useEffect, useState} from "react";
-import {authFetch} from "../../api/apiClient.js";
+import {useState} from "react";
 import { logout } from '../../api/authApi.js';
+import {useProjectState} from "./hooks/useProjectState.js";
+import {generateProjectZip} from "../../api/generateApi.js";
 
 const EditorPage = () => {
     // Получение из адресной строки параметров конкретного проекта
@@ -27,12 +28,28 @@ const EditorPage = () => {
     const navigate = useNavigate();
 
     const handleLogout = () => {
+        const confirmed = window.confirm(
+            'При выходе все несохраненные данные будут удалены. Продолжить?'
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
         logout();
+
         navigate('/auth', { replace: true });
     };
 
     // Черновик это или уже сохранённый проект (Для управления localStorage)
     const isDraftMode = !(projectId);
+
+    // Управление состоянием ошибок JSON-схемы
+    const [validationErrors, setValidationErrors] = useState([]);
+
+    // Состояние генерации кода
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [generationError, setGenerationError] = useState('');
     
     // Получения данных связанных с компонентами
     const {
@@ -70,121 +87,31 @@ const EditorPage = () => {
         isPreviewLoading,
         previewError,
         isPreviewOpen,
-        generatePreview,
+        handlePreview,
         closePreview,
-    } = usePreviewState();
-    
+    } = usePreviewState({
+        components,
+        availableFields,
+        datasetMeta,
+        setValidationErrors,
+    });
 
-    useEffect(() => {
-        if (!projectId) return;
-
-        const loadProject = async () => {
-            try {
-                const response = await authFetch(`/projects/${projectId}`);
-
-                if (!response.ok) {
-                    throw new Error('Project not found');
-                }
-
-                const project = await response.json();
-
-                setComponents(project.editorState?.components || [])
-                setDatasetMeta(project.datasetMeta || null)
-
-            } catch (error) {
-                console.error('Ошибка загрузки проекта:', error);
-            }
-        };
-
-        loadProject();
-    }, [projectId, setComponents, setDatasetMeta]);
-
-    // Управление состоянием ошибок JSON-схемы
-    const [validationErrors, setValidationErrors] = useState([]);
-
-    // Состояние генерации кода
-    const [isGenerating, setIsGenerating] = useState(false);
-    const [generationError, setGenerationError] = useState('');
-
-    // Обработка сохранения дашборда в отдельный проект
-    const handleSaveProject = async () => {
-        const errors = validateSchema(components, availableFields, datasetMeta);
-
-        if (errors.length > 0) {
-            setValidationErrors(errors);
-            return;
-        }
-
-
-        const schema = buildDashboardSchema(components, availableFields, datasetMeta);
-
-        const payload = {
-            title: schema.dashboard.title,
-            description: '',
-            datasetMeta,
-            editorState: {
-                components,
-            },
-            schema,
-        };
-
-        const url = projectId
-            ? `/projects/${projectId}`
-            : '/projects';
-
-        const method = projectId ? 'PUT' : 'POST';
-
-        try {
-            const response = await authFetch(url, {
-                method,
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload),
-            });
-
-            if (!response.ok) {
-                throw new Error('Save failed');
-            }
-
-            const savedProject = await response.json();
-
-            if (!projectId) {
-                localStorage.removeItem(EDITOR_DRAFT_STORAGE_KEY);
-                localStorage.removeItem(DATASET_DRAFT_STORAGE_KEY);
-                navigate(`/editor/${savedProject.id}`);
-            }
-
-            console.log('Проект сохранён:', savedProject);
-        } catch (error) {
-            console.error('Ошибка сохранения проекта:', error);
-        }
-    };
-
-    // Вызывается при нажатии кнопки preview
-    const handlePreview = async () => {
-        const errors = validateSchema(components, availableFields, datasetMeta);
-
-        if (errors.length > 0) {
-            setValidationErrors(errors);
-            return;
-        }
-
-        setValidationErrors([]);
-
-        const schema = buildDashboardSchema(
-            components,
-            availableFields,
-            datasetMeta
-        );
-
-        console.log(schema)
-
-        await generatePreview({
-            schema,
-            datasetId: datasetMeta?.datasetId,
-        });
-    };
+    // Получение данных, связанных с загрузкой проекта
+    const {
+        isProjectLoading,
+        isProjectSaving,
+        projectError,
+        handleSaveProject,
+    } = useProjectState({
+        projectId,
+        components,
+        availableFields,
+        datasetMeta,
+        setComponents,
+        setDatasetMeta,
+        navigate,
+        setValidationErrors,
+    });
 
     // Вызывается при нажатии на кнопку "Generate"
     const handleGenerateDashboard = async () => {
@@ -204,29 +131,15 @@ const EditorPage = () => {
             const schema = buildDashboardSchema(components, availableFields, datasetMeta);
             console.log(schema)
 
-            const response = await fetch('http://localhost:8000/generate', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
+            // Получение с сервера zip сгенерированного проекта
+            const blob = await generateProjectZip(
+                {
                     schema,
                     datasetId: datasetMeta.datasetId,
-                }),
-            });
+                    setGenerationError
+                })
 
-            if (response.status === 404) {
-                setGenerationError('Датасет не найден на backend. Загрузите CSV заново.');
-                return;
-            }
-
-            if (!response.ok) {
-                throw new Error(`Ошибка backend: ${response.status}`);
-            }
-
-            // Скачивание сгенерированного дашборда с сервера
-            const blob = await response.blob();
-
+            // Скачивание zip пользователем
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
@@ -302,6 +215,31 @@ const EditorPage = () => {
                         <div className="px-4 pt-4">
                             <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200">
                                 {generationError}
+                            </div>
+                        </div>
+                    )}
+
+                    {projectError && (
+                        <div className="px-4 pt-4">
+                            <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200">
+                                {projectError}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* UI загрузки */}
+                    {isProjectLoading && (
+                        <div className="px-4 pt-4">
+                            <div className="rounded-2xl border border-blue-500/30 bg-blue-500/10 p-4 text-sm text-blue-200">
+                                Загрузка проекта...
+                            </div>
+                        </div>
+                    )}
+
+                    {isProjectSaving && (
+                        <div className="px-4 pt-4">
+                            <div className="rounded-2xl border border-blue-500/30 bg-blue-500/10 p-4 text-sm text-blue-200">
+                                Сохранение проекта...
                             </div>
                         </div>
                     )}

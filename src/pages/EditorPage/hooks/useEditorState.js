@@ -38,7 +38,7 @@ const createComponentFromPaletteItem = (paletteItem, index) => {
 
 // Управление всем состоянием редактора
 export const useEditorState = ({ useDraftStorage = true }) => {
-    // Управление состоянием компонентов
+    // Управление состоянием компонентов для draft (только для /editor)
     const [components, setComponents] = useState(() => {
         if (!useDraftStorage) {
             return [];
@@ -50,7 +50,7 @@ export const useEditorState = ({ useDraftStorage = true }) => {
     // Управление состоянием выбранного элемента на холсте
     const [selectedId, setSelectedId] = useState(null);
 
-    // При изменении components сохраняем draft только для /editor
+    // При изменении components сохраняем draft (только для /editor)
     useEffect(() => {
         if (!useDraftStorage) {
             return;

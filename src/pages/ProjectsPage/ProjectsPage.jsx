@@ -23,7 +23,16 @@ const ProjectsPage = () => {
   const [newProjectDesc, setNewProjectDesc] = useState('');
 
   const handleLogout = () => {
+    const confirmed = window.confirm(
+        'При выходе все несохраненные данные будут удалены. Продолжить?'
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
     logout();
+
     navigate('/auth', { replace: true });
   };
 
