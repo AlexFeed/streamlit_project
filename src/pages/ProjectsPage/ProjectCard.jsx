@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Trash2, Clock, Pencil } from 'lucide-react';
 
 const CrownIcon = ({ className }) => (
@@ -7,11 +7,19 @@ const CrownIcon = ({ className }) => (
   </svg>
 );
 
-const ProjectCard = ({ project, onDelete, viewMode = 'grid', onUpdateTitle, onUpdateDescription }) => {
+const ProjectCard = ({ project, onDelete, onOpen, viewMode = 'grid', onUpdateTitle, onUpdateDescription }) => {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editTitle, setEditTitle] = useState(project.title);
   const [isEditingDesc, setIsEditingDesc] = useState(false);
   const [editDesc, setEditDesc] = useState(project.description);
+
+  useEffect(() => {
+    setEditTitle(project.title);
+  }, [project.title]);
+
+  useEffect(() => {
+    setEditDesc(project.description);
+  }, [project.description]);
 
   const handleSaveTitle = () => {
     if (editTitle.trim() && editTitle !== project.title) {
@@ -45,7 +53,7 @@ const ProjectCard = ({ project, onDelete, viewMode = 'grid', onUpdateTitle, onUp
 
   if (viewMode === 'list') {
     return (
-      <div className="sp-project-card-list">
+      <div className="sp-project-card-list" onClick={onOpen}>
         <div className="sp-list-accent" />
         <div className="sp-list-content">
           <div className="sp-list-title-row">
@@ -58,11 +66,16 @@ const ProjectCard = ({ project, onDelete, viewMode = 'grid', onUpdateTitle, onUp
                 onKeyDown={handleTitleKeyDown}
                 className="sp-edit-title-input"
                 autoFocus
+                onClick={(e) => e.stopPropagation()}
               />
             ) : (
               <h3 className="sp-list-title">{project.title}</h3>
             )}
-            <button onClick={() => setIsEditingTitle(true)} className="sp-edit-title-btn" title="Редактировать название">
+            <button
+              onClick={(e) => { e.stopPropagation(); setIsEditingTitle(true); }}
+              className="sp-edit-title-btn"
+              title="Редактировать название"
+            >
               <Pencil size={12} />
             </button>
           </div>
@@ -76,16 +89,25 @@ const ProjectCard = ({ project, onDelete, viewMode = 'grid', onUpdateTitle, onUp
                 onKeyDown={handleDescKeyDown}
                 className="sp-edit-desc-input"
                 autoFocus
+                onClick={(e) => e.stopPropagation()}
               />
             ) : (
               <p className="sp-list-desc">{project.description}</p>
             )}
-            <button onClick={() => setIsEditingDesc(true)} className="sp-edit-desc-btn" title="Редактировать описание">
+            <button
+              onClick={(e) => { e.stopPropagation(); setIsEditingDesc(true); }}
+              className="sp-edit-desc-btn"
+              title="Редактировать описание"
+            >
               <Pencil size={12} />
             </button>
           </div>
         </div>
-        <button onClick={() => onDelete(project.id)} className="sp-delete-list-btn" title="Удалить проект">
+        <button
+          onClick={(e) => { e.stopPropagation(); onDelete(project.id); }}
+          className="sp-delete-list-btn"
+          title="Удалить проект"
+        >
           <Trash2 size={18} />
         </button>
       </div>
@@ -93,7 +115,7 @@ const ProjectCard = ({ project, onDelete, viewMode = 'grid', onUpdateTitle, onUp
   }
 
   return (
-    <div className="sp-project-card-grid">
+    <div className="sp-project-card-grid" onClick={onOpen}>
       <div className="sp-card-banner">
         <div className="sp-banner-watermark">
           <span>STREAMLIT</span>
@@ -112,11 +134,16 @@ const ProjectCard = ({ project, onDelete, viewMode = 'grid', onUpdateTitle, onUp
               onKeyDown={handleTitleKeyDown}
               className="sp-edit-title-input"
               autoFocus
+              onClick={(e) => e.stopPropagation()}
             />
           ) : (
             <h3 className="sp-card-title">{project.title}</h3>
           )}
-          <button onClick={() => setIsEditingTitle(true)} className="sp-edit-title-btn" title="Редактировать название">
+          <button
+            onClick={(e) => { e.stopPropagation(); setIsEditingTitle(true); }}
+            className="sp-edit-title-btn"
+            title="Редактировать название"
+          >
             <Pencil size={12} />
           </button>
         </div>
@@ -131,11 +158,16 @@ const ProjectCard = ({ project, onDelete, viewMode = 'grid', onUpdateTitle, onUp
               rows={2}
               style={{ minHeight: '2.5rem' }}
               autoFocus
+              onClick={(e) => e.stopPropagation()}
             />
           ) : (
             <p className="sp-card-desc">{project.description}</p>
           )}
-          <button onClick={() => setIsEditingDesc(true)} className="sp-edit-desc-btn" title="Редактировать описание">
+          <button
+            onClick={(e) => { e.stopPropagation(); setIsEditingDesc(true); }}
+            className="sp-edit-desc-btn"
+            title="Редактировать описание"
+          >
             <Pencil size={12} />
           </button>
         </div>
@@ -144,7 +176,11 @@ const ProjectCard = ({ project, onDelete, viewMode = 'grid', onUpdateTitle, onUp
             <Clock size={12} />
             <span>{project.lastEdited}</span>
           </div>
-          <button onClick={() => onDelete(project.id)} className="sp-delete-card-btn" title="Удалить проект">
+          <button
+            onClick={(e) => { e.stopPropagation(); onDelete(project.id); }}
+            className="sp-delete-card-btn"
+            title="Удалить проект"
+          >
             <Trash2 size={14} />
           </button>
         </div>
