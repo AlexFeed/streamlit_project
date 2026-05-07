@@ -18,7 +18,7 @@ const Sidebar = ({ projectsCount = 0, onLogout, onExtensionsClick }) => {
       </div>
       <div className="sp-sidebar-menu sp-custom-scrollbar">
         <div className="sp-menu-section">
-          <div className="sp-menu-section-title">Core</div>
+          <div className="sp-menu-section-title">Меню</div>
           <button className="sp-menu-button">
             <div className="sp-menu-left">
               <div className="sp-menu-icon">
@@ -43,13 +43,13 @@ const Sidebar = ({ projectsCount = 0, onLogout, onExtensionsClick }) => {
               <div className="sp-menu-icon">
                 <Puzzle size={20} />
               </div>
-              <span className="sp-menu-label">Extensions</span>
+              <span className="sp-menu-label">Расширения</span>
             </div>
             <div className="sp-menu-dot" />
           </button>
         </div>
         <div className="sp-menu-section">
-          <div className="sp-menu-section-title">Tools</div>
+          <div className="sp-menu-section-title">Инструменты</div>
           <div className="sp-tools-grid">
             <button className="sp-tool-button">
               <Settings size={18} className="sp-tool-icon" />

@@ -4,10 +4,6 @@ import { Zap } from 'lucide-react';
 const Sidebar = ({ isLogin }) => {
   return (
     <aside className="sidebar">
-      {/* Фоновая надпись "STREAMLIT" */}
-      <div className="background-text">
-        <span>STREAMLIT</span>
-      </div>
 
       {/* Верхняя часть: Логотип */}
       <div className="logo-section">
