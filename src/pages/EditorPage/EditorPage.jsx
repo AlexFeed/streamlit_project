@@ -50,7 +50,7 @@ const EditorPage = () => {
     // Состояние генерации кода
     const [isGenerating, setIsGenerating] = useState(false);
     const [generationError, setGenerationError] = useState('');
-    
+
     // Получения данных связанных с компонентами
     const {
         components,
@@ -81,21 +81,6 @@ const EditorPage = () => {
         useDraftStorage: isDraftMode,
     });
 
-    // Получение данных связанных с preview дашборда
-    const {
-        previewUrl,
-        isPreviewLoading,
-        previewError,
-        isPreviewOpen,
-        handlePreview,
-        closePreview,
-    } = usePreviewState({
-        components,
-        availableFields,
-        datasetMeta,
-        setValidationErrors,
-    });
-
     // Получение данных, связанных с загрузкой проекта
     const {
         isProjectLoading,
@@ -113,6 +98,23 @@ const EditorPage = () => {
         navigate,
         setValidationErrors,
     });
+
+    // Получение данных связанных с preview дашборда
+    const {
+        previewUrl,
+        isPreviewLoading,
+        previewError,
+        isPreviewOpen,
+        handlePreview,
+        closePreview,
+    } = usePreviewState({
+        components,
+        availableFields,
+        datasetMeta,
+        projectTitle: project?.title,
+        setValidationErrors,
+    });
+
 
     const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
     const [saveTitle, setSaveTitle] = useState('');
@@ -172,7 +174,7 @@ const EditorPage = () => {
             setGenerationError('');
             setIsGenerating(true);
 
-            const schema = buildDashboardSchema(components, availableFields, datasetMeta);
+            const schema = buildDashboardSchema(components, availableFields, datasetMeta, project?.title );
             console.log(schema)
 
             // Получение с сервера zip сгенерированного проекта

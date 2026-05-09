@@ -62,15 +62,26 @@ export const useProjectState = ({
         setValidationErrors([]);
         setProjectError('');
 
+        const projectTitle =
+            metadata.title ||
+            project?.title ||
+            'Untitled dashboard';
+
+        const projectDescription =
+            metadata.description ??
+            project?.description ??
+            '';
+
         const schema = buildDashboardSchema(
             components,
             availableFields,
-            datasetMeta
+            datasetMeta,
+            projectTitle
         );
 
         const payload = {
-            title: metadata.title || schema.dashboard.title,
-            description: metadata.description ?? project?.description ?? '',
+            title: projectTitle,
+            description: projectDescription,
             datasetMeta,
             editorState: {
                 components,
@@ -103,7 +114,6 @@ export const useProjectState = ({
             setIsProjectSaving(false);
         }
     };
-
     return {
         isProjectLoading,
         isProjectSaving,

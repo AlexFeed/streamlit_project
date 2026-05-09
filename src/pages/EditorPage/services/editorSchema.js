@@ -3,7 +3,8 @@
 export const buildDashboardSchema = (
     components,
     availableFields = [],
-    datasetMeta = null
+    datasetMeta = null,
+    dashboardTitle = 'Untitled dashboard'
 ) => {
     // Тестовая версия схемы с разделением на фильтры и графики, для более удобного рендера в backend
     const filters = [];
@@ -63,7 +64,7 @@ export const buildDashboardSchema = (
     return {
         version: 1,
         dashboard: {
-            title: 'Untitled dashboard',
+            title: dashboardTitle
         },
         dataSource: {
             type: 'backend_dataset',

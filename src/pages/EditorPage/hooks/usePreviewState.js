@@ -11,6 +11,7 @@ export const usePreviewState = ({
                                     components,
                                     availableFields,
                                     datasetMeta,
+                                    projectTitle,
                                     setValidationErrors,
                                 }) => {
     const [previewUrl, setPreviewUrl] = useState(null);
@@ -65,7 +66,8 @@ export const usePreviewState = ({
         const schema = buildDashboardSchema(
             components,
             availableFields,
-            datasetMeta
+            datasetMeta,
+            projectTitle
         );
 
         await generatePreview({
