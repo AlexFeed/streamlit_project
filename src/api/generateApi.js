@@ -10,7 +10,7 @@ import { authFetch } from './apiClient.js';
 //
 // Response:
 // Blob (zip archive)
-export const generateProjectZip = async ({schema, datasetId, setGenerationError}) => {
+export const generateProjectZip = async ({ schema, datasetId }) => { // Убрали setGenerationError
     const response = await authFetch('/generate', {
         method: 'POST',
         headers: {
@@ -23,13 +23,12 @@ export const generateProjectZip = async ({schema, datasetId, setGenerationError}
     });
 
     if (response.status === 404) {
-        setGenerationError('Датасет не найден на backend. Загрузите CSV заново.');
-        return;
+        throw new Error('Датасет не найден на backend. Загрузите CSV заново.');
     }
 
     if (!response.ok) {
         const error = await response.json().catch(() => null);
-        throw new Error(error?.detail || 'Generate failed');
+        throw new Error(error?.detail || 'Не удалось сгенерировать Streamlit-файл.');
     }
 
     return response.blob();

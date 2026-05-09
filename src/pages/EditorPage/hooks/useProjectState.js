@@ -13,7 +13,6 @@ export const useProjectState = ({
                                     datasetMeta,
                                     setComponents,
                                     setDatasetMeta,
-                                    navigate,
                                     setValidationErrors,
                                 }) => {
     const [isProjectLoading, setIsProjectLoading] = useState(false);
@@ -33,11 +32,11 @@ export const useProjectState = ({
                 setIsProjectLoading(true);
                 setProjectError('');
 
-                const project = await getProject(projectId);
+                const fetchedProject = await getProject(projectId);
 
-                setProject(project);
-                setComponents(project.editorState?.components || []);
-                setDatasetMeta(project.datasetMeta || null);
+                setProject(fetchedProject);
+                setComponents(fetchedProject.editorState?.components || []);
+                setDatasetMeta(fetchedProject.datasetMeta || null);
             } catch (error) {
                 console.error('Ошибка загрузки проекта:', error);
                 setProjectError('Не удалось загрузить проект.');
@@ -49,29 +48,8 @@ export const useProjectState = ({
         loadProject();
     }, [projectId, setComponents, setDatasetMeta]);
 
-    // Сохранение нового или существующего проекта
-    const handleSaveProject = async (metadata = {}) => {
-        const errors = validateSchema(components, availableFields, datasetMeta);
-
-        if (errors.length > 0) {
-            setValidationErrors(errors);
-            setProjectError('');
-            return null;
-        }
-
-        setValidationErrors([]);
-        setProjectError('');
-
-        const projectTitle =
-            metadata.title ||
-            project?.title ||
-            'Untitled dashboard';
-
-        const projectDescription =
-            metadata.description ??
-            project?.description ??
-            '';
-
+    // Вспомогательная функция для сборки данных для отправки
+    const buildProjectData = (projectTitle, projectDescription) => {
         const schema = buildDashboardSchema(
             components,
             availableFields,
@@ -79,46 +57,88 @@ export const useProjectState = ({
             projectTitle
         );
 
-        const payload = {
+        return {
             title: projectTitle,
             description: projectDescription,
             datasetMeta,
-            editorState: {
-                components,
-            },
+            editorState: { components },
             schema,
         };
+    };
+
+    // Операция 1: Создание проекта из черновика (с модалкой)
+    const createProjectFromDraft = async ({ title, description }) => {
+        const errors = validateSchema(components, availableFields, datasetMeta);
+
+        if (errors.length > 0) {
+            setValidationErrors(errors);
+            return null;
+        }
+
+        setValidationErrors([]);
+        setProjectError('');
+
+        const payload = buildProjectData(title, description);
 
         try {
             setIsProjectSaving(true);
 
-            const savedProject = projectId
-                ? await updateProject(projectId, payload)
-                : await createProject(payload);
+            const savedProject = await createProject(payload);
 
-            if (!projectId) {
-                localStorage.removeItem(EDITOR_DRAFT_STORAGE_KEY);
-                localStorage.removeItem(DATASET_DRAFT_STORAGE_KEY);
-            }
+            // Очищаем черновики только при успешном создании
+            localStorage.removeItem(EDITOR_DRAFT_STORAGE_KEY);
+            localStorage.removeItem(DATASET_DRAFT_STORAGE_KEY);
 
             setProject(savedProject);
-
-            console.log('Проект сохранён:', savedProject);
-
             return savedProject;
         } catch (error) {
-            console.error('Ошибка сохранения проекта:', error);
-            setProjectError('Не удалось сохранить проект.');
+            console.error('Ошибка создания проекта:', error);
+            setProjectError('Не удалось создать проект.');
             return null;
         } finally {
             setIsProjectSaving(false);
         }
     };
+
+    // Операция 2: Тихое сохранение существующего проекта
+    const saveExistingProject = async () => {
+        if (!projectId || !project) return null;
+
+        const errors = validateSchema(components, availableFields, datasetMeta);
+
+        if (errors.length > 0) {
+            setValidationErrors(errors);
+            return null;
+        }
+
+        setValidationErrors([]);
+        setProjectError('');
+
+        // Используем уже существующие title и description
+        const payload = buildProjectData(project.title, project.description);
+
+        try {
+            setIsProjectSaving(true);
+
+            const updatedProject = await updateProject(projectId, payload);
+
+            setProject(updatedProject);
+            return updatedProject;
+        } catch (error) {
+            console.error('Ошибка обновления проекта:', error);
+            setProjectError('Не удалось обновить проект.');
+            return null;
+        } finally {
+            setIsProjectSaving(false);
+        }
+    };
+
     return {
         isProjectLoading,
         isProjectSaving,
         projectError,
         project,
-        handleSaveProject,
+        createProjectFromDraft,
+        saveExistingProject,
     };
 };

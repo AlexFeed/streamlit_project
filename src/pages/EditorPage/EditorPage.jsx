@@ -6,7 +6,6 @@ import EditorHeader from './components/EditorHeader';
 import PreviewModal from './components/PreviewModal';
 import { useParams, useNavigate } from 'react-router-dom';
 
-import { EDITOR_DRAFT_STORAGE_KEY } from './hooks/useEditorState';
 
 // State hooks
 import { usePreviewState } from './hooks/usePreviewState';
@@ -17,10 +16,11 @@ import {
     validateSchema,
 } from './services/editorSchema';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { logout } from '../../api/authApi.js';
 import { useProjectState } from './hooks/useProjectState.js';
 import { generateProjectZip } from '../../api/generateApi.js';
+import ErrorNotification from "./components/common/ErrorNotification.jsx";
 
 const EditorPage = () => {
     // Получение из адресной строки параметров конкретного проекта
@@ -87,7 +87,8 @@ const EditorPage = () => {
         isProjectSaving,
         projectError,
         project,
-        handleSaveProject,
+        createProjectFromDraft,
+        saveExistingProject,
     } = useProjectState({
         projectId,
         components,
@@ -95,7 +96,6 @@ const EditorPage = () => {
         datasetMeta,
         setComponents,
         setDatasetMeta,
-        navigate,
         setValidationErrors,
     });
 
@@ -121,36 +121,35 @@ const EditorPage = () => {
     const [saveDescription, setSaveDescription] = useState('');
     const [saveMetadataError, setSaveMetadataError] = useState('');
 
-    useEffect(() => {
-        if (!project) {
-            return;
+    // Вызывается при клике на кнопку "Save" в хедере редактора
+    const handleSaveClick = async () => {
+        if (isDraftMode) {
+            // Строго чистые поля для нового проекта
+            setSaveMetadataError('');
+            setSaveTitle('');
+            setSaveDescription('');
+            setIsSaveModalOpen(true);
+        } else {
+            await saveExistingProject();
         }
-
-        setSaveTitle(project.title || '');
-        setSaveDescription(project.description || '');
-    }, [project]);
-
-    const handleOpenSaveModal = () => {
-        setSaveMetadataError('');
-        setSaveTitle(project?.title || '');
-        setSaveDescription(project?.description || '');
-        setIsSaveModalOpen(true);
     };
 
+    // Вызывается при клике "Сохранить" внутри модального окна
     const handleConfirmSave = async () => {
         if (!saveTitle.trim()) {
             setSaveMetadataError('Название проекта не может быть пустым.');
             return;
         }
 
-        const saved = await handleSaveProject({
+        const saved = await createProjectFromDraft({
             title: saveTitle.trim(),
             description: saveDescription.trim(),
         });
 
         if (saved) {
             setIsSaveModalOpen(false);
-            navigate('/');
+            // Меняем URL на ID созданного проекта, оставаясь в редакторе
+            navigate(`/editor/${saved.id}`, { replace: true });
         }
     };
 
@@ -166,7 +165,6 @@ const EditorPage = () => {
 
             if (errors.length > 0) {
                 setValidationErrors(errors);
-                setGenerationError('');
                 return;
             }
 
@@ -181,8 +179,7 @@ const EditorPage = () => {
             const blob = await generateProjectZip(
                 {
                     schema,
-                    datasetId: datasetMeta.datasetId,
-                    setGenerationError
+                    datasetId: datasetMeta.datasetId
                 })
 
             // Скачивание zip пользователем
@@ -196,11 +193,20 @@ const EditorPage = () => {
             URL.revokeObjectURL(url);
         } catch (error) {
             console.error('Ошибка генерации дашборда:', error);
-            setGenerationError('Не удалось сгенерировать Streamlit-файл.');
+            setGenerationError(error.message || 'Не удалось сгенерировать Streamlit-файл.');
         } finally {
             setIsGenerating(false);
         }
     };
+
+    // Все ошибки
+    const allActiveErrors = [
+        datasetError,
+        projectError,
+        previewError,
+        generationError,
+        ...validationErrors
+    ].filter(Boolean);
 
     return (
         <div className="min-h-screen bg-zinc-950 text-white overflow-auto">
@@ -219,59 +225,20 @@ const EditorPage = () => {
                         isGenerating={isGenerating}
                         isPreviewLoading={isPreviewLoading}
                         onPreview={handlePreview}
-                        onSaveProject={handleOpenSaveModal}
+                        onSaveProject={handleSaveClick}
                         onLogout={handleLogout}
                     />
 
                     {/* Вывод ошибок в UI */}
 
-                    {datasetError && (
-                        <div className="px-4 pt-4">
-                            <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200">
-                                {datasetError}
-                            </div>
-                        </div>
-                    )}
-
-                    {previewError && (
-                        <div className="px-4 pt-4">
-                            <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200">
-                                {previewError}
-                            </div>
-                        </div>
-                    )}
-
-                    {validationErrors.length > 0 && (
-                        <div className="px-4 pt-4">
-                            <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-4">
-                                <p className="mb-2 text-sm font-semibold text-red-300">
-                                    Исправьте ошибки перед генерацией
-                                </p>
-
-                                <ul className="list-disc space-y-1 pl-5 text-sm text-red-200">
-                                    {validationErrors.map((error, index) => (
-                                        <li key={index}>{error}</li>
-                                    ))}
-                                </ul>
-                            </div>
-                        </div>
-                    )}
-
-                    {generationError && (
-                        <div className="px-4 pt-4">
-                            <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200">
-                                {generationError}
-                            </div>
-                        </div>
-                    )}
-
-                    {projectError && (
-                        <div className="px-4 pt-4">
-                            <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200">
-                                {projectError}
-                            </div>
-                        </div>
-                    )}
+                    <div className="fixed bottom-6 right-6 z-[9999] flex flex-col gap-3 w-full max-w-[360px] pointer-events-none">
+                        {allActiveErrors.map((error) => (
+                            <ErrorNotification
+                                key={error}
+                                message={error}
+                            />
+                        ))}
+                    </div>
 
                     {isSaveModalOpen && (
                         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6">
