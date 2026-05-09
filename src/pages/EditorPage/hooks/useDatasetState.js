@@ -6,7 +6,7 @@ import {deleteDataset, uploadDataset} from "../../../api/datasetsApi.js";
 export const DATASET_DRAFT_STORAGE_KEY = 'streamlit-editor-dataset-draft';
 
 // Определение начальных значений состояний датасета из LocalStorage (либо null)
-const loadDraftDatasetMeta = () => {
+const loadDatasetInfoFromDraft = () => {
     try {
         const saved = localStorage.getItem(DATASET_DRAFT_STORAGE_KEY);
 
@@ -16,7 +16,7 @@ const loadDraftDatasetMeta = () => {
 
         const parsed = JSON.parse(saved);
 
-        return parsed?.datasetMeta || null;
+        return parsed?.dataset || null;
     } catch (error) {
         console.error('Ошибка восстановления dataset draft:', error);
         return null;
@@ -24,19 +24,19 @@ const loadDraftDatasetMeta = () => {
 };
 
 export const useDatasetState = ({ useDraftStorage = true }) => {
-    const [datasetMeta, setDatasetMeta] = useState(() => {
+    const [dataset, setDataset] = useState(() => {
         if (!useDraftStorage) {
             return null;
         }
 
-        return loadDraftDatasetMeta();
+        return loadDatasetInfoFromDraft();
     });
 
     const [datasetError, setDatasetError] = useState('');
     const [isDatasetUploading, setIsDatasetUploading] = useState(false);
     const [isDatasetClearing, setIsDatasetClearing] = useState(false);
 
-    const availableFields = datasetMeta?.fields || [];
+    const availableFields = dataset?.fields || [];
 
     // Сохраняем datasetMeta в localStorage только для /editor
     useEffect(() => {
@@ -45,7 +45,7 @@ export const useDatasetState = ({ useDraftStorage = true }) => {
         }
 
         try {
-            if (!datasetMeta) {
+            if (!dataset) {
                 localStorage.removeItem(DATASET_DRAFT_STORAGE_KEY);
                 return;
             }
@@ -53,13 +53,13 @@ export const useDatasetState = ({ useDraftStorage = true }) => {
             localStorage.setItem(
                 DATASET_DRAFT_STORAGE_KEY,
                 JSON.stringify({
-                    datasetMeta,
+                    dataset: dataset,
                 })
             );
         } catch (error) {
             console.error('Ошибка сохранения dataset draft:', error);
         }
-    }, [datasetMeta, useDraftStorage]);
+    }, [dataset, useDraftStorage]);
 
     // Обработчик загрузки датасета
     const handleFileUpload = async (event) => {
@@ -76,9 +76,9 @@ export const useDatasetState = ({ useDraftStorage = true }) => {
         try {
             setIsDatasetUploading(true);
 
-            // Получение мета данных датасета с сервера (в том числе названия столбцов)
-            const meta = await uploadDataset(file);
-            setDatasetMeta(meta);
+            // Получение данных датасета с сервера (в том числе названия столбцов)
+            const datasetInfo = await uploadDataset(file);
+            setDataset(datasetInfo);
 
             event.target.value = '';
         } catch (error) {
@@ -91,8 +91,8 @@ export const useDatasetState = ({ useDraftStorage = true }) => {
 
     // Удаление загруженного датасета
     const clearDataset = async () => {
-        if (!datasetMeta?.datasetId) {
-            setDatasetMeta(null);
+        if (!dataset?.datasetId) {
+            setDataset(null);
 
             if (useDraftStorage) {
                 localStorage.removeItem(DATASET_DRAFT_STORAGE_KEY);
@@ -104,9 +104,9 @@ export const useDatasetState = ({ useDraftStorage = true }) => {
         try {
             setIsDatasetClearing(true);
 
-            await deleteDataset(datasetMeta.datasetId)
+            await deleteDataset(dataset.datasetId)
 
-            setDatasetMeta(null);
+            setDataset(null);
             setDatasetError('');
 
             if (useDraftStorage) {
@@ -121,8 +121,8 @@ export const useDatasetState = ({ useDraftStorage = true }) => {
     };
 
     return {
-        datasetMeta,
-        setDatasetMeta,
+        dataset,
+        setDataset,
         availableFields,
         datasetError,
         isDatasetUploading,

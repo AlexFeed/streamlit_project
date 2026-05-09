@@ -83,7 +83,7 @@ const EditorHeader = ({
                     onClick={onClearCanvas}
                     className="rounded-xl text-sm border border-red-500/40 bg-red-500/10 px-4 py-2 font-medium text-red-300 transition hover:bg-red-500/20"
                 >
-                    Очистить холст
+                    Clear
                 </button>
 
                 <button

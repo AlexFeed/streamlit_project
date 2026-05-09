@@ -14,6 +14,7 @@ import { authFetch } from './apiClient.js';
 //   previewUrl: string
 // }
 export const createPreview = async ({ schema, datasetId }) => {
+    console.log(schema)
     const response = await authFetch('/preview/', {
         method: 'POST',
         headers: {
