@@ -1,18 +1,15 @@
 import { useEffect, useState } from 'react';
 
 import { getProject, createProject, updateProject } from '../../../api/projectsApi.js';
-import { buildDashboardSchema, validateSchema } from '../services/editorSchema.js';
+import {compileDashboardSchema} from '../services/editorSchema.js';
 import { EDITOR_DRAFT_STORAGE_KEY } from './useEditorState.js';
 import { DATASET_DRAFT_STORAGE_KEY } from './useDatasetState.js';
 
 // Hook отвечает за загрузку и сохранение проекта.
 export const useProjectState = ({
                                     projectId,
-                                    components,
-                                    availableFields,
-                                    datasetMeta,
                                     setComponents,
-                                    setDatasetMeta,
+                                    setDataset,
                                     setValidationErrors,
                                 }) => {
     const [isProjectLoading, setIsProjectLoading] = useState(false);
@@ -36,7 +33,7 @@ export const useProjectState = ({
 
                 setProject(fetchedProject);
                 setComponents(fetchedProject.editorState?.components || []);
-                setDatasetMeta(fetchedProject.datasetMeta || null);
+                setDataset(fetchedProject.dataset || null);
             } catch (error) {
                 console.error('Ошибка загрузки проекта:', error);
                 setProjectError('Не удалось загрузить проект.');
@@ -46,30 +43,12 @@ export const useProjectState = ({
         };
 
         loadProject();
-    }, [projectId, setComponents, setDatasetMeta]);
+    }, [projectId, setComponents, setDataset]);
 
-    // Вспомогательная функция для сборки данных для отправки
-    const buildProjectData = (projectTitle, projectDescription) => {
-        const schema = buildDashboardSchema(
-            components,
-            availableFields,
-            datasetMeta,
-            projectTitle
-        );
-
-        return {
-            title: projectTitle,
-            description: projectDescription,
-            datasetMeta,
-            editorState: { components },
-            schema,
-        };
-    };
 
     // Операция 1: Создание проекта из черновика (с модалкой)
-    const createProjectFromDraft = async ({ title, description }) => {
-        const errors = validateSchema(components, availableFields, datasetMeta);
-
+    const createProjectFromDraft = async (snapshot) => {
+        const { schema, errors } = compileDashboardSchema(snapshot);
         if (errors.length > 0) {
             setValidationErrors(errors);
             return null;
@@ -78,14 +57,19 @@ export const useProjectState = ({
         setValidationErrors([]);
         setProjectError('');
 
-        const payload = buildProjectData(title, description);
+        const payload = {
+            title: snapshot.title,
+            description: snapshot.description,
+            dataset: snapshot.dataset,
+            editorState: { components: snapshot.components },
+            schema,
+        };
 
         try {
             setIsProjectSaving(true);
-
             const savedProject = await createProject(payload);
 
-            // Очищаем черновики только при успешном создании
+            // Удаляем данные черновика после успешного создания проекта
             localStorage.removeItem(EDITOR_DRAFT_STORAGE_KEY);
             localStorage.removeItem(DATASET_DRAFT_STORAGE_KEY);
 
@@ -101,11 +85,10 @@ export const useProjectState = ({
     };
 
     // Операция 2: Тихое сохранение существующего проекта
-    const saveExistingProject = async () => {
+    const saveExistingProject = async (snapshot) => {
         if (!projectId || !project) return null;
 
-        const errors = validateSchema(components, availableFields, datasetMeta);
-
+        const { schema, errors } = compileDashboardSchema(snapshot);
         if (errors.length > 0) {
             setValidationErrors(errors);
             return null;
@@ -114,14 +97,17 @@ export const useProjectState = ({
         setValidationErrors([]);
         setProjectError('');
 
-        // Используем уже существующие title и description
-        const payload = buildProjectData(project.title, project.description);
+        const payload = {
+            title: snapshot.title,
+            description: snapshot.description,
+            dataset: snapshot.dataset,
+            editorState: { components: snapshot.components },
+            schema,
+        };
 
         try {
             setIsProjectSaving(true);
-
             const updatedProject = await updateProject(projectId, payload);
-
             setProject(updatedProject);
             return updatedProject;
         } catch (error) {

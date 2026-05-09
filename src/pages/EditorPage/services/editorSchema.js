@@ -1,12 +1,14 @@
 // Файл с созданием итоговой Json схемы для отправки на сервер
 
-export const buildDashboardSchema = (
-    components,
-    availableFields = [],
-    datasetMeta = null,
-    dashboardTitle = 'Untitled dashboard'
-) => {
-    // Тестовая версия схемы с разделением на фильтры и графики, для более удобного рендера в backend
+export const buildDashboardSchema = (snapshot) => {
+    // Извлекаем все нужные данные из единого слепка состояния
+    const {
+        components = [],
+        availableFields = [],
+        dataset = null,
+        title = 'Untitled dashboard'
+    } = snapshot;
+
     const filters = [];
     const views = [];
 
@@ -24,39 +26,30 @@ export const buildDashboardSchema = (
                 field: component.bindings?.field || '',
                 scope: 'global',
             });
-
-            return;
         }
-
-        if (component.type === 'line_chart') {
+        else if (component.type === 'line_chart') {
             views.push({
                 ...base,
                 title: component.config?.title || 'Линейный график',
                 x: component.bindings?.xField || '',
                 y: component.bindings?.yField || '',
             });
-
-            return;
         }
-
-        if (component.type === 'bar_chart') {
+        else if (component.type === 'bar_chart') {
             views.push({
                 ...base,
                 title: component.config?.title || 'Столбчатый график',
                 x: component.bindings?.xField || '',
                 y: component.bindings?.yField || '',
             });
-
-            return;
         }
-
-        if (component.type === 'metric') {
+        else if (component.type === 'metric') {
             views.push({
                 ...base,
                 title: component.config?.title || 'Метрика',
                 description: component.config?.description || '',
                 field: component.bindings?.valueField || '',
-                aggregation: 'sum',
+                aggregation: 'sum', // Задел на будущее для выбора агрегации
             });
         }
     });
@@ -64,12 +57,12 @@ export const buildDashboardSchema = (
     return {
         version: 1,
         dashboard: {
-            title: dashboardTitle
+            title: title || 'Untitled dashboard' // Используем заголовок из слепка
         },
         dataSource: {
             type: 'backend_dataset',
-            datasetId: datasetMeta?.datasetId || null,
-            name: datasetMeta?.name || 'data.csv',
+            datasetId: dataset?.datasetId || null,
+            name: dataset?.name || 'data.csv',
             fields: availableFields,
         },
         filters,
@@ -78,14 +71,15 @@ export const buildDashboardSchema = (
 };
 
 // Проверка JSON-схемы на правильность
-export const validateSchema = (components, availableFields = [], datasetMeta = null,) => {
+export const validateSchema = (snapshot) => {
+    const { components = [], availableFields = [], dataset = null } = snapshot;
     const errors = [];
 
     if (!components.length) {
         errors.push('Холст пуст. Добавьте хотя бы один компонент.');
     }
 
-    if (!datasetMeta?.datasetId) {
+    if (!dataset?.datasetId) {
         errors.push('Не загружен CSV-файл.');
     }
 
@@ -94,7 +88,7 @@ export const validateSchema = (components, availableFields = [], datasetMeta = n
 
     // Проверка заполненности полей и свойств каждого компонента
     components.forEach((component, index) => {
-        const name = component.config?.title  || component.type || `component-${index + 1}`;
+        const name = component.config?.title || component.type || `component-${index + 1}`;
 
         if (component.type === 'selectbox') {
             const field = component.bindings?.field;
@@ -104,8 +98,7 @@ export const validateSchema = (components, availableFields = [], datasetMeta = n
                 errors.push(`Компонент "${name}": поле "${field}" отсутствует в текущем датасете.`);
             }
         }
-
-        if (component.type === 'line_chart' || component.type === 'bar_chart') {
+        else if (component.type === 'line_chart' || component.type === 'bar_chart') {
             const xField = component.bindings?.xField;
             const yField = component.bindings?.yField;
 
@@ -121,8 +114,7 @@ export const validateSchema = (components, availableFields = [], datasetMeta = n
                 errors.push(`Компонент "${name}": поле Y "${yField}" отсутствует в текущем датасете.`);
             }
         }
-
-        if (component.type === 'metric') {
+        else if (component.type === 'metric') {
             const valueField = component.bindings?.valueField;
 
             if (!valueField) {
@@ -134,4 +126,20 @@ export const validateSchema = (components, availableFields = [], datasetMeta = n
     });
 
     return errors;
+};
+
+// Объединяет проверку и создание схемы дашборда
+export const compileDashboardSchema = (snapshot) => {
+    const errors = validateSchema(snapshot);
+
+    // Если есть ошибки, возвращаем их и пустую схему
+    if (errors.length > 0) {
+        return { schema: null, errors };
+    }
+
+    // Если ошибок нет, компилируем схему
+    return {
+        schema: buildDashboardSchema(snapshot),
+        errors: [],
+    };
 };

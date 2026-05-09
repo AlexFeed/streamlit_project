@@ -11,21 +11,97 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { usePreviewState } from './hooks/usePreviewState';
 import { useEditorState } from './hooks/useEditorState';
 import {useDatasetState} from './hooks/useDatasetState';
-import {
-    buildDashboardSchema,
-    validateSchema,
-} from './services/editorSchema';
 
 import { useState } from 'react';
 import { logout } from '../../api/authApi.js';
 import { useProjectState } from './hooks/useProjectState.js';
-import { generateProjectZip } from '../../api/generateApi.js';
 import ErrorNotification from "./components/common/ErrorNotification.jsx";
+import {useGenerateState} from "./hooks/useGenerateState.jsx";
 
 const EditorPage = () => {
     // Получение из адресной строки параметров конкретного проекта
     const { projectId } = useParams();
     const navigate = useNavigate();
+
+    // Черновик это или уже сохранённый проект (Для управления localStorage)
+    const isDraftMode = !(projectId);
+
+    // Управление состоянием ошибок JSON-схемы
+    const [validationErrors, setValidationErrors] = useState([]);
+
+
+    // Получения данных связанных с компонентами
+    const {
+        components,
+        setComponents,
+        selectedId,
+        selectedComponent,
+        addComponent,
+        selectComponent,
+        updateComponent,
+        deleteComponent,
+        deleteSelectedComponent,
+        clearCanvas,
+    } = useEditorState({ useDraftStorage: isDraftMode });
+
+    // Получение данных связанных с датасетом
+    const {
+        dataset,
+        setDataset,
+        availableFields,
+        datasetError,
+        isDatasetUploading,
+        isDatasetClearing,
+        handleFileUpload,
+        clearDataset,
+    } = useDatasetState({ useDraftStorage: isDraftMode });
+
+    // Получение данных, связанных с загрузкой проекта
+    const {
+        isProjectLoading,
+        isProjectSaving,
+        projectError,
+        project,
+        createProjectFromDraft,
+        saveExistingProject,
+    } = useProjectState({
+        projectId,
+        setComponents,
+        setDataset,
+        setValidationErrors,
+    });
+
+    // Получение данных связанных с preview дашборда
+    const {
+        previewUrl,
+        isPreviewLoading,
+        previewError,
+        isPreviewOpen,
+        handlePreview,
+        closePreview
+    } = usePreviewState({ setValidationErrors });
+
+    // Получения данных, связанных с генерацией streamlit кода
+    const {
+        isGenerating,
+        generationError,
+        handleGenerate
+    } = useGenerateState({ setValidationErrors });
+
+    // ЕДИНЫЙ ДИСПЕТЧЕР ДАННЫХ (Snapshot)
+    const getProjectSnapshot = (overrideTitle, overrideDescription) => ({
+        title: overrideTitle ?? project?.title ?? 'Untitled dashboard',
+        description: overrideDescription ?? project?.description ?? '',
+        components,
+        availableFields,
+        dataset
+    });
+
+
+    const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
+    const [saveTitle, setSaveTitle] = useState('');
+    const [saveDescription, setSaveDescription] = useState('');
+    const [saveMetadataError, setSaveMetadataError] = useState('');
 
     const handleLogout = () => {
         const confirmed = window.confirm(
@@ -41,96 +117,17 @@ const EditorPage = () => {
         navigate('/auth', { replace: true });
     };
 
-    // Черновик это или уже сохранённый проект (Для управления localStorage)
-    const isDraftMode = !(projectId);
-
-    // Управление состоянием ошибок JSON-схемы
-    const [validationErrors, setValidationErrors] = useState([]);
-
-    // Состояние генерации кода
-    const [isGenerating, setIsGenerating] = useState(false);
-    const [generationError, setGenerationError] = useState('');
-
-    // Получения данных связанных с компонентами
-    const {
-        components,
-        setComponents,
-        selectedId,
-        selectedComponent,
-        addComponent,
-        selectComponent,
-        updateComponent,
-        deleteComponent,
-        deleteSelectedComponent,
-        clearCanvas,
-    } = useEditorState({
-        useDraftStorage: isDraftMode,
-    });
-
-    // Получение данных связанных с датасетом
-    const {
-        datasetMeta,
-        setDatasetMeta,
-        availableFields,
-        datasetError,
-        isDatasetUploading,
-        isDatasetClearing,
-        handleFileUpload,
-        clearDataset,
-    } = useDatasetState({
-        useDraftStorage: isDraftMode,
-    });
-
-    // Получение данных, связанных с загрузкой проекта
-    const {
-        isProjectLoading,
-        isProjectSaving,
-        projectError,
-        project,
-        createProjectFromDraft,
-        saveExistingProject,
-    } = useProjectState({
-        projectId,
-        components,
-        availableFields,
-        datasetMeta,
-        setComponents,
-        setDatasetMeta,
-        setValidationErrors,
-    });
-
-    // Получение данных связанных с preview дашборда
-    const {
-        previewUrl,
-        isPreviewLoading,
-        previewError,
-        isPreviewOpen,
-        handlePreview,
-        closePreview,
-    } = usePreviewState({
-        components,
-        availableFields,
-        datasetMeta,
-        projectTitle: project?.title,
-        setValidationErrors,
-    });
-
-
-    const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
-    const [saveTitle, setSaveTitle] = useState('');
-    const [saveDescription, setSaveDescription] = useState('');
-    const [saveMetadataError, setSaveMetadataError] = useState('');
-
     // Вызывается при клике на кнопку "Save" в хедере редактора
     const handleSaveClick = async () => {
         if (isDraftMode) {
-            // Строго чистые поля для нового проекта
+            // Если черновик открываем модалку для сохранения
             setSaveMetadataError('');
             setSaveTitle('');
             setSaveDescription('');
             setIsSaveModalOpen(true);
         } else {
-            await saveExistingProject();
+            const snapshot = getProjectSnapshot();
+            await saveExistingProject(snapshot);
         }
     };
 
@@ -141,14 +138,12 @@ const EditorPage = () => {
             return;
         }
 
-        const saved = await createProjectFromDraft({
-            title: saveTitle.trim(),
-            description: saveDescription.trim(),
-        });
+        // Передаем данные модалки в snapshot
+        const snapshot = getProjectSnapshot(saveTitle.trim(), saveDescription.trim());
+        const saved = await createProjectFromDraft(snapshot);
 
         if (saved) {
             setIsSaveModalOpen(false);
-            // Меняем URL на ID созданного проекта, оставаясь в редакторе
             navigate(`/editor/${saved.id}`, { replace: true });
         }
     };
@@ -158,46 +153,18 @@ const EditorPage = () => {
         setIsSaveModalOpen(false);
     };
 
-    // Вызывается при нажатии на кнопку "Generate"
-    const handleGenerateDashboard = async () => {
-        try {
-            const errors = validateSchema(components, availableFields, datasetMeta);
-
-            if (errors.length > 0) {
-                setValidationErrors(errors);
-                return;
-            }
-
-            setValidationErrors([]);
-            setGenerationError('');
-            setIsGenerating(true);
-
-            const schema = buildDashboardSchema(components, availableFields, datasetMeta, project?.title );
-            console.log(schema)
-
-            // Получение с сервера zip сгенерированного проекта
-            const blob = await generateProjectZip(
-                {
-                    schema,
-                    datasetId: datasetMeta.datasetId
-                })
-
-            // Скачивание zip пользователем
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = 'dashboard_project.zip';
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            URL.revokeObjectURL(url);
-        } catch (error) {
-            console.error('Ошибка генерации дашборда:', error);
-            setGenerationError(error.message || 'Не удалось сгенерировать Streamlit-файл.');
-        } finally {
-            setIsGenerating(false);
-        }
+    // Обработчик для кнопки Генерации (использует Snapshot)
+    const onGenerateClick = async () => {
+        const snapshot = getProjectSnapshot();
+        await handleGenerate(snapshot);
     };
+
+    // Обработчик для кнопки Preview (использует Snapshot)
+    const onPreviewClick = async () => {
+        const snapshot = getProjectSnapshot();
+        await handlePreview(snapshot);
+    };
+
 
     // Все ошибки
     const allActiveErrors = [
@@ -216,15 +183,15 @@ const EditorPage = () => {
                 <div className="flex flex-col">
                     <EditorHeader
                         onClearCanvas={clearCanvas}
-                        onGenerateDashboard={handleGenerateDashboard}
+                        onGenerateDashboard={onGenerateClick}
                         onFileUpload={handleFileUpload}
-                        datasetMeta={datasetMeta}
+                        datasetMeta={dataset}
                         onClearDataset={clearDataset}
                         isDatasetUploading={isDatasetUploading}
                         isDatasetClearing={isDatasetClearing}
                         isGenerating={isGenerating}
                         isPreviewLoading={isPreviewLoading}
-                        onPreview={handlePreview}
+                        onPreview={onPreviewClick}
                         onSaveProject={handleSaveClick}
                         onLogout={handleLogout}
                     />
