@@ -326,8 +326,9 @@
   justify-content: space-between;
   gap: 24px;
   padding: 12px 32px;
-  min-height: 90px;
+  min-height: 60px;
   box-sizing: border-box;
+  width: 100%;
 }
 
 /* Поиск слева */
@@ -335,8 +336,6 @@
   flex: 1;
   max-width: 448px;
   position: relative;
-  margin-top: 30px;
-  margin-left: 30px;
 }
 
 .sp-search-icon {
@@ -380,7 +379,6 @@
   gap: 16px;
   flex-shrink: 0;
   justify-content: flex-end;
-  margin-bottom: 10px;
 }
 
 /* Переключатель вида (сетка/список) */
@@ -752,8 +750,13 @@
 
 /* ==================== ПУСТОЕ СОСТОЯНИЕ ==================== */
 .sp-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
   text-align: center;
-  padding: 80px 20px;
+  padding: 20px;
   position: relative;
   z-index: 1;
 }
@@ -763,9 +766,9 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-size: 160px;
+  font-size: 200px;
   font-weight: 900;
-  background: linear-gradient(135deg, rgba(249, 115, 22, 0.06), rgba(139, 92, 246, 0.03));
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.15), rgba(139, 92, 246, 0.1));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -773,9 +776,10 @@
   user-select: none;
   white-space: nowrap;
   z-index: 0;
-  overflow: visible; /* Ключевое свойство - разрешает выступать за пределы */
+  overflow: visible;
   display: block;
   width: auto;
+  line-height: 1;
 }
 
 .sp-empty-icon-wrapper {
