@@ -17,7 +17,7 @@ import {logoutAndClearLocalData} from "./authStorage.js";
 //   token_type: "bearer"
 // }
 export const register = async ({ email, password }) => {
-    const response = await fetch(`${API_BASE_URL}/register`, {
+    const response = await fetch(`${API_BASE_URL}/auth/register`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -34,30 +34,26 @@ export const register = async ({ email, password }) => {
     return login({ email, password });
 };
 
-// Login пользователя через OAuth2PasswordRequestForm
+// Login пользователя
 //
 // Request:
-// form-urlencoded:
-// username=<email>
-// password=<password>
+// {
+//   email: string,
+//   password: string
+// }
 //
 // Response:
 // {
-//   access_token: string,
-//   token_type: "bearer"
+//   user: { id, email },
+//   accessToken: string
 // }
 export const login = async ({ email, password }) => {
-    const formData = new URLSearchParams();
-
-    formData.append('username', email);
-    formData.append('password', password);
-
-    const response = await fetch(`${API_BASE_URL}/token`, {
+    const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
+            'Content-Type': 'application/json',
         },
-        body: formData,
+        body: JSON.stringify({ email, password }),
     });
 
     if (!response.ok) {
@@ -82,7 +78,7 @@ export const login = async ({ email, password }) => {
 //   disabled: boolean
 // }
 export const getMe = async () => {
-    const response = await authFetch('/me');
+    const response = await authFetch('/auth/me');
 
     if (!response.ok) {
         const error = await response.json().catch(() => null);
