@@ -54,6 +54,19 @@ export const getDataset = async (datasetId) => {
 // {
 //   deleted: true
 // }
+export const getDatasetPreview = async (datasetId, limit = 500) => {
+    const response = await authFetch(
+        `/datasets/${datasetId}/preview?limit=${limit}`
+    );
+
+    if (!response.ok) {
+        const error = await response.json().catch(() => null);
+        throw new Error(error?.detail || 'Dataset preview loading failed');
+    }
+
+    return response.json();
+};
+
 export const deleteDataset = async (datasetId) => {
     const response = await authFetch(`/datasets/${datasetId}`, {
         method: 'DELETE',

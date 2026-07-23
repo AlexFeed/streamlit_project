@@ -1,5 +1,9 @@
 import { useEffect, useState } from 'react';
-import {deleteDataset, uploadDataset} from "../../../api/datasetsApi.js";
+import {
+    deleteDataset,
+    getDatasetPreview,
+    uploadDataset,
+} from "../../../api/datasetsApi.js";
 
 // Hook отвечает за управление состоянием с датасетом
 
@@ -35,8 +39,58 @@ export const useDatasetState = ({ useDraftStorage = true }) => {
     const [datasetError, setDatasetError] = useState('');
     const [isDatasetUploading, setIsDatasetUploading] = useState(false);
     const [isDatasetClearing, setIsDatasetClearing] = useState(false);
+    const [isDatasetPreviewLoading, setIsDatasetPreviewLoading] = useState(false);
+    const [previewRows, setPreviewRows] = useState(
+        () => dataset?.sampleRows || []
+    );
 
     const availableFields = dataset?.fields || [];
+    const fieldTypes = dataset?.fieldTypes || {};
+
+    useEffect(() => {
+        if (!dataset?.datasetId) {
+            return undefined;
+        }
+
+        let isCancelled = false;
+
+        const loadPreviewRows = async () => {
+            try {
+                setIsDatasetPreviewLoading(true);
+                const preview = await getDatasetPreview(dataset.datasetId);
+
+                if (!isCancelled) {
+                    setPreviewRows(preview.rows || []);
+                    setDataset((current) => {
+                        if (current?.datasetId !== preview.datasetId) {
+                            return current;
+                        }
+
+                        return {
+                            ...current,
+                            fields: preview.fields || current.fields,
+                            fieldTypes: preview.fieldTypes || current.fieldTypes,
+                        };
+                    });
+                }
+            } catch (error) {
+                if (!isCancelled) {
+                    console.error('Ошибка загрузки данных для Canvas:', error);
+                    setPreviewRows(dataset.sampleRows || []);
+                }
+            } finally {
+                if (!isCancelled) {
+                    setIsDatasetPreviewLoading(false);
+                }
+            }
+        };
+
+        loadPreviewRows();
+
+        return () => {
+            isCancelled = true;
+        };
+    }, [dataset?.datasetId, dataset?.sampleRows]);
 
     // Сохраняем datasetMeta в localStorage только для /editor
     useEffect(() => {
@@ -79,6 +133,7 @@ export const useDatasetState = ({ useDraftStorage = true }) => {
             // Получение данных датасета с сервера (в том числе названия столбцов)
             const datasetInfo = await uploadDataset(file);
             setDataset(datasetInfo);
+            setPreviewRows(datasetInfo.sampleRows || []);
 
             event.target.value = '';
         } catch (error) {
@@ -93,6 +148,7 @@ export const useDatasetState = ({ useDraftStorage = true }) => {
     const clearDataset = async () => {
         if (!dataset?.datasetId) {
             setDataset(null);
+            setPreviewRows([]);
 
             if (useDraftStorage) {
                 localStorage.removeItem(DATASET_DRAFT_STORAGE_KEY);
@@ -107,6 +163,7 @@ export const useDatasetState = ({ useDraftStorage = true }) => {
             await deleteDataset(dataset.datasetId)
 
             setDataset(null);
+            setPreviewRows([]);
             setDatasetError('');
 
             if (useDraftStorage) {
@@ -124,9 +181,12 @@ export const useDatasetState = ({ useDraftStorage = true }) => {
         dataset,
         setDataset,
         availableFields,
+        fieldTypes,
+        previewRows: dataset?.datasetId ? previewRows : [],
         datasetError,
         isDatasetUploading,
         isDatasetClearing,
+        isDatasetPreviewLoading,
 
         handleFileUpload,
         clearDataset,

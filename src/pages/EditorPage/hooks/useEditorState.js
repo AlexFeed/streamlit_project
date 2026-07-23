@@ -1,9 +1,25 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+    gridUnitsToContentHeight,
+    normalizeComponentLayouts,
+    normalizeGridWidth,
+} from '../services/gridLayout.js';
 
 // Hook отвечает за управление состоянием локальных компонентов дашборда, их загрузка в LocalStorage
 
 // Ключ хранения состояния в localStorage
 export const EDITOR_DRAFT_STORAGE_KEY = 'streamlit-editor-draft';
+
+const defaultHeightByType = {
+    selectbox: 120,
+    line_chart: 320,
+    bar_chart: 320,
+    area_chart: 320,
+    scatter_plot: 320,
+    metric: 140,
+};
+
+const normalizeComponents = normalizeComponentLayouts;
 
 const loadDraftComponents = () => {
     try {
@@ -19,7 +35,7 @@ const loadDraftComponents = () => {
             return [];
         }
 
-        return parsed;
+        return normalizeComponents(parsed);
     } catch (error) {
         console.error('Ошибка чтения черновика editor из localStorage:', error);
         return [];
@@ -29,10 +45,16 @@ const loadDraftComponents = () => {
 // Создание компоненты для холста
 const createComponentFromPaletteItem = (paletteItem, index) => {
     return {
-        id: `${paletteItem.type}-${Date.now()}-${index}`,
+        id: `${paletteItem.type}-${globalThis.crypto?.randomUUID?.() || `${Date.now()}-${index}`}`,
         type: paletteItem.type,
         config: { ...paletteItem.defaultConfig },
         bindings: { ...paletteItem.defaultBindings },
+        layout: {
+            width: paletteItem.defaultWidth || 6,
+            height: paletteItem.defaultHeight
+                || defaultHeightByType[paletteItem.type]
+                || 320,
+        },
     };
 };
 
@@ -49,6 +71,11 @@ export const useEditorState = ({ useDraftStorage = true }) => {
 
     // Управление состоянием выбранного элемента на холсте
     const [selectedId, setSelectedId] = useState(null);
+
+    const replaceComponents = useCallback((nextComponents) => {
+        setComponents(normalizeComponents(nextComponents));
+        setSelectedId(null);
+    }, []);
 
     // При изменении components сохраняем draft (только для /editor)
     useEffect(() => {
@@ -73,14 +100,121 @@ export const useEditorState = ({ useDraftStorage = true }) => {
 
 
     // Добавление компонента на холст
-    const addComponent = (paletteItem) => {
+    const addComponent = (paletteItem, targetIndex) => {
         const newComponent = createComponentFromPaletteItem(
             paletteItem,
             components.length + 1
         );
 
-        setComponents((prev) => [...prev, newComponent]);
+        setComponents((prev) => {
+            const insertIndex = Number.isInteger(targetIndex)
+                ? Math.max(0, Math.min(targetIndex, prev.length))
+                : prev.length;
+
+            return normalizeComponents([
+                ...prev.slice(0, insertIndex),
+                newComponent,
+                ...prev.slice(insertIndex),
+            ]);
+        });
         setSelectedId(newComponent.id);
+    };
+
+    const reorderComponent = (activeId, overId) => {
+        if (!activeId || !overId || activeId === overId) return;
+
+        setComponents((prev) => {
+            const fromIndex = prev.findIndex((item) => item.id === activeId);
+            const toIndex = prev.findIndex((item) => item.id === overId);
+
+            if (fromIndex < 0 || toIndex < 0) return prev;
+
+            const next = [...prev];
+            const [moved] = next.splice(fromIndex, 1);
+            next.splice(toIndex, 0, moved);
+            return next;
+        });
+    };
+
+    const duplicateComponent = (id) => {
+        const source = components.find((item) => item.id === id);
+        if (!source) return;
+
+        const duplicate = {
+            ...source,
+            id: `${source.type}-${globalThis.crypto?.randomUUID?.() || Date.now()}`,
+            config: { ...source.config },
+            bindings: { ...source.bindings },
+            layout: { ...source.layout },
+        };
+        delete duplicate.layout.x;
+        delete duplicate.layout.y;
+
+        setComponents((prev) => {
+            const sourceIndex = prev.findIndex((item) => item.id === id);
+            if (sourceIndex < 0) return prev;
+
+            return normalizeComponents([
+                ...prev.slice(0, sourceIndex + 1),
+                duplicate,
+                ...prev.slice(sourceIndex + 1),
+            ]);
+        });
+        setSelectedId(duplicate.id);
+    };
+
+    const setComponentWidth = (id, width) => {
+        updateComponent(id, (component) => ({
+            ...component,
+            layout: {
+                ...component.layout,
+                width: normalizeGridWidth(width, component.type),
+            },
+        }));
+    };
+
+    const setComponentSize = (id, size) => {
+        const width = Math.max(
+            2,
+            Math.min(12, Math.round(Number(size?.width) || 6))
+        );
+        const height = Math.max(
+            120,
+            Math.min(720, Math.round(Number(size?.height) || 320))
+        );
+
+        updateComponent(id, (component) => ({
+            ...component,
+            layout: {
+                ...component.layout,
+                width,
+                height,
+            },
+        }));
+    };
+
+    const setDashboardLayout = (gridLayout) => {
+        if (!Array.isArray(gridLayout)) return;
+
+        const layoutById = new Map(
+            gridLayout.map((item) => [item.i, item])
+        );
+
+        setComponents((prev) => prev.map((component) => {
+            const item = layoutById.get(component.id);
+            if (!item) return component;
+
+            return {
+                ...component,
+                layout: {
+                    ...component.layout,
+                    x: Math.max(0, Math.round(item.x)),
+                    y: Math.max(0, Math.round(item.y)),
+                    width: normalizeGridWidth(item.w, component.type),
+                    height: gridUnitsToContentHeight(item.h, component.type),
+                },
+            };
+        }));
     };
 
     // Выбор текущего компонента на холсте
@@ -124,10 +258,15 @@ export const useEditorState = ({ useDraftStorage = true }) => {
 
     return {
         components,
-        setComponents,
+        setComponents: replaceComponents,
         selectedId,
         selectedComponent,
         addComponent,
+        reorderComponent,
+        duplicateComponent,
+        setComponentWidth,
+        setComponentSize,
+        setDashboardLayout,
         selectComponent,
         updateComponent,
         deleteComponent,

@@ -1,3 +1,9 @@
+import { Trash2, X } from 'lucide-react';
+import {
+    chartPalettes,
+    getPaletteColors,
+} from '../data/chartPalettes.js';
+
 // Стили
 const inputClassName =
     'w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2.5 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20';
@@ -6,8 +12,6 @@ const selectClassName =
     'w-full appearance-none rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2.5 text-sm text-white outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20';
 
 const labelClassName = 'mb-1.5 block text-sm font-medium text-zinc-200';
-
-const helperClassName = 'mt-1 text-xs text-zinc-500';
 
 const panelSectionClassName = 'rounded-xl border border-zinc-800 bg-zinc-950/50 p-3';
 
@@ -18,7 +22,6 @@ const FieldSelect = ({
                          onChange,
                          options = [],
                          placeholder = 'Выберите значение',
-                         helperText,
                      }) => {
     const isDisabled = !options.length;
 
@@ -37,11 +40,17 @@ const FieldSelect = ({
                         {isDisabled ? 'Нет доступных полей' : placeholder}
                     </option>
 
-                    {options.map((field) => (
-                        <option key={field} value={field}>
-                            {field}
+                    {options.map((field) => {
+                        const option = typeof field === 'string'
+                            ? { value: field, label: field }
+                            : field;
+
+                        return (
+                        <option key={option.value} value={option.value}>
+                            {option.label}
                         </option>
-                    ))}
+                        );
+                    })}
                 </select>
 
                 <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-zinc-500">
@@ -59,8 +68,6 @@ const FieldSelect = ({
                     </svg>
                 </div>
             </div>
-
-            {helperText && <p className={helperClassName}>{helperText}</p>}
         </div>
     );
 };
@@ -72,7 +79,6 @@ const TextField = ({
                        value,
                        onChange,
                        placeholder,
-                       helperText,
                    }) => {
     return (
         <div className={panelSectionClassName}>
@@ -84,8 +90,191 @@ const TextField = ({
                 className={inputClassName}
                 placeholder={placeholder}
             />
-            {helperText && <p className={helperClassName}>{helperText}</p>}
         </div>
+    );
+};
+
+const OptionSelect = ({
+                          label,
+                          value,
+                          onChange,
+                          options,
+                      }) => (
+    <div className={panelSectionClassName}>
+        <label className={labelClassName}>{label}</label>
+        <select
+            value={value || ''}
+            onChange={(event) => onChange(event.target.value)}
+            className={selectClassName}
+        >
+            {options.map((option) => (
+                <option key={option.value} value={option.value}>
+                    {option.label}
+                </option>
+            ))}
+        </select>
+    </div>
+);
+
+const chartTypes = ['line_chart', 'bar_chart', 'area_chart', 'scatter_plot'];
+
+const aggregationOptions = [
+    { value: 'none', label: 'Без агрегации' },
+    { value: 'sum', label: 'Сумма' },
+    { value: 'mean', label: 'Среднее' },
+    { value: 'count', label: 'Количество' },
+    { value: 'min', label: 'Минимум' },
+    { value: 'max', label: 'Максимум' },
+];
+
+const sortOptions = [
+    { value: 'none', label: 'Не сортировать' },
+    { value: 'asc', label: 'По возрастанию' },
+    { value: 'desc', label: 'По убыванию' },
+];
+
+const sortByOptions = [
+    { value: 'x', label: 'По значениям X' },
+    { value: 'y', label: 'По значениям Y' },
+];
+
+const colorPresets = [
+    '#3b82f6',
+    '#8b5cf6',
+    '#ec4899',
+    '#ef4444',
+    '#f59e0b',
+    '#10b981',
+    '#06b6d4',
+];
+
+const ColorStyleField = ({
+                             type,
+                             config,
+                             onUpdate,
+                         }) => {
+    const supportsPaletteModes = ['bar_chart', 'scatter_plot'].includes(type);
+    const colorMode = supportsPaletteModes
+        ? config.colorMode || 'solid'
+        : 'solid';
+    const paletteColors = getPaletteColors(
+        config.palette,
+        config.reversePalette
+    );
+    const modeOptions = [
+        { value: 'solid', label: 'Один цвет' },
+        { value: 'gradient', label: 'По значению' },
+        { value: 'categorical', label: 'Категории X' },
+    ];
+
+    return (
+    <div className={panelSectionClassName}>
+        <div className="mb-3">
+            <label className="text-sm font-medium text-zinc-200">Цветовая схема</label>
+        </div>
+
+        <div className={`mb-4 grid gap-1 rounded-xl bg-zinc-900 p-1 ${
+            supportsPaletteModes ? 'grid-cols-3' : 'grid-cols-1'
+        }`}>
+            {modeOptions
+                .filter((option) => supportsPaletteModes || option.value === 'solid')
+                .map((option) => (
+                    <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => onUpdate('colorMode', option.value)}
+                        className={`rounded-lg px-2 py-2 text-xs font-medium transition ${
+                            colorMode === option.value
+                                ? 'bg-zinc-700 text-white shadow'
+                                : 'text-zinc-500 hover:text-zinc-200'
+                        }`}
+                    >
+                        {option.label}
+                    </button>
+                ))}
+        </div>
+
+        {colorMode === 'solid' ? (
+            <>
+                <div className="mb-3 flex items-center justify-between gap-3">
+                    <span className="text-xs text-zinc-500">Основной цвет</span>
+                    <div className="flex items-center gap-2">
+                        <input
+                            type="color"
+                            value={config.color || '#3b82f6'}
+                            onChange={(event) => onUpdate('color', event.target.value)}
+                            className="h-8 w-10 cursor-pointer rounded-lg border border-zinc-700 bg-transparent p-0.5"
+                            aria-label="Выбрать произвольный цвет"
+                        />
+                        <span className="font-mono text-xs uppercase text-zinc-400">
+                            {config.color || '#3b82f6'}
+                        </span>
+                    </div>
+                </div>
+                <div className="grid grid-cols-7 gap-2">
+                    {colorPresets.map((color) => (
+                        <button
+                            key={color}
+                            type="button"
+                            onClick={() => onUpdate('color', color)}
+                            className={`aspect-square rounded-lg border-2 transition hover:scale-110 ${
+                                config.color === color ? 'border-white' : 'border-transparent'
+                            }`}
+                            style={{ backgroundColor: color }}
+                            aria-label={`Выбрать цвет ${color}`}
+                            title={color}
+                        />
+                    ))}
+                </div>
+            </>
+        ) : (
+            <>
+                <div className="grid grid-cols-2 gap-2">
+                    {chartPalettes.map((palette) => {
+                        const colors = config.reversePalette
+                            ? [...palette.colors].reverse()
+                            : palette.colors;
+
+                        return (
+                            <button
+                                key={palette.id}
+                                type="button"
+                                onClick={() => onUpdate('palette', palette.id)}
+                                className={`rounded-xl border p-2 text-left transition ${
+                                    (config.palette || 'ocean') === palette.id
+                                        ? 'border-blue-400 bg-blue-500/10'
+                                        : 'border-zinc-800 bg-zinc-900 hover:border-zinc-700'
+                                }`}
+                            >
+                                <span
+                                    className="block h-7 rounded-lg"
+                                    style={{
+                                        background: `linear-gradient(90deg, ${colors.join(', ')})`,
+                                    }}
+                                />
+                                <span className="mt-1.5 block text-xs text-zinc-400">
+                                    {palette.name}
+                                </span>
+                            </button>
+                        );
+                    })}
+                </div>
+                <button
+                    type="button"
+                    onClick={() => onUpdate('reversePalette', !config.reversePalette)}
+                    className="mt-3 flex w-full items-center justify-between rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-2.5 text-xs text-zinc-300 transition hover:border-zinc-700"
+                >
+                    <span>Развернуть палитру</span>
+                    <span
+                        className="h-3 w-20 rounded-full"
+                        style={{
+                            background: `linear-gradient(90deg, ${paletteColors.join(', ')})`,
+                        }}
+                    />
+                </button>
+            </>
+        )}
+    </div>
     );
 };
 
@@ -93,22 +282,31 @@ const PropertiesPanel = ({
                              selectedComponent,
                              onUpdateComponent,
                              onDeleteSelected,
+                             onClose,
                              availableFields = [],
+                             fieldTypes = {},
                          }) => {
     if (!selectedComponent) {
-        return (
-            <aside className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
-                <div className="rounded-xl border border-dashed border-zinc-700 bg-zinc-950/40 p-4">
-                    <h2 className="mb-2 text-lg font-semibold text-white">Свойства</h2>
-                    <p className="text-sm leading-6 text-zinc-400">
-                        Выберите элемент на холсте, чтобы изменить его настройки и привязать поля данных.
-                    </p>
-                </div>
-            </aside>
-        );
+        return null;
     }
 
     const { type, config, bindings } = selectedComponent;
+    const fieldOptions = availableFields.map((field) => ({
+        value: field,
+        label: fieldTypes[field] ? `${field} · ${fieldTypes[field]}` : field,
+    }));
+    const numericFieldOptions = fieldOptions.filter(
+        (option) => fieldTypes[option.value] === 'number'
+    );
+    const valueFieldOptions = numericFieldOptions.length
+        ? numericFieldOptions
+        : fieldOptions;
+    const xFieldOptions = type === 'scatter_plot'
+        ? valueFieldOptions
+        : fieldOptions;
+    const aggregatedValueFieldOptions = config.aggregation === 'count'
+        ? fieldOptions
+        : valueFieldOptions;
 
     // Обновление значений конфига в схеме (название схемы)
     const updateConfig = (key, value) => {
@@ -133,26 +331,32 @@ const PropertiesPanel = ({
     };
 
     return (
-        <aside className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
-            <div className="mb-4 flex items-start justify-between gap-3">
+        <>
+        <button
+            type="button"
+            aria-label="Закрыть панель свойств"
+            onClick={onClose}
+            className="fixed inset-0 top-[65px] z-30 bg-transparent xl:hidden"
+        />
+        <aside className="fixed bottom-0 right-0 top-[65px] z-40 w-[360px] overflow-y-auto border-l border-zinc-800 bg-zinc-950 shadow-2xl shadow-black/60 xl:static xl:z-20 xl:h-full xl:w-auto xl:min-w-0 xl:shadow-none">
+            <div className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-zinc-800 bg-zinc-950/95 p-4 backdrop-blur-xl">
                 <div>
-                    <h2 className="text-lg font-semibold text-white">Свойства</h2>
-                    <p className="mt-1 text-sm text-zinc-400">
-                        Тип элемента:{' '}
-                        <span className="font-medium text-zinc-200">{type}</span>
-                    </p>
+                    <h2 className="text-base font-semibold text-white">
+                        {config.title || 'Без названия'}
+                    </h2>
                 </div>
 
                 <button
                     type="button"
-                    onClick={onDeleteSelected}
-                    className="rounded-xl border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm font-medium text-red-300 transition hover:bg-red-500/20"
+                    onClick={onClose}
+                    className="flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-2 text-xs font-medium text-zinc-300 transition hover:border-zinc-700 hover:text-white"
                 >
-                    Удалить
+                    <X className="h-3.5 w-3.5" />
+                    Закрыть
                 </button>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-3 p-4">
                 <TextField
                     label="Заголовок"
                     value={config.title || ''}
@@ -167,7 +371,7 @@ const PropertiesPanel = ({
                             label="Поле данных"
                             value={bindings.field || ''}
                             onChange={(value) => updateBinding('field', value)}
-                            options={availableFields}
+                            options={fieldOptions}
                             placeholder="Выберите поле"
                             helperText="Поле, по которому строится список значений"
                         />
@@ -182,13 +386,13 @@ const PropertiesPanel = ({
                     </>
                 )}
 
-                {(type === 'line_chart' || type === 'bar_chart') && (
+                {chartTypes.includes(type) && (
                     <>
                         <FieldSelect
                             label="Поле X"
                             value={bindings.xField || ''}
                             onChange={(value) => updateBinding('xField', value)}
-                            options={availableFields}
+                            options={xFieldOptions}
                             placeholder="Выберите поле X"
                             helperText="Горизонтальная ось графика"
                         />
@@ -197,9 +401,41 @@ const PropertiesPanel = ({
                             label="Поле Y"
                             value={bindings.yField || ''}
                             onChange={(value) => updateBinding('yField', value)}
-                            options={availableFields}
+                            options={aggregatedValueFieldOptions}
                             placeholder="Выберите поле Y"
                             helperText="Значения, отображаемые на графике"
+                        />
+
+                        <OptionSelect
+                            label="Агрегация"
+                            value={config.aggregation || 'none'}
+                            onChange={(value) => updateConfig('aggregation', value)}
+                            options={aggregationOptions}
+                            helperText="Как объединять несколько значений для одной точки X"
+                        />
+
+                        <OptionSelect
+                            label="Сортировка"
+                            value={config.sort || 'none'}
+                            onChange={(value) => updateConfig('sort', value)}
+                            options={sortOptions}
+                            helperText="Направление сортировки"
+                        />
+
+                        {config.sort !== 'none' && (
+                            <OptionSelect
+                                label="Сортировать"
+                                value={config.sortBy || 'x'}
+                                onChange={(value) => updateConfig('sortBy', value)}
+                                options={sortByOptions}
+                                helperText="X — порядок категорий или дат, Y — рейтинг по величине"
+                            />
+                        )}
+
+                        <ColorStyleField
+                            type={type}
+                            config={config}
+                            onUpdate={updateConfig}
                         />
                     </>
                 )}
@@ -210,7 +446,7 @@ const PropertiesPanel = ({
                             label="Поле значения"
                             value={bindings.valueField || ''}
                             onChange={(value) => updateBinding('valueField', value)}
-                            options={availableFields}
+                            options={aggregatedValueFieldOptions}
                             placeholder="Выберите поле"
                             helperText="Поле, из которого берётся значение метрики"
                         />
@@ -222,10 +458,30 @@ const PropertiesPanel = ({
                             placeholder="Например: Общая выручка"
                             helperText="Краткое пояснение для пользователя"
                         />
+
+                        <OptionSelect
+                            label="Агрегация"
+                            value={config.aggregation || 'sum'}
+                            onChange={(value) => updateConfig('aggregation', value)}
+                            options={aggregationOptions.filter((option) => option.value !== 'none')}
+                            helperText="Способ вычисления итогового значения"
+                        />
                     </>
                 )}
             </div>
+
+            <div className="sticky bottom-0 border-t border-zinc-800 bg-zinc-950/95 p-4 backdrop-blur-xl">
+                <button
+                    type="button"
+                    onClick={onDeleteSelected}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-2.5 text-xs font-medium text-red-300 transition hover:bg-red-500/10"
+                >
+                    <Trash2 className="h-4 w-4" />
+                    Удалить компонент
+                </button>
+            </div>
         </aside>
+        </>
     );
 };
 

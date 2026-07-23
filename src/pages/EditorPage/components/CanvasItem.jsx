@@ -1,82 +1,141 @@
-import { BarChart3, ChevronDownSquare, LineChart, Trash2, WalletCards } from 'lucide-react';
+import { lazy, Suspense } from 'react';
+import {
+    AreaChart,
+    BarChart3,
+    ChevronDownSquare,
+    Copy,
+    GripVertical,
+    LineChart,
+    ScatterChart,
+    Trash2,
+    WalletCards,
+    MoveDiagonal2,
+} from 'lucide-react';
+
+const LiveComponentPreview = lazy(
+    () => import('./LiveComponentPreview')
+);
 
 const iconByType = {
     selectbox: ChevronDownSquare,
     line_chart: LineChart,
     bar_chart: BarChart3,
+    area_chart: AreaChart,
+    scatter_plot: ScatterChart,
     metric: WalletCards,
 };
 
-const CanvasItem = ({ item, isSelected, onSelect, onDelete }) => {
+const labelByType = {
+    selectbox: 'Фильтр',
+    line_chart: 'Линейный',
+    bar_chart: 'Столбчатый',
+    area_chart: 'Область',
+    scatter_plot: 'Точечный',
+    metric: 'Метрика',
+};
+
+const CanvasItem = ({
+                        item,
+                        isSelected,
+                        onSelect,
+                        onDelete,
+                        onDuplicate,
+                        rows,
+                        filterValue,
+                        onFilterChange,
+                        onDragPointerDown,
+                        onResizePointerDown,
+                        isInteracting,
+                    }) => {
     const Icon = iconByType[item.type] || WalletCards;
 
     return (
-        <div
+        <article
+            data-canvas-item
             onClick={() => onSelect(item.id)}
-            className={`group cursor-pointer rounded-2xl border p-4 transition ${
+            className={`group relative flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border transition-colors ${
                 isSelected
-                    ? 'border-blue-500 bg-blue-500/10 shadow-[0_0_0_1px_rgba(59,130,246,0.35)]'
-                    : 'border-zinc-800 bg-zinc-900 hover:border-zinc-700 hover:bg-zinc-800'
-            }`}
+                    ? 'border-blue-500 bg-zinc-900 shadow-[0_0_0_1px_rgba(59,130,246,0.3),0_20px_50px_rgba(0,0,0,0.22)]'
+                    : 'border-zinc-800 bg-zinc-900/95 hover:border-zinc-700'
+            } ${isInteracting ? 'select-none ring-2 ring-blue-500/60' : ''}`}
         >
-            <div className="mb-3 flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3">
-                    <div className="rounded-xl bg-zinc-800 p-2">
-                        <Icon className="h-5 w-5 text-zinc-200" />
+            <header
+                className="canvas-drag-handle flex shrink-0 touch-none cursor-grab items-center justify-between gap-3 border-b border-zinc-800/80 px-4 py-3 active:cursor-grabbing"
+                onPointerDown={onDragPointerDown}
+                title="Зажмите и перетащите карточку"
+            >
+                <div className="flex min-w-0 items-center gap-3">
+                    <div className="rounded-xl border border-zinc-700/80 bg-zinc-800 p-2">
+                        <Icon className="h-4 w-4 text-blue-300" />
                     </div>
-
-                    <div>
-                        <h3 className="font-medium text-white">
-                            {item.config?.title || item.type}
-                        </h3>
-                        <p className="text-xs uppercase tracking-wide text-zinc-400">
-                            {item.type}
-                        </p>
-                    </div>
+                    <h3 className="truncate text-sm font-semibold text-white">
+                        {item.config?.title || labelByType[item.type]}
+                    </h3>
                 </div>
 
-                <button
-                    type="button"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onDelete(item.id);
-                    }}
-                    className="rounded-lg p-2 text-zinc-500 transition hover:bg-red-500/10 hover:text-red-400"
+                <div className={`flex shrink-0 items-center gap-0.5 transition-opacity ${
+                    isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                }`}>
+                    <button
+                        type="button"
+                        title="Дублировать"
+                        onPointerDown={(event) => event.stopPropagation()}
+                        onClick={(event) => {
+                            event.stopPropagation();
+                            onDuplicate(item.id);
+                        }}
+                        className="rounded-lg p-2 text-zinc-500 transition hover:bg-zinc-800 hover:text-white"
+                    >
+                        <Copy className="h-4 w-4" />
+                    </button>
+                    <button
+                        type="button"
+                        title="Удалить"
+                        onPointerDown={(event) => event.stopPropagation()}
+                        onClick={(event) => {
+                            event.stopPropagation();
+                            onDelete(item.id);
+                        }}
+                        className="rounded-lg p-2 text-zinc-500 transition hover:bg-red-500/10 hover:text-red-400"
+                    >
+                        <Trash2 className="h-4 w-4" />
+                    </button>
+                    <span
+                        title="Перетащить"
+                        className="rounded-lg p-2 text-zinc-500"
+                    >
+                        <GripVertical className="h-4 w-4" />
+                    </span>
+                </div>
+            </header>
+
+            <div className="min-h-0 flex-1 p-4">
+                <Suspense
+                    fallback={(
+                        <div className="h-full animate-pulse rounded-xl bg-zinc-800/60" />
+                    )}
                 >
-                    <Trash2 className="h-4 w-4" />
-                </button>
+                    <LiveComponentPreview
+                        item={item}
+                        height="100%"
+                        rows={rows}
+                        value={filterValue}
+                        onChange={onFilterChange}
+                    />
+                </Suspense>
             </div>
 
-            <div className="space-y-1 text-sm text-zinc-400">
-                {item.type === 'selectbox' && (
-                    <>
-                        <p>Поле: {item.bindings?.field || 'не выбрано'}</p>
-                        <p>Подсказка: {item.config?.placeholder || '—'}</p>
-                    </>
-                )}
-
-                {item.type === 'line_chart' && (
-                    <>
-                        <p>X: {item.bindings?.xField || 'не выбрано'}</p>
-                        <p>Y: {item.bindings?.yField || 'не выбрано'}</p>
-                    </>
-                )}
-
-                {item.type === 'bar_chart' && (
-                    <>
-                        <p>X: {item.bindings?.xField || 'не выбрано'}</p>
-                        <p>Y: {item.bindings?.yField || 'не выбрано'}</p>
-                    </>
-                )}
-
-                {item.type === 'metric' && (
-                    <>
-                        <p>Поле значения: {item.bindings?.valueField || 'не выбрано'}</p>
-                        <p>Описание: {item.config?.description || '—'}</p>
-                    </>
-                )}
-            </div>
-        </div>
+            <button
+                type="button"
+                aria-label="Изменить размер карточки"
+                title="Тяните, чтобы изменить ширину и высоту"
+                onClick={(event) => event.stopPropagation()}
+                onPointerDown={onResizePointerDown}
+                className="canvas-resize-handle absolute bottom-1 right-1 z-20 flex h-9 w-9 touch-none cursor-se-resize items-end justify-end rounded-xl p-2 text-blue-300 transition hover:bg-blue-500/15 hover:text-blue-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+            >
+                <MoveDiagonal2 className="h-4 w-4" />
+            </button>
+        </article>
     );
 };
 
