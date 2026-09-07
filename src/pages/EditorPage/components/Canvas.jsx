@@ -54,6 +54,7 @@ const Canvas = ({
     });
     const [filterValues, setFilterValues] = useState({});
     const gridRef = useRef(null);
+    const gridResizeObserverRef = useRef(null);
     const interactionRef = useRef(null);
     const suppressSelectionRef = useRef(null);
     const [gridWidth, setGridWidth] = useState(0);
@@ -74,9 +75,11 @@ const Canvas = ({
         [components]
     );
 
-    useEffect(() => {
-        const node = gridRef.current;
-        if (!node) return undefined;
+    const setGridNode = useCallback((node) => {
+        gridResizeObserverRef.current?.disconnect();
+        gridResizeObserverRef.current = null;
+        gridRef.current = node;
+        if (!node) return;
 
         const measure = () => {
             setGridWidth(node.getBoundingClientRect().width);
@@ -85,8 +88,7 @@ const Canvas = ({
 
         const observer = new ResizeObserver(measure);
         observer.observe(node);
-
-        return () => observer.disconnect();
+        gridResizeObserverRef.current = observer;
     }, []);
 
     const beginInteraction = useCallback((event, id, mode) => {
@@ -218,6 +220,8 @@ const Canvas = ({
     }, [gridLayout, gridWidth, onLayoutChange]);
 
     useEffect(() => () => {
+        gridResizeObserverRef.current?.disconnect();
+        gridResizeObserverRef.current = null;
         interactionRef.current?.cancel?.();
         interactionRef.current = null;
     }, []);
@@ -308,7 +312,7 @@ const Canvas = ({
                 </div>
             ) : (
                 <div
-                    ref={gridRef}
+                    ref={setGridNode}
                     className="dashboard-layout-grid relative w-full"
                     style={{ height: gridHeight }}
                 >
