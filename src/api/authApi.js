@@ -34,26 +34,30 @@ export const register = async ({ email, password }) => {
     return login({ email, password });
 };
 
-// Login пользователя
+// Login пользователя через OAuth2PasswordRequestForm
 //
 // Request:
-// {
-//   email: string,
-//   password: string
-// }
+// form-urlencoded:
+// username=<email>
+// password=<password>
 //
 // Response:
 // {
-//   user: { id, email },
-//   accessToken: string
+//   access_token: string,
+//   token_type: "bearer"
 // }
 export const login = async ({ email, password }) => {
-    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+    const formData = new URLSearchParams();
+
+    formData.append('username', email);
+    formData.append('password', password);
+
+    const response = await fetch(`${API_BASE_URL}/auth/token`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: JSON.stringify({ email, password }),
+        body: formData,
     });
 
     if (!response.ok) {
