@@ -10,6 +10,8 @@ export const paletteItems = [
         defaultBindings: {
             field: '',
         },
+        defaultWidth: 4,
+        defaultHeight: 120,
     },
     {
         type: 'line_chart',
@@ -17,11 +19,20 @@ export const paletteItems = [
         description: 'Отображение изменения показателя во времени',
         defaultConfig: {
             title: 'Линейный график',
+            aggregation: 'sum',
+            sort: 'asc',
+            sortBy: 'x',
+            color: '#60a5fa',
+            colorMode: 'solid',
+            palette: 'ocean',
+            reversePalette: false,
         },
         defaultBindings: {
             xField: '',
             yField: '',
         },
+        defaultWidth: 6,
+        defaultHeight: 320,
     },
     {
         type: 'bar_chart',
@@ -29,11 +40,62 @@ export const paletteItems = [
         description: 'Сравнение значений между категориями',
         defaultConfig: {
             title: 'Столбчатый график',
+            aggregation: 'sum',
+            sort: 'desc',
+            sortBy: 'y',
+            color: '#3b82f6',
+            colorMode: 'gradient',
+            palette: 'ocean',
+            reversePalette: true,
         },
         defaultBindings: {
             xField: '',
             yField: '',
         },
+        defaultWidth: 6,
+        defaultHeight: 320,
+    },
+    {
+        type: 'area_chart',
+        label: 'График с областями',
+        description: 'Отображение динамики и объёма показателя во времени',
+        defaultConfig: {
+            title: 'График с областями',
+            aggregation: 'sum',
+            sort: 'asc',
+            sortBy: 'x',
+            color: '#818cf8',
+            colorMode: 'solid',
+            palette: 'berry',
+            reversePalette: false,
+        },
+        defaultBindings: {
+            xField: '',
+            yField: '',
+        },
+        defaultWidth: 6,
+        defaultHeight: 320,
+    },
+    {
+        type: 'scatter_plot',
+        label: 'Точечный график',
+        description: 'Поиск зависимости между двумя числовыми показателями',
+        defaultConfig: {
+            title: 'Точечный график',
+            aggregation: 'none',
+            sort: 'none',
+            sortBy: 'x',
+            color: '#38bdf8',
+            colorMode: 'gradient',
+            palette: 'ocean',
+            reversePalette: false,
+        },
+        defaultBindings: {
+            xField: '',
+            yField: '',
+        },
+        defaultWidth: 6,
+        defaultHeight: 320,
     },
     {
         type: 'metric',
@@ -42,9 +104,12 @@ export const paletteItems = [
         defaultConfig: {
             title: 'Метрика',
             description: '',
+            aggregation: 'sum',
         },
         defaultBindings: {
             valueField: '',
         },
+        defaultWidth: 3,
+        defaultHeight: 140,
     },
 ];

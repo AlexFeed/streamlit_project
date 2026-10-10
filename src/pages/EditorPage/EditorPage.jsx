@@ -3,12 +3,20 @@ import ComponentPalette from './components/ComponentsPalette';
 import Canvas from './components/Canvas';
 import PropertiesPanel from './components/PropertiesPanel';
 import EditorHeader from './components/EditorHeader';
-import PreviewModal from './components/PreviewModal';
 import { useParams, useNavigate } from 'react-router-dom';
+import {
+    closestCenter,
+    DndContext,
+    DragOverlay,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+} from '@dnd-kit/core';
+import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 
 
 // State hooks
-import { usePreviewState } from './hooks/usePreviewState';
 import { useEditorState } from './hooks/useEditorState';
 import {useDatasetState} from './hooks/useDatasetState';
 
@@ -37,6 +45,10 @@ const EditorPage = () => {
         selectedId,
         selectedComponent,
         addComponent,
+        reorderComponent,
+        duplicateComponent,
+        setComponentSize,
+        setDashboardLayout,
         selectComponent,
         updateComponent,
         deleteComponent,
@@ -44,14 +56,59 @@ const EditorPage = () => {
         clearCanvas,
     } = useEditorState({ useDraftStorage: isDraftMode });
 
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 6,
+            },
+        }),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
+
+    const [activeDrag, setActiveDrag] = useState(null);
+
+    const handleDragStart = ({ active }) => {
+        setActiveDrag(active.data.current || null);
+    };
+
+    const handleDragCancel = () => {
+        setActiveDrag(null);
+    };
+
+    const handleDragEnd = ({ active, over }) => {
+        setActiveDrag(null);
+        if (!over) return;
+
+        const dragData = active.data.current;
+
+        if (dragData?.source === 'palette') {
+            const overIndex = components.findIndex((item) => item.id === over.id);
+            const targetIndex = overIndex >= 0 ? overIndex : components.length;
+            addComponent(dragData.paletteItem, targetIndex);
+            return;
+        }
+
+        if (
+            dragData?.source === 'canvas-item'
+            && over.id !== 'dashboard-canvas'
+        ) {
+            reorderComponent(active.id, over.id);
+        }
+    };
+
     // Получение данных связанных с датасетом
     const {
         dataset,
         setDataset,
         availableFields,
+        fieldTypes,
+        previewRows,
         datasetError,
         isDatasetUploading,
         isDatasetClearing,
+        isDatasetPreviewLoading,
         handleFileUpload,
         clearDataset,
     } = useDatasetState({ useDraftStorage: isDraftMode });
@@ -71,16 +128,6 @@ const EditorPage = () => {
         setValidationErrors,
     });
 
-    // Получение данных связанных с preview дашборда
-    const {
-        previewUrl,
-        isPreviewLoading,
-        previewError,
-        isPreviewOpen,
-        handlePreview,
-        closePreview
-    } = usePreviewState({ setValidationErrors });
-
     // Получения данных, связанных с генерацией streamlit кода
     const {
         isGenerating,
@@ -88,13 +135,21 @@ const EditorPage = () => {
         handleGenerate
     } = useGenerateState({ setValidationErrors });
 
+    const getDatasetMetadata = () => {
+        if (!dataset) return null;
+
+        const metadata = { ...dataset };
+        delete metadata.sampleRows;
+        return metadata;
+    };
+
     // ЕДИНЫЙ ДИСПЕТЧЕР ДАННЫХ (Snapshot)
     const getProjectSnapshot = (overrideTitle, overrideDescription) => ({
         title: overrideTitle ?? project?.title ?? 'Untitled dashboard',
         description: overrideDescription ?? project?.description ?? '',
         components,
         availableFields,
-        dataset
+        dataset: getDatasetMetadata()
     });
 
 
@@ -159,28 +214,27 @@ const EditorPage = () => {
         await handleGenerate(snapshot);
     };
 
-    // Обработчик для кнопки Preview (использует Snapshot)
-    const onPreviewClick = async () => {
-        const snapshot = getProjectSnapshot();
-        await handlePreview(snapshot);
-    };
-
-
     // Все ошибки
     const allActiveErrors = [
         datasetError,
         projectError,
-        previewError,
         generationError,
         ...validationErrors
     ].filter(Boolean);
 
     return (
-        <div className="min-h-screen bg-zinc-950 text-white overflow-auto">
-            <div className="grid grid-cols-[260px_minmax(0,1fr)]">
+        <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragStart={handleDragStart}
+            onDragCancel={handleDragCancel}
+            onDragEnd={handleDragEnd}
+        >
+        <div className="h-screen overflow-hidden bg-zinc-950 text-white">
+            <div className="grid h-full grid-cols-[252px_minmax(0,1fr)]">
                 <ComponentPalette onAddComponent={addComponent} />
 
-                <div className="flex flex-col">
+                <div className="flex min-h-0 min-w-0 flex-col overflow-hidden">
                     <EditorHeader
                         onClearCanvas={clearCanvas}
                         onGenerateDashboard={onGenerateClick}
@@ -190,8 +244,6 @@ const EditorPage = () => {
                         isDatasetUploading={isDatasetUploading}
                         isDatasetClearing={isDatasetClearing}
                         isGenerating={isGenerating}
-                        isPreviewLoading={isPreviewLoading}
-                        onPreview={onPreviewClick}
                         onSaveProject={handleSaveClick}
                         onLogout={handleLogout}
                     />
@@ -288,29 +340,52 @@ const EditorPage = () => {
                         </div>
                     )}
 
-                    <div className="grid gap-4 p-4 2xl:grid-cols-[minmax(0,1fr)_320px]">
-                        <Canvas
-                            components={components}
-                            selectedId={selectedId}
-                            onSelect={selectComponent}
-                            onDelete={deleteComponent}
-                        />
+                    <div className={`grid min-h-0 min-w-0 flex-1 overflow-hidden ${
+                        selectedComponent
+                            ? 'xl:grid-cols-[minmax(0,1fr)_360px]'
+                            : 'grid-cols-1'
+                    }`}>
+                        <main className="min-h-0 min-w-0 overflow-y-auto p-4">
+                            <Canvas
+                                key={dataset?.datasetId || 'no-dataset'}
+                                components={components}
+                                selectedId={selectedId}
+                                onSelect={selectComponent}
+                                onDelete={deleteComponent}
+                                onDuplicate={duplicateComponent}
+                                onResize={setComponentSize}
+                                onLayoutChange={setDashboardLayout}
+                                isDragging={Boolean(activeDrag)}
+                                dataRows={previewRows}
+                                isDataLoading={isDatasetPreviewLoading}
+                            />
+                        </main>
 
                         <PropertiesPanel
                             selectedComponent={selectedComponent}
                             onUpdateComponent={updateComponent}
                             onDeleteSelected={deleteSelectedComponent}
+                            onClose={() => selectComponent(null)}
                             availableFields={availableFields}
+                            fieldTypes={fieldTypes}
                         />
                     </div>
                 </div>
             </div>
-            <PreviewModal
-                isOpen={isPreviewOpen}
-                previewUrl={previewUrl}
-                onClose={closePreview}
-            />
         </div>
+            <DragOverlay dropAnimation={null}>
+                {activeDrag && (
+                    <div className="w-64 rounded-xl border border-blue-500 bg-zinc-900 p-4 shadow-2xl shadow-black/50">
+                        <p className="text-sm font-medium text-white">
+                            {activeDrag.paletteItem?.label || 'Компонент дашборда'}
+                        </p>
+                        <p className="mt-1 text-xs text-zinc-400">
+                            Переместите в нужную позицию
+                        </p>
+                    </div>
+                )}
+            </DragOverlay>
+        </DndContext>
     );
 };
 

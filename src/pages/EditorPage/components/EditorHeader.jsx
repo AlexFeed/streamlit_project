@@ -1,3 +1,13 @@
+import {
+    Database,
+    Download,
+    LogOut,
+    Save,
+    Trash2,
+    Upload,
+    X,
+} from 'lucide-react';
+
 const EditorHeader = ({
                           onClearCanvas,
                           onGenerateDashboard,
@@ -7,94 +17,89 @@ const EditorHeader = ({
                           isDatasetUploading,
                           isDatasetClearing,
                           isGenerating,
-                          onPreview,
-                          isPreviewLoading,
                           onSaveProject,
-                          onLogout
+                          onLogout,
                       }) => {
     return (
-        <div className="flex items-center justify-between border-b border-zinc-800 bg-zinc-950 px-4 py-4">
-            <h1 className="text-sm font-semibold text-white my-3">Streamlit Constructor</h1>
+        <header className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-4 border-b border-zinc-800/80 bg-zinc-950/90 px-5 py-3 backdrop-blur-xl">
+            <div>
+                <div className="flex items-center gap-2">
+                    <h1 className="text-sm font-semibold text-white">Редактор дашборда</h1>
+                    <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-emerald-300">
+                        Live
+                    </span>
+                </div>
+            </div>
 
-            <div className="flex items-center gap-3">
-                <button className="cursor-pointer rounded-xl border border-orange-700 bg-orange-500/20 px-4 py-2 text-sm font-medium text-zinc-200 transition hover:bg-orange-500/30"
-                    type="button"
-                    onClick={onSaveProject}
-                >
-                    Save project
-                </button>
-                <button
-                    type="button"
-                    onClick={onPreview}
-                    disabled={isPreviewLoading}
-                    className={`rounded-xl px-4 py-2 text-sm font-medium transition ${
-                        isPreviewLoading
-                            ? 'cursor-not-allowed border border-purple-500/20 bg-purple-500/5 text-purple-200/60'
-                            : 'border border-purple-500/40 bg-purple-500/10 text-purple-300 hover:bg-purple-500/20'
-                    }`}
-                >
-                    {isPreviewLoading ? 'Preview...' : 'Preview'}
-                </button>
-
-
-                <label className="cursor-pointer rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2 text-sm font-medium text-zinc-200 transition hover:bg-zinc-800">
-                    {isDatasetUploading ? 'Uploading...' : 'Upload CSV'}
-                    <input
-                        type="file"
-                        accept=".csv"
-                        onChange={onFileUpload}
-                        className="hidden"
-                        disabled={isDatasetUploading}
-                    />
-                </label>
-
-                {datasetMeta && (
-                    <div className="flex items-center gap-2 rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-300">
+            <div className="flex flex-wrap items-center justify-end gap-2">
+                {datasetMeta ? (
+                    <div className="flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-200">
+                        <Database className="h-4 w-4" />
                         <span className="max-w-[180px] truncate">{datasetMeta.name}</span>
-
                         <button
                             type="button"
                             onClick={onClearDataset}
                             disabled={isDatasetClearing}
-                            className="text-zinc-500 transition hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="ml-1 rounded p-0.5 text-emerald-300/60 transition hover:bg-red-500/10 hover:text-red-300 disabled:opacity-40"
                             title="Удалить датасет"
                         >
-                            ×
+                            <X className="h-3.5 w-3.5" />
                         </button>
                     </div>
+                ) : (
+                    <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 px-3.5 py-2 text-xs font-medium text-zinc-200 transition hover:border-zinc-600 hover:bg-zinc-800">
+                        <Upload className="h-4 w-4" />
+                        {isDatasetUploading ? 'Загрузка…' : 'Загрузить CSV'}
+                        <input
+                            type="file"
+                            accept=".csv"
+                            onChange={onFileUpload}
+                            className="hidden"
+                            disabled={isDatasetUploading}
+                        />
+                    </label>
                 )}
 
+                <div className="mx-1 h-6 w-px bg-zinc-800" />
+
+                <button
+                    type="button"
+                    onClick={onSaveProject}
+                    className="flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 px-3.5 py-2 text-xs font-medium text-zinc-200 transition hover:border-zinc-600 hover:bg-zinc-800"
+                >
+                    <Save className="h-4 w-4" />
+                    Сохранить
+                </button>
 
                 <button
                     type="button"
                     onClick={onGenerateDashboard}
                     disabled={isGenerating}
-                    className={`rounded-xl px-4 py-2 text-sm font-medium transition ${
-                        isGenerating
-                            ? 'cursor-not-allowed border border-blue-500/20 bg-blue-500/5 text-blue-200/60'
-                            : 'border border-blue-500/40 bg-blue-500/10 text-blue-300 hover:bg-blue-500/20'
-                    }`}
+                    className="flex items-center gap-2 rounded-xl bg-blue-500 px-3.5 py-2 text-xs font-semibold text-white shadow-lg shadow-blue-950/30 transition hover:bg-blue-400 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                    {isGenerating ? 'Generating...' : 'Generate'}
+                    <Download className="h-4 w-4" />
+                    {isGenerating ? 'Генерация…' : 'Скачать Streamlit'}
                 </button>
 
                 <button
                     type="button"
                     onClick={onClearCanvas}
-                    className="rounded-xl text-sm border border-red-500/40 bg-red-500/10 px-4 py-2 font-medium text-red-300 transition hover:bg-red-500/20"
+                    className="rounded-xl p-2 text-zinc-500 transition hover:bg-red-500/10 hover:text-red-300"
+                    title="Очистить холст"
                 >
-                    Clear
+                    <Trash2 className="h-4 w-4" />
                 </button>
 
                 <button
                     type="button"
                     onClick={onLogout}
-                    className="rounded-xl text-sm border border-gray-500/40 bg-gray-500/10 px-4 py-2 font-medium text-gray-300 transition hover:bg-gray-500/20"
+                    className="rounded-xl p-2 text-zinc-500 transition hover:bg-zinc-800 hover:text-white"
+                    title="Выйти"
                 >
-                    Выйти
+                    <LogOut className="h-4 w-4" />
                 </button>
             </div>
-        </div>
+        </header>
     );
 };
 
