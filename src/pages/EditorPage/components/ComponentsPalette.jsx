@@ -76,7 +76,7 @@ const ComponentsPalette = ({ onAddComponent, onGoHome }) => (
                             {groupTitle}
                         </h2>
                         <div className="space-y-2">
-                            {paletteItems
+                            {Object.values(paletteItems)
                                 .filter((item) => item.group === groupTitle)
                                 .map((item) => (
                                     <PaletteItem

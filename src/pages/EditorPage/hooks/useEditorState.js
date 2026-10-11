@@ -4,7 +4,6 @@ import {
     normalizeComponentLayouts,
     normalizeGridWidth,
 } from '../services/gridLayout.js';
-import { getComponentMeta } from '../data/paletteItems.js';
 
 // Hook отвечает за управление состоянием локальных компонентов дашборда, их загрузка в LocalStorage
 
@@ -36,18 +35,14 @@ const loadDraftComponents = () => {
 
 // Создание компоненты для холста
 const createComponentFromPaletteItem = (paletteItem, index) => {
-    const meta = getComponentMeta(paletteItem.type);
-
     return {
         id: `${paletteItem.type}-${globalThis.crypto?.randomUUID?.() || `${Date.now()}-${index}`}`,
         type: paletteItem.type,
         config: { ...paletteItem.defaultConfig },
         bindings: { ...paletteItem.defaultBindings },
         layout: {
-            width: paletteItem.defaultWidth || meta?.defaultWidth || 6,
-            height: paletteItem.defaultHeight
-                || meta?.defaultHeight
-                || 320,
+            width: paletteItem.defaultWidth || 6,
+            height: paletteItem.defaultHeight || 320,
         },
     };
 };

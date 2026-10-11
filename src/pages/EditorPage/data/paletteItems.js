@@ -9,8 +9,8 @@ import {
 
 export const PALETTE_GROUPS = ['Данные', 'Графики'];
 
-export const paletteItems = [
-    {
+export const paletteItems = {
+    selectbox: {
         type: 'selectbox',
         label: 'Фильтр',
         group: 'Данные',
@@ -30,7 +30,7 @@ export const paletteItems = [
         defaultHeight: 120,
         minHeight: 120,
     },
-    {
+    line_chart: {
         type: 'line_chart',
         label: 'Линейный график',
         group: 'Графики',
@@ -57,7 +57,7 @@ export const paletteItems = [
         defaultHeight: 320,
         minHeight: 220,
     },
-    {
+    bar_chart: {
         type: 'bar_chart',
         label: 'Столбчатый график',
         group: 'Графики',
@@ -84,7 +84,7 @@ export const paletteItems = [
         defaultHeight: 320,
         minHeight: 220,
     },
-    {
+    area_chart: {
         type: 'area_chart',
         label: 'График с областями',
         group: 'Графики',
@@ -111,7 +111,7 @@ export const paletteItems = [
         defaultHeight: 320,
         minHeight: 220,
     },
-    {
+    scatter_plot: {
         type: 'scatter_plot',
         label: 'Точечный график',
         group: 'Графики',
@@ -138,7 +138,7 @@ export const paletteItems = [
         defaultHeight: 320,
         minHeight: 220,
     },
-    {
+    metric: {
         type: 'metric',
         label: 'Метрика',
         group: 'Данные',
@@ -159,11 +159,4 @@ export const paletteItems = [
         defaultHeight: 140,
         minHeight: 120,
     },
-];
-
-const COMPONENT_META_BY_TYPE = Object.fromEntries(
-    paletteItems.map((item) => [item.type, item])
-);
-
-// Функция для получения данных компонента по его типу
-export const getComponentMeta = (type) => COMPONENT_META_BY_TYPE[type] || null;
+};

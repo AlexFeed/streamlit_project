@@ -1,6 +1,6 @@
 // Файл с созданием итоговой Json схемы для отправки на сервер
 import { getPaletteColors } from '../data/chartPalettes.js';
-import { getComponentMeta } from '../data/paletteItems.js';
+import { paletteItems } from '../data/paletteItems.js';
 
 export const buildDashboardSchema = (snapshot) => {
     // Извлекаем все нужные данные из единого слепка состояния
@@ -15,7 +15,7 @@ export const buildDashboardSchema = (snapshot) => {
     const views = [];
 
     components.forEach((component, index) => {
-        const meta = getComponentMeta(component.type);
+        const meta = paletteItems[component.type];
         const base = {
             id: component.id,
             type: component.type,
@@ -106,7 +106,7 @@ export const validateSchema = (snapshot) => {
 
     // Проверка заполненности полей и свойств каждого компонента
     components.forEach((component, index) => {
-        const meta = getComponentMeta(component.type);
+        const meta = paletteItems[component.type];
         const name = component.config?.title || component.type || `component-${index + 1}`;
         const width = component.layout?.width;
         const height = component.layout?.height;
