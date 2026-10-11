@@ -1,4 +1,4 @@
-import { Trash2, X } from 'lucide-react';
+import { Trash2, X, Info} from 'lucide-react';
 import {
     chartPalettes,
     getPaletteColors,
@@ -15,6 +15,33 @@ const labelClassName = 'mb-1.5 block text-sm font-medium text-zinc-200';
 
 const panelSectionClassName = 'rounded-xl border border-zinc-800 bg-zinc-950/50 p-3';
 
+// Заголовок поля с иконкой-подсказкой (i) справа сверху
+const FieldLabel = ({ label, helperText }) => (
+    <div className="mb-1.5 flex items-center justify-between gap-2">
+        <label className="block text-sm font-medium text-zinc-200">
+            {label}
+        </label>
+
+        {helperText && (
+            <div className="group relative flex items-center">
+                <button
+                    type="button"
+                    aria-label="Подсказка"
+                    className="rounded-md p-0.5 text-zinc-500 transition hover:bg-zinc-800 hover:text-zinc-200 focus:bg-zinc-800 focus:text-blue-400 focus:outline-none"
+                >
+                    <Info className="h-3.5 w-3.5" />
+                </button>
+
+                <div
+                    role="tooltip"
+                    className="pointer-events-none invisible absolute right-full top-1/2 z-30 mr-1.5 w-max max-w-[200px] -translate-y-1/2 rounded-lg border border-zinc-700 bg-zinc-900/95 px-2 py-1 text-[10px] leading-tight text-zinc-300 opacity-0 shadow-lg shadow-black/60 backdrop-blur-md transition-all duration-150 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100"
+                >
+                    {helperText}
+                </div>
+            </div>
+        )}
+    </div>
+);
 // Поле выбора значения для компонента
 const FieldSelect = ({
                          label,
@@ -22,13 +49,12 @@ const FieldSelect = ({
                          onChange,
                          options = [],
                          placeholder = 'Выберите значение',
+                         helperText,
                      }) => {
     const isDisabled = !options.length;
-
     return (
         <div className={panelSectionClassName}>
-            <label className={labelClassName}>{label}</label>
-
+            <FieldLabel label={label} helperText={helperText} />
             <div className="relative">
                 <select
                     value={value || ''}
@@ -39,20 +65,17 @@ const FieldSelect = ({
                     <option value="" disabled className="text-zinc-500">
                         {isDisabled ? 'Нет доступных полей' : placeholder}
                     </option>
-
                     {options.map((field) => {
                         const option = typeof field === 'string'
                             ? { value: field, label: field }
                             : field;
-
                         return (
-                        <option key={option.value} value={option.value}>
-                            {option.label}
-                        </option>
+                            <option key={option.value} value={option.value}>
+                                {option.label}
+                            </option>
                         );
                     })}
                 </select>
-
                 <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-zinc-500">
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -79,10 +102,11 @@ const TextField = ({
                        value,
                        onChange,
                        placeholder,
+                       helperText,
                    }) => {
     return (
         <div className={panelSectionClassName}>
-            <label className={labelClassName}>{label}</label>
+            <FieldLabel label={label} helperText={helperText} />
             <input
                 type="text"
                 value={value || ''}
@@ -99,9 +123,10 @@ const OptionSelect = ({
                           value,
                           onChange,
                           options,
+                          helperText,
                       }) => (
     <div className={panelSectionClassName}>
-        <label className={labelClassName}>{label}</label>
+        <FieldLabel label={label} helperText={helperText} />
         <select
             value={value || ''}
             onChange={(event) => onChange(event.target.value)}

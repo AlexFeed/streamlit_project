@@ -348,7 +348,6 @@ const Canvas = ({
                                 onResizePointerDown={(event) => (
                                     beginInteraction(event, item.id, 'resize')
                                 )}
-                                isInteracting={false}
                             />
                         </div>
                         );

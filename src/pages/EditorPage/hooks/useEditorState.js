@@ -163,36 +163,6 @@ export const useEditorState = ({ useDraftStorage = true }) => {
         setSelectedId(duplicate.id);
     };
 
-    const setComponentWidth = (id, width) => {
-        updateComponent(id, (component) => ({
-            ...component,
-            layout: {
-                ...component.layout,
-                width: normalizeGridWidth(width, component.type),
-            },
-        }));
-    };
-
-    const setComponentSize = (id, size) => {
-        const width = Math.max(
-            2,
-            Math.min(12, Math.round(Number(size?.width) || 6))
-        );
-        const height = Math.max(
-            120,
-            Math.min(720, Math.round(Number(size?.height) || 320))
-        );
-
-        updateComponent(id, (component) => ({
-            ...component,
-            layout: {
-                ...component.layout,
-                width,
-                height,
-            },
-        }));
-    };
-
     const setDashboardLayout = (gridLayout) => {
         if (!Array.isArray(gridLayout)) return;
 
@@ -270,8 +240,6 @@ export const useEditorState = ({ useDraftStorage = true }) => {
         addComponent,
         reorderComponent,
         duplicateComponent,
-        setComponentWidth,
-        setComponentSize,
         setDashboardLayout,
         selectComponent,
         updateComponent,

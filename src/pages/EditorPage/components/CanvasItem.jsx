@@ -45,7 +45,6 @@ const CanvasItem = ({
                         onFilterChange,
                         onDragPointerDown,
                         onResizePointerDown,
-                        isInteracting,
                     }) => {
     const Icon = iconByType[item.type] || WalletCards;
 
@@ -57,7 +56,7 @@ const CanvasItem = ({
                 isSelected
                     ? 'border-blue-500 bg-zinc-900 shadow-[0_0_0_1px_rgba(59,130,246,0.3),0_20px_50px_rgba(0,0,0,0.22)]'
                     : 'border-zinc-800 bg-zinc-900/95 hover:border-zinc-700'
-            } ${isInteracting ? 'select-none ring-2 ring-blue-500/60' : ''}`}
+            }`}
         >
             <header
                 className="canvas-drag-handle flex shrink-0 touch-none cursor-grab items-center justify-between gap-3 border-b border-zinc-800/80 px-4 py-3 active:cursor-grabbing"

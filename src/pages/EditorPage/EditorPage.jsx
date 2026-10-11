@@ -46,7 +46,6 @@ const EditorPage = () => {
         addComponent,
         reorderComponent,
         duplicateComponent,
-        setComponentSize,
         setDashboardLayout,
         selectComponent,
         updateComponent,
@@ -350,7 +349,6 @@ const EditorPage = () => {
                                 onSelect={selectComponent}
                                 onDelete={deleteComponent}
                                 onDuplicate={duplicateComponent}
-                                onResize={setComponentSize}
                                 onLayoutChange={setDashboardLayout}
                                 isDragging={Boolean(activeDrag)}
                                 dataRows={previewRows}
