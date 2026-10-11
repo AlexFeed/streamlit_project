@@ -22,7 +22,6 @@ import {useDatasetState} from './hooks/useDatasetState';
 
 import { useState } from 'react';
 import { useProjectState } from './hooks/useProjectState.js';
-import ErrorNotification from "./components/common/ErrorNotification.jsx";
 import {useGenerateState} from "./hooks/useGenerateState.jsx";
 
 const EditorPage = () => {
@@ -32,10 +31,6 @@ const EditorPage = () => {
 
     // Черновик это или уже сохранённый проект (Для управления localStorage)
     const isDraftMode = !(projectId);
-
-    // Управление состоянием ошибок JSON-схемы
-    const [validationErrors, setValidationErrors] = useState([]);
-
 
     // Получения данных связанных с компонентами
     const {
@@ -53,6 +48,56 @@ const EditorPage = () => {
         deleteSelectedComponent,
         clearCanvas,
     } = useEditorState({ useDraftStorage: isDraftMode });
+
+    // Получение данных связанных с датасетом
+    const {
+        dataset,
+        setDataset,
+        availableFields,
+        fieldTypes,
+        previewRows,
+        isDatasetUploading,
+        isDatasetClearing,
+        isDatasetPreviewLoading,
+        handleFileUpload,
+        clearDataset,
+    } = useDatasetState({ useDraftStorage: isDraftMode });
+
+    // Получение данных, связанных с загрузкой проекта
+    const {
+        isProjectLoading,
+        isProjectSaving,
+        project,
+        createProjectFromDraft,
+        saveExistingProject,
+    } = useProjectState({
+        projectId,
+        setComponents,
+        setDataset,
+    });
+
+    // Получения данных, связанных с генерацией streamlit кода
+    const {
+        isGenerating,
+        handleGenerate
+    } = useGenerateState();
+
+    const getDatasetMetadata = () => {
+        if (!dataset) return null;
+
+        const metadata = { ...dataset };
+        delete metadata.sampleRows;
+        return metadata;
+    };
+
+    // ЕДИНЫЙ ДИСПЕТЧЕР ДАННЫХ (Snapshot)
+    const getProjectSnapshot = (overrideTitle, overrideDescription) => ({
+        title: overrideTitle ?? project?.title ?? 'Untitled dashboard',
+        description: overrideDescription ?? project?.description ?? '',
+        components,
+        availableFields,
+        dataset: getDatasetMetadata()
+    });
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -95,61 +140,6 @@ const EditorPage = () => {
             reorderComponent(active.id, over.id);
         }
     };
-
-    // Получение данных связанных с датасетом
-    const {
-        dataset,
-        setDataset,
-        availableFields,
-        fieldTypes,
-        previewRows,
-        datasetError,
-        isDatasetUploading,
-        isDatasetClearing,
-        isDatasetPreviewLoading,
-        handleFileUpload,
-        clearDataset,
-    } = useDatasetState({ useDraftStorage: isDraftMode });
-
-    // Получение данных, связанных с загрузкой проекта
-    const {
-        isProjectLoading,
-        isProjectSaving,
-        projectError,
-        project,
-        createProjectFromDraft,
-        saveExistingProject,
-    } = useProjectState({
-        projectId,
-        setComponents,
-        setDataset,
-        setValidationErrors,
-    });
-
-    // Получения данных, связанных с генерацией streamlit кода
-    const {
-        isGenerating,
-        generationError,
-        handleGenerate
-    } = useGenerateState({ setValidationErrors });
-
-    const getDatasetMetadata = () => {
-        if (!dataset) return null;
-
-        const metadata = { ...dataset };
-        delete metadata.sampleRows;
-        return metadata;
-    };
-
-    // ЕДИНЫЙ ДИСПЕТЧЕР ДАННЫХ (Snapshot)
-    const getProjectSnapshot = (overrideTitle, overrideDescription) => ({
-        title: overrideTitle ?? project?.title ?? 'Untitled dashboard',
-        description: overrideDescription ?? project?.description ?? '',
-        components,
-        availableFields,
-        dataset: getDatasetMetadata()
-    });
-
 
     const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
     const [saveTitle, setSaveTitle] = useState('');
@@ -210,14 +200,6 @@ const EditorPage = () => {
         await handleGenerate(snapshot);
     };
 
-    // Все ошибки
-    const allActiveErrors = [
-        datasetError,
-        projectError,
-        generationError,
-        ...validationErrors
-    ].filter(Boolean);
-
     return (
         <DndContext
             sensors={sensors}
@@ -243,17 +225,6 @@ const EditorPage = () => {
                         onSaveProject={handleSaveClick}
                         onGoHome={handleGoHome}
                     />
-
-                    {/* Вывод ошибок в UI */}
-
-                    <div className="fixed bottom-6 right-6 z-[9999] flex flex-col gap-3 w-full max-w-[360px] pointer-events-none">
-                        {allActiveErrors.map((error) => (
-                            <ErrorNotification
-                                key={error}
-                                message={error}
-                            />
-                        ))}
-                    </div>
 
                     {isSaveModalOpen && (
                         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6">

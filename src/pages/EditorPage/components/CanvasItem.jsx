@@ -1,38 +1,16 @@
 import { lazy, Suspense } from 'react';
 import {
-    AreaChart,
-    BarChart3,
-    ChevronDownSquare,
     Copy,
     GripVertical,
-    LineChart,
-    ScatterChart,
     Trash2,
     WalletCards,
     MoveDiagonal2,
 } from 'lucide-react';
+import { getComponentMeta } from '../data/paletteItems';
 
 const LiveComponentPreview = lazy(
     () => import('./LiveComponentPreview')
 );
-
-const iconByType = {
-    selectbox: ChevronDownSquare,
-    line_chart: LineChart,
-    bar_chart: BarChart3,
-    area_chart: AreaChart,
-    scatter_plot: ScatterChart,
-    metric: WalletCards,
-};
-
-const labelByType = {
-    selectbox: 'Фильтр',
-    line_chart: 'Линейный',
-    bar_chart: 'Столбчатый',
-    area_chart: 'Область',
-    scatter_plot: 'Точечный',
-    metric: 'Метрика',
-};
 
 const CanvasItem = ({
                         item,
@@ -46,7 +24,8 @@ const CanvasItem = ({
                         onDragPointerDown,
                         onResizePointerDown,
                     }) => {
-    const Icon = iconByType[item.type] || WalletCards;
+    const meta = getComponentMeta(item.type);
+    const Icon = meta?.icon || WalletCards;
 
     return (
         <article
@@ -68,7 +47,7 @@ const CanvasItem = ({
                         <Icon className="h-4 w-4 text-blue-300" />
                     </div>
                     <h3 className="truncate text-sm font-semibold text-white">
-                        {item.config?.title || labelByType[item.type]}
+                        {item.config?.title || meta?.label}
                     </h3>
                 </div>
 

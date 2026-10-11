@@ -3,6 +3,7 @@ import {
     chartPalettes,
     getPaletteColors,
 } from '../data/chartPalettes.js';
+import { getComponentMeta } from '../data/paletteItems.js';
 
 // Стили
 const inputClassName =
@@ -141,8 +142,6 @@ const OptionSelect = ({
     </div>
 );
 
-const chartTypes = ['line_chart', 'bar_chart', 'area_chart', 'scatter_plot'];
-
 const aggregationOptions = [
     { value: 'none', label: 'Без агрегации' },
     { value: 'sum', label: 'Сумма' },
@@ -178,7 +177,9 @@ const ColorStyleField = ({
                              config,
                              onUpdate,
                          }) => {
-    const supportsPaletteModes = ['bar_chart', 'scatter_plot'].includes(type);
+    const supportsPaletteModes = Boolean(
+        getComponentMeta(type)?.supportsPaletteModes
+    );
     const colorMode = supportsPaletteModes
         ? config.colorMode || 'solid'
         : 'solid';
@@ -411,7 +412,7 @@ const PropertiesPanel = ({
                     </>
                 )}
 
-                {chartTypes.includes(type) && (
+                {getComponentMeta(type)?.isChart && (
                     <>
                         <FieldSelect
                             label="Поле X"

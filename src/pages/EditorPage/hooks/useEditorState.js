@@ -4,20 +4,12 @@ import {
     normalizeComponentLayouts,
     normalizeGridWidth,
 } from '../services/gridLayout.js';
+import { getComponentMeta } from '../data/paletteItems.js';
 
 // Hook отвечает за управление состоянием локальных компонентов дашборда, их загрузка в LocalStorage
 
 // Ключ хранения состояния в localStorage
 export const EDITOR_DRAFT_STORAGE_KEY = 'streamlit-editor-draft';
-
-const defaultHeightByType = {
-    selectbox: 120,
-    line_chart: 320,
-    bar_chart: 320,
-    area_chart: 320,
-    scatter_plot: 320,
-    metric: 140,
-};
 
 const normalizeComponents = normalizeComponentLayouts;
 
@@ -44,15 +36,17 @@ const loadDraftComponents = () => {
 
 // Создание компоненты для холста
 const createComponentFromPaletteItem = (paletteItem, index) => {
+    const meta = getComponentMeta(paletteItem.type);
+
     return {
         id: `${paletteItem.type}-${globalThis.crypto?.randomUUID?.() || `${Date.now()}-${index}`}`,
         type: paletteItem.type,
         config: { ...paletteItem.defaultConfig },
         bindings: { ...paletteItem.defaultBindings },
         layout: {
-            width: paletteItem.defaultWidth || 6,
+            width: paletteItem.defaultWidth || meta?.defaultWidth || 6,
             height: paletteItem.defaultHeight
-                || defaultHeightByType[paletteItem.type]
+                || meta?.defaultHeight
                 || 320,
         },
     };

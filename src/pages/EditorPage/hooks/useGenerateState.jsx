@@ -1,24 +1,22 @@
 // Этот файл отвечает за управление состоянием генерации кода
 
 import { useState } from 'react';
+import { toast } from 'sonner';
 import {compileDashboardSchema} from '../services/editorSchema.js';
 import { generateProjectZip } from '../../../api/generateApi.js';
 
-export const useGenerateState = ({ setValidationErrors }) => {
+export const useGenerateState = () => {
     const [isGenerating, setIsGenerating] = useState(false);
-    const [generationError, setGenerationError] = useState('');
 
     const handleGenerate = async (snapshot) => {
         try {
             // Сборка схемы
             const { schema, errors } = compileDashboardSchema(snapshot);
             if (errors.length > 0) {
-                setValidationErrors(errors);
+                errors.forEach((err) => toast.error(err));
                 return null;
             }
 
-            setValidationErrors([]);
-            setGenerationError('');
             setIsGenerating(true);
 
             // Отправка на бэкенд
@@ -39,7 +37,7 @@ export const useGenerateState = ({ setValidationErrors }) => {
 
         } catch (error) {
             console.error('Ошибка генерации дашборда:', error);
-            setGenerationError(error.message || 'Не удалось сгенерировать Streamlit-файл.');
+            toast.error(error.message || 'Не удалось сгенерировать Streamlit-файл.');
         } finally {
             setIsGenerating(false);
         }
@@ -47,7 +45,6 @@ export const useGenerateState = ({ setValidationErrors }) => {
 
     return {
         isGenerating,
-        generationError,
         handleGenerate,
     };
 };

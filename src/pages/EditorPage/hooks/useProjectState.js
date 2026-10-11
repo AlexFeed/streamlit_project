@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 import { getProject, createProject, updateProject } from '../../../api/projectsApi.js';
 import {compileDashboardSchema} from '../services/editorSchema.js';
@@ -10,11 +11,9 @@ export const useProjectState = ({
                                     projectId,
                                     setComponents,
                                     setDataset,
-                                    setValidationErrors,
                                 }) => {
     const [isProjectLoading, setIsProjectLoading] = useState(false);
     const [isProjectSaving, setIsProjectSaving] = useState(false);
-    const [projectError, setProjectError] = useState('');
     const [project, setProject] = useState(null);
 
     // Загрузка сохранённого проекта при открытии /editor/:projectId
@@ -27,7 +26,6 @@ export const useProjectState = ({
         const loadProject = async () => {
             try {
                 setIsProjectLoading(true);
-                setProjectError('');
 
                 const fetchedProject = await getProject(projectId);
 
@@ -36,7 +34,7 @@ export const useProjectState = ({
                 setDataset(fetchedProject.dataset || null);
             } catch (error) {
                 console.error('Ошибка загрузки проекта:', error);
-                setProjectError('Не удалось загрузить проект.');
+                toast.error('Не удалось загрузить проект.');
             } finally {
                 setIsProjectLoading(false);
             }
@@ -50,12 +48,9 @@ export const useProjectState = ({
     const createProjectFromDraft = async (snapshot) => {
         const { schema, errors } = compileDashboardSchema(snapshot);
         if (errors.length > 0) {
-            setValidationErrors(errors);
+            errors.forEach((err) => toast.error(err));
             return null;
         }
-
-        setValidationErrors([]);
-        setProjectError('');
 
         const payload = {
             title: snapshot.title,
@@ -74,10 +69,11 @@ export const useProjectState = ({
             localStorage.removeItem(DATASET_DRAFT_STORAGE_KEY);
 
             setProject(savedProject);
+            toast.success('Проект успешно сохранён.');
             return savedProject;
         } catch (error) {
             console.error('Ошибка создания проекта:', error);
-            setProjectError('Не удалось создать проект.');
+            toast.error('Не удалось создать проект.');
             return null;
         } finally {
             setIsProjectSaving(false);
@@ -90,12 +86,9 @@ export const useProjectState = ({
 
         const { schema, errors } = compileDashboardSchema(snapshot);
         if (errors.length > 0) {
-            setValidationErrors(errors);
+            errors.forEach((err) => toast.error(err));
             return null;
         }
-
-        setValidationErrors([]);
-        setProjectError('');
 
         const payload = {
             title: snapshot.title,
@@ -109,10 +102,11 @@ export const useProjectState = ({
             setIsProjectSaving(true);
             const updatedProject = await updateProject(projectId, payload);
             setProject(updatedProject);
+            toast.success('Изменения сохранены.');
             return updatedProject;
         } catch (error) {
             console.error('Ошибка обновления проекта:', error);
-            setProjectError('Не удалось обновить проект.');
+            toast.error('Не удалось обновить проект.');
             return null;
         } finally {
             setIsProjectSaving(false);
@@ -122,7 +116,6 @@ export const useProjectState = ({
     return {
         isProjectLoading,
         isProjectSaving,
-        projectError,
         project,
         createProjectFromDraft,
         saveExistingProject,

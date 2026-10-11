@@ -1,7 +1,23 @@
+import {
+    AreaChart,
+    BarChart3,
+    ChevronDownSquare,
+    LineChart,
+    ScatterChart,
+    WalletCards,
+} from 'lucide-react';
+
+export const PALETTE_GROUPS = ['Данные', 'Графики'];
+
 export const paletteItems = [
     {
         type: 'selectbox',
         label: 'Фильтр',
+        group: 'Данные',
+        icon: ChevronDownSquare,
+        accentClass: 'from-cyan-500/20 to-blue-500/5 text-cyan-300',
+        isChart: false,
+        supportsPaletteModes: false,
         description: 'Фильтрация данных по выбранному полю',
         defaultConfig: {
             title: 'Фильтр',
@@ -12,10 +28,16 @@ export const paletteItems = [
         },
         defaultWidth: 4,
         defaultHeight: 120,
+        minHeight: 120,
     },
     {
         type: 'line_chart',
         label: 'Линейный график',
+        group: 'Графики',
+        icon: LineChart,
+        accentClass: 'from-blue-500/20 to-indigo-500/5 text-blue-300',
+        isChart: true,
+        supportsPaletteModes: false,
         description: 'Отображение изменения показателя во времени',
         defaultConfig: {
             title: 'Линейный график',
@@ -33,10 +55,16 @@ export const paletteItems = [
         },
         defaultWidth: 6,
         defaultHeight: 320,
+        minHeight: 220,
     },
     {
         type: 'bar_chart',
         label: 'Столбчатый график',
+        group: 'Графики',
+        icon: BarChart3,
+        accentClass: 'from-violet-500/20 to-fuchsia-500/5 text-violet-300',
+        isChart: true,
+        supportsPaletteModes: true,
         description: 'Сравнение значений между категориями',
         defaultConfig: {
             title: 'Столбчатый график',
@@ -54,10 +82,16 @@ export const paletteItems = [
         },
         defaultWidth: 6,
         defaultHeight: 320,
+        minHeight: 220,
     },
     {
         type: 'area_chart',
         label: 'График с областями',
+        group: 'Графики',
+        icon: AreaChart,
+        accentClass: 'from-pink-500/20 to-rose-500/5 text-pink-300',
+        isChart: true,
+        supportsPaletteModes: false,
         description: 'Отображение динамики и объёма показателя во времени',
         defaultConfig: {
             title: 'График с областями',
@@ -75,10 +109,16 @@ export const paletteItems = [
         },
         defaultWidth: 6,
         defaultHeight: 320,
+        minHeight: 220,
     },
     {
         type: 'scatter_plot',
         label: 'Точечный график',
+        group: 'Графики',
+        icon: ScatterChart,
+        accentClass: 'from-amber-500/20 to-orange-500/5 text-amber-300',
+        isChart: true,
+        supportsPaletteModes: true,
         description: 'Поиск зависимости между двумя числовыми показателями',
         defaultConfig: {
             title: 'Точечный график',
@@ -96,10 +136,16 @@ export const paletteItems = [
         },
         defaultWidth: 6,
         defaultHeight: 320,
+        minHeight: 220,
     },
     {
         type: 'metric',
         label: 'Метрика',
+        group: 'Данные',
+        icon: WalletCards,
+        accentClass: 'from-emerald-500/20 to-teal-500/5 text-emerald-300',
+        isChart: false,
+        supportsPaletteModes: false,
         description: 'Отображение агрегированного значения',
         defaultConfig: {
             title: 'Метрика',
@@ -111,5 +157,13 @@ export const paletteItems = [
         },
         defaultWidth: 3,
         defaultHeight: 140,
+        minHeight: 120,
     },
 ];
+
+const COMPONENT_META_BY_TYPE = Object.fromEntries(
+    paletteItems.map((item) => [item.type, item])
+);
+
+// Функция для получения данных компонента по его типу
+export const getComponentMeta = (type) => COMPONENT_META_BY_TYPE[type] || null;

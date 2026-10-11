@@ -1,47 +1,12 @@
 import {
-    AreaChart,
-    BarChart3,
-    ChevronDownSquare,
     GripVertical,
     LayoutDashboard,
-    LineChart,
-    ScatterChart,
-    WalletCards,
 } from 'lucide-react';
 import { useDraggable } from '@dnd-kit/core';
-import { paletteItems } from '../data/paletteItems';
-
-const iconByType = {
-    selectbox: ChevronDownSquare,
-    metric: WalletCards,
-    line_chart: LineChart,
-    bar_chart: BarChart3,
-    area_chart: AreaChart,
-    scatter_plot: ScatterChart,
-};
-
-const accentByType = {
-    selectbox: 'from-cyan-500/20 to-blue-500/5 text-cyan-300',
-    metric: 'from-emerald-500/20 to-teal-500/5 text-emerald-300',
-    line_chart: 'from-blue-500/20 to-indigo-500/5 text-blue-300',
-    bar_chart: 'from-violet-500/20 to-fuchsia-500/5 text-violet-300',
-    area_chart: 'from-pink-500/20 to-rose-500/5 text-pink-300',
-    scatter_plot: 'from-amber-500/20 to-orange-500/5 text-amber-300',
-};
-
-const groups = [
-    {
-        title: 'Данные',
-        types: ['selectbox', 'metric'],
-    },
-    {
-        title: 'Графики',
-        types: ['line_chart', 'bar_chart', 'area_chart', 'scatter_plot'],
-    },
-];
+import { PALETTE_GROUPS, paletteItems } from '../data/paletteItems';
 
 const PaletteItem = ({ item, onAddComponent }) => {
-    const Icon = iconByType[item.type] || LayoutDashboard;
+    const Icon = item.icon || LayoutDashboard;
     const {
         attributes,
         listeners,
@@ -67,7 +32,7 @@ const PaletteItem = ({ item, onAddComponent }) => {
             {...attributes}
         >
             <div className="flex items-start gap-3">
-                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${accentByType[item.type]}`}>
+                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${item.accentClass || ''}`}>
                     <Icon className="h-4.5 w-4.5" />
                 </div>
                 <div className="flex min-w-0 flex-1 items-center justify-between gap-2 self-center">
@@ -105,14 +70,14 @@ const ComponentsPalette = ({ onAddComponent, onGoHome }) => (
             </div>
 
             <div className="space-y-5">
-                {groups.map((group) => (
-                    <section key={group.title}>
+                {PALETTE_GROUPS.map((groupTitle) => (
+                    <section key={groupTitle}>
                         <h2 className="mb-2 px-1 text-xs font-medium text-zinc-500">
-                            {group.title}
+                            {groupTitle}
                         </h2>
                         <div className="space-y-2">
                             {paletteItems
-                                .filter((item) => group.types.includes(item.type))
+                                .filter((item) => item.group === groupTitle)
                                 .map((item) => (
                                     <PaletteItem
                                         key={item.type}

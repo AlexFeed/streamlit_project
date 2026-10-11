@@ -1,5 +1,6 @@
 // Файл с созданием итоговой Json схемы для отправки на сервер
 import { getPaletteColors } from '../data/chartPalettes.js';
+import { getComponentMeta } from '../data/paletteItems.js';
 
 export const buildDashboardSchema = (snapshot) => {
     // Извлекаем все нужные данные из единого слепка состояния
@@ -12,17 +13,9 @@ export const buildDashboardSchema = (snapshot) => {
 
     const filters = [];
     const views = [];
-    const chartTypes = ['line_chart', 'bar_chart', 'area_chart', 'scatter_plot'];
-    const defaultWidthByType = {
-        selectbox: 4,
-        metric: 3,
-    };
-    const defaultHeightByType = {
-        selectbox: 120,
-        metric: 140,
-    };
 
     components.forEach((component, index) => {
+        const meta = getComponentMeta(component.type);
         const base = {
             id: component.id,
             type: component.type,
@@ -30,8 +23,8 @@ export const buildDashboardSchema = (snapshot) => {
             layout: {
                 x: component.layout?.x || 0,
                 y: component.layout?.y || 0,
-                width: component.layout?.width || defaultWidthByType[component.type] || 6,
-                height: component.layout?.height || defaultHeightByType[component.type] || 320,
+                width: component.layout?.width || meta?.defaultWidth || 6,
+                height: component.layout?.height || meta?.defaultHeight || 320,
             },
         };
 
@@ -43,9 +36,7 @@ export const buildDashboardSchema = (snapshot) => {
                 scope: 'global',
             });
         }
-        else if (chartTypes.includes(component.type)) {
-            const supportsPaletteModes = ['bar_chart', 'scatter_plot']
-                .includes(component.type);
+        else if (meta?.isChart) {
             views.push({
                 ...base,
                 title: component.config?.title || 'График',
@@ -55,7 +46,7 @@ export const buildDashboardSchema = (snapshot) => {
                 sort: component.config?.sort || 'none',
                 sortBy: component.config?.sortBy || 'x',
                 color: component.config?.color || '#3b82f6',
-                colorMode: supportsPaletteModes
+                colorMode: meta.supportsPaletteModes
                     ? component.config?.colorMode || 'solid'
                     : 'solid',
                 palette: getPaletteColors(
@@ -98,8 +89,6 @@ export const buildDashboardSchema = (snapshot) => {
 export const validateSchema = (snapshot) => {
     const { components = [], availableFields = [], dataset = null } = snapshot;
     const errors = [];
-    const chartTypes = ['line_chart', 'bar_chart', 'area_chart', 'scatter_plot'];
-    const supportedTypes = new Set(['selectbox', 'metric', ...chartTypes]);
     const allowedAggregations = new Set(['none', 'sum', 'mean', 'count', 'min', 'max']);
     const allowedColorModes = new Set(['solid', 'gradient', 'categorical']);
     const allowedSortFields = new Set(['x', 'y']);
@@ -117,11 +106,12 @@ export const validateSchema = (snapshot) => {
 
     // Проверка заполненности полей и свойств каждого компонента
     components.forEach((component, index) => {
+        const meta = getComponentMeta(component.type);
         const name = component.config?.title || component.type || `component-${index + 1}`;
         const width = component.layout?.width;
         const height = component.layout?.height;
 
-        if (!supportedTypes.has(component.type)) {
+        if (!meta) {
             errors.push(`Компонент "${name}": тип "${component.type}" не поддерживается.`);
             return;
         }
@@ -142,7 +132,7 @@ export const validateSchema = (snapshot) => {
                 errors.push(`Компонент "${name}": поле "${field}" отсутствует в текущем датасете.`);
             }
         }
-        else if (chartTypes.includes(component.type)) {
+        else if (meta.isChart) {
             const xField = component.bindings?.xField;
             const yField = component.bindings?.yField;
             const aggregation = component.config?.aggregation || 'none';
@@ -167,7 +157,7 @@ export const validateSchema = (snapshot) => {
             }
 
             if (
-                !['bar_chart', 'scatter_plot'].includes(component.type)
+                !meta.supportsPaletteModes
                 && colorMode !== 'solid'
             ) {
                 errors.push(`Компонент "${name}": палитры по данным доступны для столбчатого и точечного графиков.`);
