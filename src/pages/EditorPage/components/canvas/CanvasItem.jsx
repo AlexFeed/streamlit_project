@@ -6,7 +6,7 @@ import {
     WalletCards,
     MoveDiagonal2,
 } from 'lucide-react';
-import { getComponentMeta } from '../data/paletteItems';
+import { getComponentMeta } from '../../data/paletteItems';
 
 const LiveComponentPreview = lazy(
     () => import('./LiveComponentPreview')

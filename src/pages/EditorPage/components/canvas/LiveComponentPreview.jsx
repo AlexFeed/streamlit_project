@@ -18,13 +18,13 @@ import {
 import {
     getPaletteColors,
     interpolatePaletteColor,
-} from '../data/chartPalettes.js';
+} from '../../data/chartPalettes.js';
 import {
     calculateMetric,
     formatMetricValue,
     prepareChartData,
-} from '../services/chartData';
-import { getComponentMeta } from '../data/paletteItems.js';
+} from '../../services/chartData';
+import { getComponentMeta } from '../../data/paletteItems.js';
 
 const tooltipStyle = {
     backgroundColor: '#18181b',

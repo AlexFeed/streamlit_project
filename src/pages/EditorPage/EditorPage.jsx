@@ -3,7 +3,7 @@ import ComponentsPalette from './components/ComponentsPalette';
 import Canvas from './components/Canvas';
 import PropertiesPanel from './components/PropertiesPanel';
 import EditorHeader from './components/EditorHeader';
-import SaveProjectModal from './components/SaveProjectModal';
+import SaveProjectModal from './components/modals/SaveProjectModal';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
     closestCenter,

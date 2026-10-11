@@ -6,7 +6,7 @@ import {
     useState,
 } from 'react';
 import { useDroppable } from '@dnd-kit/core';
-import CanvasItem from './CanvasItem';
+import CanvasItem from './canvas/CanvasItem';
 import {
     GRID_COLUMNS,
     GRID_GAP,
