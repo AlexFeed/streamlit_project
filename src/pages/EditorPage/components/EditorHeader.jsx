@@ -1,11 +1,11 @@
 import {
     Database,
     Download,
-    LogOut,
     Save,
     Trash2,
     Upload,
     X,
+    House
 } from 'lucide-react';
 
 const EditorHeader = ({
@@ -18,7 +18,7 @@ const EditorHeader = ({
                           isDatasetClearing,
                           isGenerating,
                           onSaveProject,
-                          onLogout,
+                          onGoHome,
                       }) => {
     return (
         <header className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-4 border-b border-zinc-800/80 bg-zinc-950/90 px-5 py-3 backdrop-blur-xl">
@@ -92,11 +92,11 @@ const EditorHeader = ({
 
                 <button
                     type="button"
-                    onClick={onLogout}
+                    onClick={onGoHome}
                     className="rounded-xl p-2 text-zinc-500 transition hover:bg-zinc-800 hover:text-white"
-                    title="Выйти"
+                    title="Перейти на главную"
                 >
-                    <LogOut className="h-4 w-4" />
+                    <House className="h-4 w-4" />
                 </button>
             </div>
         </header>

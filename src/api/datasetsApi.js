@@ -9,8 +9,14 @@ import { authFetch } from './apiClient.js';
 // Response:
 // {
 //   datasetId: string,
+//   userId: string,
 //   name: string,
-//   fields: string[]
+//   storedName: string,
+//   fields: string[],
+//   fieldTypes: Record<string, "number" | "datetime" | "string" | "boolean">,
+//   sampleRows: Record<string, any>[],
+//   size: number,
+//   createdAt: string
 // }
 export const uploadDataset = async (file) => {
     const formData = new FormData();
@@ -48,11 +54,19 @@ export const getDataset = async (datasetId) => {
     return response.json();
 };
 
-// Удаление датасета
+// Получение выборки строк и типов колонок датасета для предпросмотра на Canvas через Recharts
+//
+// Query params:
+// limit: number (default = 500, max = 1000)
 //
 // Response:
 // {
-//   deleted: true
+//   datasetId: string,
+//   fields: string[],
+//   fieldTypes: Record<string, "number" | "datetime" | "string" | "boolean">,
+//   rows: Record<string, any>[],
+//   returnedRows: number,
+//   limit: number
 // }
 export const getDatasetPreview = async (datasetId, limit = 500) => {
     const response = await authFetch(
@@ -67,6 +81,12 @@ export const getDatasetPreview = async (datasetId, limit = 500) => {
     return response.json();
 };
 
+// Удаление датасета
+//
+// Response:
+// {
+//   deleted: true
+// }
 export const deleteDataset = async (datasetId) => {
     const response = await authFetch(`/datasets/${datasetId}`, {
         method: 'DELETE',

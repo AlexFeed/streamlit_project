@@ -248,9 +248,15 @@ export const useEditorState = ({ useDraftStorage = true }) => {
 
     // Очистка холста целиком
     const clearCanvas = () => {
+        if (components.length === 0) return;
+        const confirmed = window.confirm(
+            'Вы уверены, что хотите очистить холст? Все добавленные компоненты будут удалены.'
+        );
+        if (!confirmed) {
+            return;
+        }
         setComponents([]);
         setSelectedId(null);
-
         if (useDraftStorage) {
             localStorage.removeItem(EDITOR_DRAFT_STORAGE_KEY);
         }

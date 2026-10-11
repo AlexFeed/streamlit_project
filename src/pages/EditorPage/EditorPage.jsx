@@ -1,5 +1,5 @@
 // Editor components
-import ComponentPalette from './components/ComponentsPalette';
+import ComponentsPalette from './components/ComponentsPalette';
 import Canvas from './components/Canvas';
 import PropertiesPanel from './components/PropertiesPanel';
 import EditorHeader from './components/EditorHeader';
@@ -21,7 +21,6 @@ import { useEditorState } from './hooks/useEditorState';
 import {useDatasetState} from './hooks/useDatasetState';
 
 import { useState } from 'react';
-import { logout } from '../../api/authApi.js';
 import { useProjectState } from './hooks/useProjectState.js';
 import ErrorNotification from "./components/common/ErrorNotification.jsx";
 import {useGenerateState} from "./hooks/useGenerateState.jsx";
@@ -158,18 +157,16 @@ const EditorPage = () => {
     const [saveDescription, setSaveDescription] = useState('');
     const [saveMetadataError, setSaveMetadataError] = useState('');
 
-    const handleLogout = () => {
+    const handleGoHome = () => {
         const confirmed = window.confirm(
-            'При выходе все несохраненные данные будут удалены. Продолжить?'
+            'При выходе на главную все несохраненные данные будут удалены. Продолжить?'
         );
 
         if (!confirmed) {
             return;
         }
 
-        logout();
-
-        navigate('/auth', { replace: true });
+        navigate('/');
     };
 
     // Вызывается при клике на кнопку "Save" в хедере редактора
@@ -232,7 +229,7 @@ const EditorPage = () => {
         >
         <div className="h-screen overflow-hidden bg-zinc-950 text-white">
             <div className="grid h-full grid-cols-[252px_minmax(0,1fr)]">
-                <ComponentPalette onAddComponent={addComponent} />
+                <ComponentsPalette onAddComponent={addComponent} onGoHome={handleGoHome}/>
 
                 <div className="flex min-h-0 min-w-0 flex-col overflow-hidden">
                     <EditorHeader
@@ -245,7 +242,7 @@ const EditorPage = () => {
                         isDatasetClearing={isDatasetClearing}
                         isGenerating={isGenerating}
                         onSaveProject={handleSaveClick}
-                        onLogout={handleLogout}
+                        onGoHome={handleGoHome}
                     />
 
                     {/* Вывод ошибок в UI */}

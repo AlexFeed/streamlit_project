@@ -1,6 +1,6 @@
 import { authFetch } from './apiClient.js';
 
-// Получение списка проектов текущего пользователя
+// Получение списка проектов текущего пользователя (краткие карточки для главной страницы)
 //
 // Response:
 // [
@@ -8,8 +8,9 @@ import { authFetch } from './apiClient.js';
 //     id: string,
 //     title: string,
 //     description: string,
-//     updatedAt: string,
-//     ...
+//     datasetName: string | null,
+//     createdAt: string,
+//     updatedAt: string
 //   }
 // ]
 export const listProjects = async () => {
@@ -29,13 +30,23 @@ export const listProjects = async () => {
 // {
 //   title: string,
 //   description: string,
-//   schema: object,
-//   datasetMeta: object,
-//   editorState: object
+//   dataset: object | null,
+//   editorState: { components: object[] },
+//   schema: object | null
 // }
 //
 // Response:
-// Полный объект созданного проекта
+// {
+//   id: string,
+//   userId: string,
+//   title: string,
+//   description: string,
+//   dataset: object | null,
+//   editorState: { components: object[] },
+//   schema: object | null,
+//   createdAt: string,
+//   updatedAt: string
+// }
 export const createProject = async (payload) => {
     const response = await authFetch('/projects', {
         method: 'POST',
@@ -53,10 +64,20 @@ export const createProject = async (payload) => {
     return response.json();
 };
 
-// Получение проекта по id
+// Получение полного проекта по id (для восстановления состояния редактора)
 //
 // Response:
-// Полный объект проекта
+// {
+//   id: string,
+//   userId: string,
+//   title: string,
+//   description: string,
+//   dataset: object | null,
+//   editorState: { components: object[] },
+//   schema: object | null,
+//   createdAt: string,
+//   updatedAt: string
+// }
 export const getProject = async (projectId) => {
     const response = await authFetch(`/projects/${projectId}`);
 
@@ -68,13 +89,29 @@ export const getProject = async (projectId) => {
     return response.json();
 };
 
-// Обновление проекта
+// Частичное или полное обновление проекта
 //
-// Request:
-// Частичный или полный payload проекта
+// Request (все поля опциональны):
+// {
+//   title?: string,
+//   description?: string,
+//   dataset?: object | null,
+//   editorState?: { components: object[] },
+//   schema?: object | null
+// }
 //
 // Response:
-// Обновлённый объект проекта
+// {
+//   id: string,
+//   userId: string,
+//   title: string,
+//   description: string,
+//   dataset: object | null,
+//   editorState: { components: object[] },
+//   schema: object | null,
+//   createdAt: string,
+//   updatedAt: string
+// }
 export const updateProject = async (projectId, payload) => {
     const response = await authFetch(`/projects/${projectId}`, {
         method: 'PUT',

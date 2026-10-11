@@ -81,17 +81,22 @@ const PaletteItem = ({ item, onAddComponent }) => {
     );
 };
 
-const ComponentsPalette = ({ onAddComponent }) => (
+const ComponentsPalette = ({ onAddComponent, onGoHome }) => (
     <aside className="sticky top-0 flex h-screen flex-col overflow-hidden border-r border-zinc-800/80 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.10),transparent_42%),#111113]">
         <div className="border-b border-zinc-800/80 px-4 py-4">
-            <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg shadow-blue-950/40">
+            <button
+                type="button"
+                onClick={onGoHome}
+                className="flex w-full items-center gap-3 rounded-xl text-left transition hover:opacity-85"
+                title="На главную (Мои проекты)"
+            >
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg shadow-blue-950/40">
                     <LayoutDashboard className="h-5 w-5 text-white" />
                 </div>
                 <div>
                     <h1 className="text-sm font-semibold text-white">Streamlit Builder</h1>
                 </div>
-            </div>
+            </button>
         </div>
 
         <div className="flex-1 overflow-y-auto px-3 py-4">
