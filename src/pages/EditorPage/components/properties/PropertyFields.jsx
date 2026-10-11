@@ -10,7 +10,7 @@ const selectClassName =
 const panelSectionClassName = 'rounded-xl border border-zinc-800 bg-zinc-950/50 p-3';
 
 // Заголовок поля с иконкой-подсказкой (i) справа сверху
-export const FieldLabel = ({ label, helperText }) => (
+const LabelWithTooltip = ({ label, helperText }) => (
     <div className="mb-1.5 flex items-center justify-between gap-2">
         <label className="block text-sm font-medium text-zinc-200">
             {label}
@@ -49,7 +49,7 @@ export const FieldSelect = ({
     const isDisabled = !options.length;
     return (
         <div className={panelSectionClassName}>
-            <FieldLabel label={label} helperText={helperText} />
+            <LabelWithTooltip  label={label} helperText={helperText} />
             <div className="relative">
                 <select
                     value={value || ''}
@@ -100,7 +100,7 @@ export const TextField = ({
 }) => {
     return (
         <div className={panelSectionClassName}>
-            <FieldLabel label={label} helperText={helperText} />
+            <LabelWithTooltip  label={label} helperText={helperText} />
             <input
                 type="text"
                 value={value || ''}
@@ -120,7 +120,7 @@ export const OptionSelect = ({
     helperText,
 }) => (
     <div className={panelSectionClassName}>
-        <FieldLabel label={label} helperText={helperText} />
+        <LabelWithTooltip  label={label} helperText={helperText} />
         <select
             value={value || ''}
             onChange={(event) => onChange(event.target.value)}

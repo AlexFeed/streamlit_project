@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, memo, Suspense } from 'react';
 import {
     Copy,
     GripVertical,
@@ -21,8 +21,7 @@ const CanvasItem = ({
                         rows,
                         filterValue,
                         onFilterChange,
-                        onDragPointerDown,
-                        onResizePointerDown,
+                        onBeginInteraction,
                     }) => {
     const meta = getComponentMeta(item.type);
     const Icon = meta?.icon || WalletCards;
@@ -39,7 +38,7 @@ const CanvasItem = ({
         >
             <header
                 className="canvas-drag-handle flex shrink-0 touch-none cursor-grab items-center justify-between gap-3 border-b border-zinc-800/80 px-4 py-3 active:cursor-grabbing"
-                onPointerDown={onDragPointerDown}
+                onPointerDown={(event) => onBeginInteraction(event, item.id, 'drag')}
                 title="Зажмите и перетащите карточку"
             >
                 <div className="flex min-w-0 items-center gap-3">
@@ -98,7 +97,7 @@ const CanvasItem = ({
                         height="100%"
                         rows={rows}
                         value={filterValue}
-                        onChange={onFilterChange}
+                        onChange={(value) => onFilterChange(item.id, value)}
                     />
                 </Suspense>
             </div>
@@ -108,7 +107,7 @@ const CanvasItem = ({
                 aria-label="Изменить размер карточки"
                 title="Тяните, чтобы изменить ширину и высоту"
                 onClick={(event) => event.stopPropagation()}
-                onPointerDown={onResizePointerDown}
+                onPointerDown={(event) => onBeginInteraction(event, item.id, 'resize')}
                 className="canvas-resize-handle absolute bottom-1 right-1 z-20 flex h-9 w-9 touch-none cursor-se-resize items-end justify-end rounded-xl p-2 text-blue-300 transition hover:bg-blue-500/15 hover:text-blue-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
             >
                 <MoveDiagonal2 className="h-4 w-4" />
@@ -117,4 +116,4 @@ const CanvasItem = ({
     );
 };
 
-export default CanvasItem;
+export default memo(CanvasItem);

@@ -130,7 +130,7 @@ export const useEditorState = ({ useDraftStorage = true }) => {
         });
     };
 
-    const duplicateComponent = (id) => {
+    const duplicateComponent = useCallback((id) => {
         const source = components.find((item) => item.id === id);
         if (!source) return;
 
@@ -155,19 +155,16 @@ export const useEditorState = ({ useDraftStorage = true }) => {
             ]);
         });
         setSelectedId(duplicate.id);
-    };
+    }, [components]);
 
-    const setDashboardLayout = (gridLayout) => {
+    const setDashboardLayout = useCallback((gridLayout) => {
         if (!Array.isArray(gridLayout)) return;
-
         const layoutById = new Map(
             gridLayout.map((item) => [item.i, item])
         );
-
         setComponents((prev) => prev.map((component) => {
             const item = layoutById.get(component.id);
             if (!item) return component;
-
             return {
                 ...component,
                 layout: {
@@ -179,12 +176,12 @@ export const useEditorState = ({ useDraftStorage = true }) => {
                 },
             };
         }));
-    };
+    }, []);
 
     // Выбор текущего компонента на холсте
-    const selectComponent = (id) => {
+    const selectComponent = useCallback((id) => {
         setSelectedId(id);
-    };
+    }, []);
 
     // Изменение данных в компоненте на холсте (например название графика)
     const updateComponent = (id, updater) => {
@@ -196,13 +193,10 @@ export const useEditorState = ({ useDraftStorage = true }) => {
     };
 
     // Удаление компонента с холста
-    const deleteComponent = (id) => {
+    const deleteComponent = useCallback((id) => {
         setComponents((prev) => prev.filter((item) => item.id !== id));
-
-        if (selectedId === id) {
-            setSelectedId(null);
-        }
-    };
+        setSelectedId((prev) => (prev === id ? null : prev));
+    }, []);
 
     // Удаление выбранного компонента с холста
     const deleteSelectedComponent = () => {
