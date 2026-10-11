@@ -6,7 +6,7 @@ import {
     WalletCards,
     MoveDiagonal2,
 } from 'lucide-react';
-import { getComponentMeta } from '../../data/paletteItems';
+import { paletteItems } from '../../data/paletteItems';
 
 const LiveComponentPreview = lazy(
     () => import('./LiveComponentPreview')
@@ -23,7 +23,7 @@ const CanvasItem = ({
                         onFilterChange,
                         onBeginInteraction,
                     }) => {
-    const meta = getComponentMeta(item.type);
+    const meta = paletteItems[item.type];
     const Icon = meta?.icon || WalletCards;
 
     return (

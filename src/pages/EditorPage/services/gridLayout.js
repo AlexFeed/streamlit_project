@@ -1,4 +1,4 @@
-import { getComponentMeta } from '../data/paletteItems.js';
+import { paletteItems } from '../data/paletteItems.js';
 
 export const GRID_COLUMNS = 12;
 export const GRID_ROW_HEIGHT = 20;
@@ -6,17 +6,17 @@ export const GRID_GAP = 16;
 export const CARD_CHROME_HEIGHT = 96;
 
 export const getMinimumContentHeight = (type) => (
-    getComponentMeta(type)?.minHeight || 220
+    paletteItems[type]?.minHeight || 220
 );
 
 export const normalizeGridWidth = (value, type) => {
-    const fallback = getComponentMeta(type)?.defaultWidth || 6;
+    const fallback = paletteItems[type]?.defaultWidth || 6;
     const numeric = Math.round(Number(value) || fallback);
     return Math.max(2, Math.min(GRID_COLUMNS, numeric));
 };
 
 export const normalizeContentHeight = (value, type) => {
-    const fallback = getComponentMeta(type)?.defaultHeight || 320;
+    const fallback = paletteItems[type]?.defaultHeight || 320;
     const minimum = getMinimumContentHeight(type);
     const numeric = Math.round(Number(value) || fallback);
     return Math.max(minimum, Math.min(720, numeric));

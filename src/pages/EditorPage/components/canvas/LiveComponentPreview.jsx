@@ -24,7 +24,7 @@ import {
     formatMetricValue,
     prepareChartData,
 } from '../../services/chartData';
-import { getComponentMeta } from '../../data/paletteItems.js';
+import { paletteItems } from '../../data/paletteItems.js';
 
 const tooltipStyle = {
     backgroundColor: '#18181b',
@@ -279,7 +279,7 @@ const LiveFilter = ({
 const LiveComponentPreview = (props) => {
     const { item, height } = props;
 
-    if (getComponentMeta(item.type)?.isChart) {
+    if (paletteItems[item.type]?.isChart) {
         return <LiveChart item={item} rows={props.rows} height={height} />;
     }
     if (item.type === 'metric') {

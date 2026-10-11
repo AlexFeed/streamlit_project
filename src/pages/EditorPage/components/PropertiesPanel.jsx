@@ -1,5 +1,5 @@
 import { Trash2, X } from 'lucide-react';
-import { getComponentMeta } from '../data/paletteItems.js';
+import { paletteItems } from '../data/paletteItems.js';
 import {
     FieldSelect,
     TextField,
@@ -135,7 +135,7 @@ const PropertiesPanel = ({
                     </>
                 )}
 
-                {getComponentMeta(type)?.isChart && (
+                {paletteItems[type]?.isChart && (
                     <>
                         <FieldSelect
                             label="Поле X"

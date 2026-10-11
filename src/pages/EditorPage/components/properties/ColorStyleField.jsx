@@ -2,7 +2,7 @@ import {
     chartPalettes,
     getPaletteColors,
 } from '../../data/chartPalettes.js';
-import { getComponentMeta } from '../../data/paletteItems.js';
+import { paletteItems } from '../../data/paletteItems.js';
 
 const colorPresets = [
     '#3b82f6',
@@ -20,7 +20,7 @@ const ColorStyleField = ({
     onUpdate,
 }) => {
     const supportsPaletteModes = Boolean(
-        getComponentMeta(type)?.supportsPaletteModes
+        paletteItems[type]?.supportsPaletteModes
     );
     const colorMode = supportsPaletteModes
         ? config.colorMode || 'solid'
