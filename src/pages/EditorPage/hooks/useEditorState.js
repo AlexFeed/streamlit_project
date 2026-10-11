@@ -4,20 +4,12 @@ import {
     normalizeComponentLayouts,
     normalizeGridWidth,
 } from '../services/gridLayout.js';
+import { getComponentMeta } from '../data/paletteItems.js';
 
 // Hook отвечает за управление состоянием локальных компонентов дашборда, их загрузка в LocalStorage
 
 // Ключ хранения состояния в localStorage
 export const EDITOR_DRAFT_STORAGE_KEY = 'streamlit-editor-draft';
-
-const defaultHeightByType = {
-    selectbox: 120,
-    line_chart: 320,
-    bar_chart: 320,
-    area_chart: 320,
-    scatter_plot: 320,
-    metric: 140,
-};
 
 const normalizeComponents = normalizeComponentLayouts;
 
@@ -44,15 +36,17 @@ const loadDraftComponents = () => {
 
 // Создание компоненты для холста
 const createComponentFromPaletteItem = (paletteItem, index) => {
+    const meta = getComponentMeta(paletteItem.type);
+
     return {
         id: `${paletteItem.type}-${globalThis.crypto?.randomUUID?.() || `${Date.now()}-${index}`}`,
         type: paletteItem.type,
         config: { ...paletteItem.defaultConfig },
         bindings: { ...paletteItem.defaultBindings },
         layout: {
-            width: paletteItem.defaultWidth || 6,
+            width: paletteItem.defaultWidth || meta?.defaultWidth || 6,
             height: paletteItem.defaultHeight
-                || defaultHeightByType[paletteItem.type]
+                || meta?.defaultHeight
                 || 320,
         },
     };
@@ -136,7 +130,7 @@ export const useEditorState = ({ useDraftStorage = true }) => {
         });
     };
 
-    const duplicateComponent = (id) => {
+    const duplicateComponent = useCallback((id) => {
         const source = components.find((item) => item.id === id);
         if (!source) return;
 
@@ -161,49 +155,16 @@ export const useEditorState = ({ useDraftStorage = true }) => {
             ]);
         });
         setSelectedId(duplicate.id);
-    };
+    }, [components]);
 
-    const setComponentWidth = (id, width) => {
-        updateComponent(id, (component) => ({
-            ...component,
-            layout: {
-                ...component.layout,
-                width: normalizeGridWidth(width, component.type),
-            },
-        }));
-    };
-
-    const setComponentSize = (id, size) => {
-        const width = Math.max(
-            2,
-            Math.min(12, Math.round(Number(size?.width) || 6))
-        );
-        const height = Math.max(
-            120,
-            Math.min(720, Math.round(Number(size?.height) || 320))
-        );
-
-        updateComponent(id, (component) => ({
-            ...component,
-            layout: {
-                ...component.layout,
-                width,
-                height,
-            },
-        }));
-    };
-
-    const setDashboardLayout = (gridLayout) => {
+    const setDashboardLayout = useCallback((gridLayout) => {
         if (!Array.isArray(gridLayout)) return;
-
         const layoutById = new Map(
             gridLayout.map((item) => [item.i, item])
         );
-
         setComponents((prev) => prev.map((component) => {
             const item = layoutById.get(component.id);
             if (!item) return component;
-
             return {
                 ...component,
                 layout: {
@@ -215,12 +176,12 @@ export const useEditorState = ({ useDraftStorage = true }) => {
                 },
             };
         }));
-    };
+    }, []);
 
     // Выбор текущего компонента на холсте
-    const selectComponent = (id) => {
+    const selectComponent = useCallback((id) => {
         setSelectedId(id);
-    };
+    }, []);
 
     // Изменение данных в компоненте на холсте (например название графика)
     const updateComponent = (id, updater) => {
@@ -232,13 +193,10 @@ export const useEditorState = ({ useDraftStorage = true }) => {
     };
 
     // Удаление компонента с холста
-    const deleteComponent = (id) => {
+    const deleteComponent = useCallback((id) => {
         setComponents((prev) => prev.filter((item) => item.id !== id));
-
-        if (selectedId === id) {
-            setSelectedId(null);
-        }
-    };
+        setSelectedId((prev) => (prev === id ? null : prev));
+    }, []);
 
     // Удаление выбранного компонента с холста
     const deleteSelectedComponent = () => {
@@ -248,9 +206,15 @@ export const useEditorState = ({ useDraftStorage = true }) => {
 
     // Очистка холста целиком
     const clearCanvas = () => {
+        if (components.length === 0) return;
+        const confirmed = window.confirm(
+            'Вы уверены, что хотите очистить холст? Все добавленные компоненты будут удалены.'
+        );
+        if (!confirmed) {
+            return;
+        }
         setComponents([]);
         setSelectedId(null);
-
         if (useDraftStorage) {
             localStorage.removeItem(EDITOR_DRAFT_STORAGE_KEY);
         }
@@ -264,8 +228,6 @@ export const useEditorState = ({ useDraftStorage = true }) => {
         addComponent,
         reorderComponent,
         duplicateComponent,
-        setComponentWidth,
-        setComponentSize,
         setDashboardLayout,
         selectComponent,
         updateComponent,

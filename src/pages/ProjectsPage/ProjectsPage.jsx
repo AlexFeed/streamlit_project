@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { logout } from '../../api/authApi.js';
 import { listProjects, deleteProject, updateProject } from '../../api/projectsApi.js';
 import EmptyState from './EmptyState';
@@ -79,7 +80,7 @@ const ProjectsPage = () => {
       setProjects((prevProjects) => prevProjects.filter((p) => p.id !== id));
     } catch (error) {
       console.error('Ошибка удаления проекта:', error);
-      window.alert('Не удалось удалить проект. Попробуйте снова.');
+      toast.error('Не удалось удалить проект. Попробуйте снова.');
     }
   };
 
@@ -91,7 +92,7 @@ const ProjectsPage = () => {
       ));
     } catch (error) {
       console.error('Ошибка обновления названия проекта:', error);
-      window.alert('Не удалось сохранить название проекта. Попробуйте снова.');
+      toast.error('Не удалось сохранить название проекта. Попробуйте снова.');
     }
   };
 
@@ -103,7 +104,7 @@ const ProjectsPage = () => {
       ));
     } catch (error) {
       console.error('Ошибка обновления описания проекта:', error);
-      window.alert('Не удалось сохранить описание проекта. Попробуйте снова.');
+      toast.error('Не удалось сохранить описание проекта. Попробуйте снова.');
     }
   };
 

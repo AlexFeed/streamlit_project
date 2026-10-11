@@ -18,14 +18,13 @@ import {
 import {
     getPaletteColors,
     interpolatePaletteColor,
-} from '../data/chartPalettes.js';
+} from '../../data/chartPalettes.js';
 import {
     calculateMetric,
     formatMetricValue,
     prepareChartData,
-} from '../services/chartData';
-
-const chartTypes = ['line_chart', 'bar_chart', 'area_chart', 'scatter_plot'];
+} from '../../services/chartData';
+import { getComponentMeta } from '../../data/paletteItems.js';
 
 const tooltipStyle = {
     backgroundColor: '#18181b',
@@ -280,7 +279,7 @@ const LiveFilter = ({
 const LiveComponentPreview = (props) => {
     const { item, height } = props;
 
-    if (chartTypes.includes(item.type)) {
+    if (getComponentMeta(item.type)?.isChart) {
         return <LiveChart item={item} rows={props.rows} height={height} />;
     }
     if (item.type === 'metric') {

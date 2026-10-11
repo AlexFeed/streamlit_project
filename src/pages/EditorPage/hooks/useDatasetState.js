@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import {
     deleteDataset,
     getDatasetPreview,
@@ -36,7 +37,6 @@ export const useDatasetState = ({ useDraftStorage = true }) => {
         return loadDatasetInfoFromDraft();
     });
 
-    const [datasetError, setDatasetError] = useState('');
     const [isDatasetUploading, setIsDatasetUploading] = useState(false);
     const [isDatasetClearing, setIsDatasetClearing] = useState(false);
     const [isDatasetPreviewLoading, setIsDatasetPreviewLoading] = useState(false);
@@ -120,10 +120,8 @@ export const useDatasetState = ({ useDraftStorage = true }) => {
         const file = event.target.files?.[0];
         if (!file) return;
 
-        setDatasetError('');
-
         if (!file.name.toLowerCase().endsWith('.csv')) {
-            setDatasetError('Поддерживаются только CSV-файлы.');
+            toast.error('Поддерживаются только CSV-файлы.');
             return;
         }
 
@@ -138,7 +136,7 @@ export const useDatasetState = ({ useDraftStorage = true }) => {
             event.target.value = '';
         } catch (error) {
             console.error('Ошибка загрузки CSV:', error);
-            setDatasetError('Не удалось загрузить CSV на backend.');
+            toast.error('Не удалось загрузить CSV на backend.');
         } finally {
             setIsDatasetUploading(false);
         }
@@ -164,14 +162,13 @@ export const useDatasetState = ({ useDraftStorage = true }) => {
 
             setDataset(null);
             setPreviewRows([]);
-            setDatasetError('');
 
             if (useDraftStorage) {
                 localStorage.removeItem(DATASET_DRAFT_STORAGE_KEY);
             }
         } catch (error) {
             console.error('Ошибка удаления датасета:', error);
-            setDatasetError('Не удалось удалить датасет на backend.');
+            toast.error('Не удалось удалить датасет на backend.');
         } finally {
             setIsDatasetClearing(false);
         }
@@ -183,7 +180,6 @@ export const useDatasetState = ({ useDraftStorage = true }) => {
         availableFields,
         fieldTypes,
         previewRows: dataset?.datasetId ? previewRows : [],
-        datasetError,
         isDatasetUploading,
         isDatasetClearing,
         isDatasetPreviewLoading,

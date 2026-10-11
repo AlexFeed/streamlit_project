@@ -1,38 +1,16 @@
-import { lazy, Suspense } from 'react';
+import { lazy, memo, Suspense } from 'react';
 import {
-    AreaChart,
-    BarChart3,
-    ChevronDownSquare,
     Copy,
     GripVertical,
-    LineChart,
-    ScatterChart,
     Trash2,
     WalletCards,
     MoveDiagonal2,
 } from 'lucide-react';
+import { getComponentMeta } from '../../data/paletteItems';
 
 const LiveComponentPreview = lazy(
     () => import('./LiveComponentPreview')
 );
-
-const iconByType = {
-    selectbox: ChevronDownSquare,
-    line_chart: LineChart,
-    bar_chart: BarChart3,
-    area_chart: AreaChart,
-    scatter_plot: ScatterChart,
-    metric: WalletCards,
-};
-
-const labelByType = {
-    selectbox: 'Фильтр',
-    line_chart: 'Линейный',
-    bar_chart: 'Столбчатый',
-    area_chart: 'Область',
-    scatter_plot: 'Точечный',
-    metric: 'Метрика',
-};
 
 const CanvasItem = ({
                         item,
@@ -43,11 +21,10 @@ const CanvasItem = ({
                         rows,
                         filterValue,
                         onFilterChange,
-                        onDragPointerDown,
-                        onResizePointerDown,
-                        isInteracting,
+                        onBeginInteraction,
                     }) => {
-    const Icon = iconByType[item.type] || WalletCards;
+    const meta = getComponentMeta(item.type);
+    const Icon = meta?.icon || WalletCards;
 
     return (
         <article
@@ -57,11 +34,11 @@ const CanvasItem = ({
                 isSelected
                     ? 'border-blue-500 bg-zinc-900 shadow-[0_0_0_1px_rgba(59,130,246,0.3),0_20px_50px_rgba(0,0,0,0.22)]'
                     : 'border-zinc-800 bg-zinc-900/95 hover:border-zinc-700'
-            } ${isInteracting ? 'select-none ring-2 ring-blue-500/60' : ''}`}
+            }`}
         >
             <header
                 className="canvas-drag-handle flex shrink-0 touch-none cursor-grab items-center justify-between gap-3 border-b border-zinc-800/80 px-4 py-3 active:cursor-grabbing"
-                onPointerDown={onDragPointerDown}
+                onPointerDown={(event) => onBeginInteraction(event, item.id, 'drag')}
                 title="Зажмите и перетащите карточку"
             >
                 <div className="flex min-w-0 items-center gap-3">
@@ -69,7 +46,7 @@ const CanvasItem = ({
                         <Icon className="h-4 w-4 text-blue-300" />
                     </div>
                     <h3 className="truncate text-sm font-semibold text-white">
-                        {item.config?.title || labelByType[item.type]}
+                        {item.config?.title || meta?.label}
                     </h3>
                 </div>
 
@@ -120,7 +97,7 @@ const CanvasItem = ({
                         height="100%"
                         rows={rows}
                         value={filterValue}
-                        onChange={onFilterChange}
+                        onChange={(value) => onFilterChange(item.id, value)}
                     />
                 </Suspense>
             </div>
@@ -130,7 +107,7 @@ const CanvasItem = ({
                 aria-label="Изменить размер карточки"
                 title="Тяните, чтобы изменить ширину и высоту"
                 onClick={(event) => event.stopPropagation()}
-                onPointerDown={onResizePointerDown}
+                onPointerDown={(event) => onBeginInteraction(event, item.id, 'resize')}
                 className="canvas-resize-handle absolute bottom-1 right-1 z-20 flex h-9 w-9 touch-none cursor-se-resize items-end justify-end rounded-xl p-2 text-blue-300 transition hover:bg-blue-500/15 hover:text-blue-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
             >
                 <MoveDiagonal2 className="h-4 w-4" />
@@ -139,4 +116,4 @@ const CanvasItem = ({
     );
 };
 
-export default CanvasItem;
+export default memo(CanvasItem);
