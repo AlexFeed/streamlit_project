@@ -34,10 +34,11 @@ const loadDraftComponents = () => {
 };
 
 // Создание компоненты для холста
-const createComponentFromPaletteItem = (paletteItem, index) => {
+const createComponentFromPaletteItem = (paletteItem, index, defaultDatasetId = '') => {
     return {
         id: `${paletteItem.type}-${globalThis.crypto?.randomUUID?.() || `${Date.now()}-${index}`}`,
         type: paletteItem.type,
+        datasetId: defaultDatasetId,
         config: { ...paletteItem.defaultConfig },
         bindings: { ...paletteItem.defaultBindings },
         layout: {
@@ -48,7 +49,7 @@ const createComponentFromPaletteItem = (paletteItem, index) => {
 };
 
 // Управление всем состоянием редактора
-export const useEditorState = ({ useDraftStorage = true }) => {
+export const useEditorState = ({ useDraftStorage = true, defaultDatasetId = ''}) => {
     // Управление состоянием компонентов для draft (только для /editor)
     const [components, setComponents] = useState(() => {
         if (!useDraftStorage) {
@@ -92,14 +93,13 @@ export const useEditorState = ({ useDraftStorage = true }) => {
     const addComponent = (paletteItem, targetIndex) => {
         const newComponent = createComponentFromPaletteItem(
             paletteItem,
-            components.length + 1
+            components.length + 1,
+            defaultDatasetId
         );
-
         setComponents((prev) => {
             const insertIndex = Number.isInteger(targetIndex)
                 ? Math.max(0, Math.min(targetIndex, prev.length))
                 : prev.length;
-
             return normalizeComponents([
                 ...prev.slice(0, insertIndex),
                 newComponent,

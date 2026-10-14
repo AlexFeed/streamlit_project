@@ -22,7 +22,6 @@ export const useGenerateState = () => {
             // Отправка на бэкенд
             const blob = await generateProjectZip({
                 schema,
-                datasetId: snapshot.dataset?.datasetId,
             });
 
             // Скачивание архива

@@ -12,8 +12,8 @@ const EditorHeader = ({
                           onClearCanvas,
                           onGenerateDashboard,
                           onFileUpload,
-                          datasetMeta,
-                          onClearDataset,
+                          datasets = [],
+                          onRemoveDataset,
                           isDatasetUploading,
                           isDatasetClearing,
                           isGenerating,
@@ -32,13 +32,18 @@ const EditorHeader = ({
             </div>
 
             <div className="flex flex-wrap items-center justify-end gap-2">
-                {datasetMeta ? (
-                    <div className="flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-200">
+                {datasets.map((dataset) => (
+                    <div
+                        key={dataset.datasetId}
+                        className="flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-200"
+                    >
                         <Database className="h-4 w-4" />
-                        <span className="max-w-[180px] truncate">{datasetMeta.name}</span>
+                        <span className="max-w-[160px] truncate" title={dataset.name}>
+                            {dataset.name}
+                        </span>
                         <button
                             type="button"
-                            onClick={onClearDataset}
+                            onClick={() => onRemoveDataset(dataset.datasetId)}
                             disabled={isDatasetClearing}
                             className="ml-1 rounded p-0.5 text-emerald-300/60 transition hover:bg-red-500/10 hover:text-red-300 disabled:opacity-40"
                             title="Удалить датасет"
@@ -46,19 +51,23 @@ const EditorHeader = ({
                             <X className="h-3.5 w-3.5" />
                         </button>
                     </div>
-                ) : (
-                    <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 px-3.5 py-2 text-xs font-medium text-zinc-200 transition hover:border-zinc-600 hover:bg-zinc-800">
-                        <Upload className="h-4 w-4" />
-                        {isDatasetUploading ? 'Загрузка…' : 'Загрузить CSV'}
-                        <input
-                            type="file"
-                            accept=".csv"
-                            onChange={onFileUpload}
-                            className="hidden"
-                            disabled={isDatasetUploading}
-                        />
-                    </label>
-                )}
+                ))}
+
+                <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 px-3.5 py-2 text-xs font-medium text-zinc-200 transition hover:border-zinc-600 hover:bg-zinc-800">
+                    <Upload className="h-4 w-4" />
+                    {isDatasetUploading
+                        ? 'Загрузка…'
+                        : datasets.length > 0
+                            ? 'Добавить CSV'
+                            : 'Загрузить CSV'}
+                    <input
+                        type="file"
+                        accept=".csv"
+                        onChange={onFileUpload}
+                        className="hidden"
+                        disabled={isDatasetUploading}
+                    />
+                </label>
 
                 <div className="mx-1 h-6 w-px bg-zinc-800" />
 

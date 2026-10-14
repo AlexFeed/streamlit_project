@@ -29,6 +29,18 @@ const EditorPage = () => {
     // Черновик это или уже сохранённый проект (Для управления localStorage)
     const isDraftMode = !(projectId);
 
+    // Получение данных связанных с датасетом
+    const {
+        datasets,
+        setDatasets,
+        previewRowsByDataset,
+        isDatasetUploading,
+        isDatasetClearing,
+        isDatasetPreviewLoading,
+        handleFileUpload,
+        removeDataset,
+    } = useDatasetState({ useDraftStorage: isDraftMode });
+
     // Получения данных связанных с компонентами
     const {
         components,
@@ -44,21 +56,10 @@ const EditorPage = () => {
         deleteComponent,
         deleteSelectedComponent,
         clearCanvas,
-    } = useEditorState({ useDraftStorage: isDraftMode });
-
-    // Получение данных связанных с датасетом
-    const {
-        dataset,
-        setDataset,
-        availableFields,
-        fieldTypes,
-        previewRows,
-        isDatasetUploading,
-        isDatasetClearing,
-        isDatasetPreviewLoading,
-        handleFileUpload,
-        clearDataset,
-    } = useDatasetState({ useDraftStorage: isDraftMode });
+    } = useEditorState({
+        useDraftStorage: isDraftMode,
+        defaultDatasetId: datasets[0]?.datasetId || '',
+    });
 
     // Получение данных, связанных с загрузкой проекта
     const {
@@ -70,7 +71,7 @@ const EditorPage = () => {
     } = useProjectState({
         projectId,
         setComponents,
-        setDataset,
+        setDatasets,
     });
 
     // Получения данных, связанных с генерацией streamlit кода
@@ -92,21 +93,50 @@ const EditorPage = () => {
         reorderComponent,
     });
 
-    const getDatasetMetadata = () => {
-        if (!dataset) return null;
+    // Удаление датасета с перепривязкой компонентов на первый оставшийся датасет
+    const handleRemoveDataset = async (datasetId) => {
+        const remainingDatasets = datasets.filter((ds) => ds.datasetId !== datasetId);
+        const fallbackDataset = remainingDatasets[0] || null;
+        const fallbackDatasetId = fallbackDataset?.datasetId || '';
+        const fallbackFields = new Set(fallbackDataset?.fields || []);
 
-        const metadata = { ...dataset };
-        delete metadata.sampleRows;
-        return metadata;
+        await removeDataset(datasetId);
+
+        components.forEach((component) => {
+            if (component.datasetId && component.datasetId !== datasetId) {
+                return;
+            }
+
+            updateComponent(component.id, (current) => {
+                const cleanedBindings = { ...current.bindings };
+                Object.keys(cleanedBindings).forEach((key) => {
+                    if (cleanedBindings[key] && !fallbackFields.has(cleanedBindings[key])) {
+                        cleanedBindings[key] = '';
+                    }
+                });
+
+                return {
+                    ...current,
+                    datasetId: fallbackDatasetId,
+                    bindings: cleanedBindings,
+                };
+            });
+        });
     };
+
+    const getDatasetsMetadata = () =>
+        datasets.map((ds) => {
+            const metadata = { ...ds };
+            delete metadata.sampleRows;
+            return metadata;
+        });
 
     // ЕДИНЫЙ ДИСПЕТЧЕР ДАННЫХ (Snapshot)
     const getProjectSnapshot = (overrideTitle, overrideDescription) => ({
         title: overrideTitle ?? project?.title ?? 'Untitled dashboard',
         description: overrideDescription ?? project?.description ?? '',
         components,
-        availableFields,
-        dataset: getDatasetMetadata()
+        datasets: getDatasetsMetadata(),
     });
 
     const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
@@ -171,8 +201,8 @@ const EditorPage = () => {
                         onClearCanvas={clearCanvas}
                         onGenerateDashboard={onGenerateClick}
                         onFileUpload={handleFileUpload}
-                        datasetMeta={dataset}
-                        onClearDataset={clearDataset}
+                        datasets={datasets}
+                        onRemoveDataset={handleRemoveDataset}
                         isDatasetUploading={isDatasetUploading}
                         isDatasetClearing={isDatasetClearing}
                         isGenerating={isGenerating}
@@ -211,7 +241,6 @@ const EditorPage = () => {
                     }`}>
                         <main className="min-h-0 min-w-0 overflow-y-auto p-4">
                             <Canvas
-                                key={dataset?.datasetId || 'no-dataset'}
                                 components={components}
                                 selectedId={selectedId}
                                 onSelect={selectComponent}
@@ -219,7 +248,8 @@ const EditorPage = () => {
                                 onDuplicate={duplicateComponent}
                                 onLayoutChange={setDashboardLayout}
                                 isDragging={Boolean(activeDrag)}
-                                dataRows={previewRows}
+                                datasets={datasets}
+                                previewRowsByDataset={previewRowsByDataset}
                                 isDataLoading={isDatasetPreviewLoading}
                             />
                         </main>
@@ -229,8 +259,7 @@ const EditorPage = () => {
                             onUpdateComponent={updateComponent}
                             onDeleteSelected={deleteSelectedComponent}
                             onClose={() => selectComponent(null)}
-                            availableFields={availableFields}
-                            fieldTypes={fieldTypes}
+                            datasets={datasets}
                         />
                     </div>
                 </div>
