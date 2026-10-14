@@ -19,7 +19,8 @@ const Canvas = ({
                     onDuplicate,
                     onLayoutChange,
                     isDragging,
-                    dataRows = [],
+                    datasets = [],
+                    previewRowsByDataset = {},
                     isDataLoading = false,
                 }) => {
     const { setNodeRef, isOver } = useDroppable({
@@ -41,20 +42,48 @@ const Canvas = ({
         onSelect,
     });
 
+    const defaultDatasetId = datasets[0]?.datasetId || '';
+
+    const resolveDatasetId = useCallback(
+        (component) => {
+            if (
+                component?.datasetId &&
+                datasets.some((ds) => ds.datasetId === component.datasetId)
+            ) {
+                return component.datasetId;
+            }
+            return defaultDatasetId;
+        },
+        [datasets, defaultDatasetId]
+    );
+
     const activeFilters = useMemo(
         () => components.filter((component) => component.type === 'selectbox'),
         [components]
     );
 
-    const filteredRows = useMemo(() => (
-        dataRows.filter((row) => activeFilters.every((filter) => {
-            const selectedValue = filterValues[filter.id];
-            const field = filter.bindings?.field;
+    const filteredRowsByDataset = useMemo(() => {
+        const result = {};
 
-            if (!selectedValue || !field) return true;
-            return String(row[field]) === selectedValue;
-        }))
-    ), [activeFilters, dataRows, filterValues]);
+        datasets.forEach((ds) => {
+            const rawRows = previewRowsByDataset[ds.datasetId] || [];
+            const datasetFilters = activeFilters.filter(
+                (filter) => resolveDatasetId(filter) === ds.datasetId
+            );
+
+            result[ds.datasetId] = rawRows.filter((row) =>
+                datasetFilters.every((filter) => {
+                    const selectedValue = filterValues[filter.id];
+                    const field = filter.bindings?.field;
+
+                    if (!selectedValue || !field) return true;
+                    return String(row[field]) === selectedValue;
+                })
+            );
+        });
+
+        return result;
+    }, [datasets, previewRowsByDataset, activeFilters, filterValues, resolveDatasetId]);
 
     const handleFilterChange = useCallback((id, value) => {
         setFilterValues((current) => ({
@@ -106,7 +135,9 @@ const Canvas = ({
                         </span>
                     ) : (
                         <span className="rounded-lg border border-zinc-800 bg-zinc-900/80 px-2.5 py-1.5">
-                            {filteredRows.length} из {dataRows.length} строк
+                            {datasets.length > 1
+                                ? `${datasets.length} CSV · ${Object.values(filteredRowsByDataset).reduce((acc, rows) => acc + rows.length, 0)} строк`
+                                : `${(filteredRowsByDataset[defaultDatasetId] || []).length} из ${(previewRowsByDataset[defaultDatasetId] || []).length} строк`}
                         </span>
                     )}
                 </div>
@@ -137,6 +168,10 @@ const Canvas = ({
                         );
                         if (!item) return null;
 
+                        const itemDatasetId = resolveDatasetId(item);
+                        const itemRawRows = previewRowsByDataset[itemDatasetId] || [];
+                        const itemFilteredRows = filteredRowsByDataset[itemDatasetId] || [];
+
                         return (
                             <div
                                 key={item.id}
@@ -151,8 +186,8 @@ const Canvas = ({
                                     onDelete={onDelete}
                                     onDuplicate={onDuplicate}
                                     rows={item.type === 'selectbox'
-                                        ? dataRows
-                                        : filteredRows}
+                                        ? itemRawRows
+                                        : itemFilteredRows}
                                     filterValue={filterValues[item.id] || ''}
                                     onFilterChange={handleFilterChange}
                                     onBeginInteraction={beginInteraction}

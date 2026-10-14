@@ -6,10 +6,20 @@ export const buildDashboardSchema = (snapshot) => {
     // Извлекаем все нужные данные из единого слепка состояния
     const {
         components = [],
-        availableFields = [],
-        dataset = null,
+        datasets = [],
         title = 'Untitled dashboard'
     } = snapshot;
+
+    const defaultDatasetId = datasets[0]?.datasetId || null;
+    const resolveDatasetId = (component) => {
+        if (
+            component?.datasetId &&
+            datasets.some((ds) => ds.datasetId === component.datasetId)
+        ) {
+            return component.datasetId;
+        }
+        return defaultDatasetId;
+    };
 
     const filters = [];
     const views = [];
@@ -19,6 +29,7 @@ export const buildDashboardSchema = (snapshot) => {
         const base = {
             id: component.id,
             type: component.type,
+            datasetId: resolveDatasetId(component),
             order: index + 1,
             layout: {
                 x: component.layout?.x || 0,
@@ -74,12 +85,12 @@ export const buildDashboardSchema = (snapshot) => {
                 columns: 12,
             },
         },
-        dataSource: {
+        dataSources: datasets.map((ds) => ({
             type: 'backend_dataset',
-            datasetId: dataset?.datasetId || null,
-            name: dataset?.name || 'data.csv',
-            fields: availableFields,
-        },
+            datasetId: ds.datasetId || null,
+            name: ds.name || 'data.csv',
+            fields: ds.fields || [],
+        })),
         filters,
         views,
     };
@@ -87,7 +98,7 @@ export const buildDashboardSchema = (snapshot) => {
 
 // Проверка JSON-схемы на правильность
 export const validateSchema = (snapshot) => {
-    const { components = [], availableFields = [], dataset = null } = snapshot;
+    const { components = [], datasets = [] } = snapshot;
     const errors = [];
     const allowedAggregations = new Set(['none', 'sum', 'mean', 'count', 'min', 'max']);
     const allowedColorModes = new Set(['solid', 'gradient', 'categorical']);
@@ -97,12 +108,9 @@ export const validateSchema = (snapshot) => {
         errors.push('Холст пуст. Добавьте хотя бы один компонент.');
     }
 
-    if (!dataset?.datasetId) {
+    if (!datasets.length || datasets.some((ds) => !ds?.datasetId)) {
         errors.push('Не загружен CSV-файл.');
     }
-
-    // Проверка того, что поле реально есть в availableFields
-    const hasField = (field) => availableFields.includes(field);
 
     // Проверка заполненности полей и свойств каждого компонента
     components.forEach((component, index) => {
@@ -110,6 +118,14 @@ export const validateSchema = (snapshot) => {
         const name = component.config?.title || component.type || `component-${index + 1}`;
         const width = component.layout?.width;
         const height = component.layout?.height;
+
+        const targetDataset =
+            datasets.find((ds) => ds.datasetId === component.datasetId) ||
+            datasets[0] ||
+            null;
+        const availableFields = targetDataset?.fields || [];
+        // Проверка того, что поле реально есть в выбранном датасете компонента
+        const hasField = (field) => availableFields.includes(field);
 
         if (!meta) {
             errors.push(`Компонент "${name}": тип "${component.type}" не поддерживается.`);
@@ -129,7 +145,7 @@ export const validateSchema = (snapshot) => {
             if (!field) {
                 errors.push(`Компонент "${name}": не выбрано поле данных для фильтра.`);
             } else if (!hasField(field)) {
-                errors.push(`Компонент "${name}": поле "${field}" отсутствует в текущем датасете.`);
+                errors.push(`Компонент "${name}": поле "${field}" отсутствует в выбранном датасете.`);
             }
         }
         else if (meta.isChart) {
@@ -166,13 +182,13 @@ export const validateSchema = (snapshot) => {
             if (!xField) {
                 errors.push(`Компонент "${name}": не выбрано поле X.`);
             } else if (!hasField(xField)) {
-                errors.push(`Компонент "${name}": поле X "${xField}" отсутствует в текущем датасете.`);
+                errors.push(`Компонент "${name}": поле X "${xField}" отсутствует в выбранном датасете.`);
             }
 
             if (!yField) {
                 errors.push(`Компонент "${name}": не выбрано поле Y.`);
             } else if (!hasField(yField)) {
-                errors.push(`Компонент "${name}": поле Y "${yField}" отсутствует в текущем датасете.`);
+                errors.push(`Компонент "${name}": поле Y "${yField}" отсутствует в выбранном датасете.`);
             }
         }
         else if (component.type === 'metric') {
@@ -186,7 +202,7 @@ export const validateSchema = (snapshot) => {
             if (!valueField) {
                 errors.push(`Компонент "${name}": не выбрано поле значения.`);
             } else if (!hasField(valueField)) {
-                errors.push(`Компонент "${name}": поле "${valueField}" отсутствует в текущем датасете.`);
+                errors.push(`Компонент "${name}": поле "${valueField}" отсутствует в выбранном датасете.`);
             }
         }
     });

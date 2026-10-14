@@ -10,7 +10,7 @@ import { DATASET_DRAFT_STORAGE_KEY } from './useDatasetState.js';
 export const useProjectState = ({
                                     projectId,
                                     setComponents,
-                                    setDataset,
+                                    setDatasets,
                                 }) => {
     const [isProjectLoading, setIsProjectLoading] = useState(false);
     const [isProjectSaving, setIsProjectSaving] = useState(false);
@@ -31,7 +31,7 @@ export const useProjectState = ({
 
                 setProject(fetchedProject);
                 setComponents(fetchedProject.editorState?.components || []);
-                setDataset(fetchedProject.dataset || null);
+                setDatasets(fetchedProject.datasets || []);
             } catch (error) {
                 console.error('Ошибка загрузки проекта:', error);
                 toast.error('Не удалось загрузить проект.');
@@ -41,7 +41,7 @@ export const useProjectState = ({
         };
 
         loadProject();
-    }, [projectId, setComponents, setDataset]);
+    }, [projectId, setComponents, setDatasets]);
 
 
     // Операция 1: Создание проекта из черновика (с модалкой)
@@ -55,7 +55,7 @@ export const useProjectState = ({
         const payload = {
             title: snapshot.title,
             description: snapshot.description,
-            dataset: snapshot.dataset,
+            datasets: snapshot.datasets,
             editorState: { components: snapshot.components },
             schema,
         };
@@ -93,7 +93,7 @@ export const useProjectState = ({
         const payload = {
             title: snapshot.title,
             description: snapshot.description,
-            dataset: snapshot.dataset,
+            datasets: snapshot.datasets,
             editorState: { components: snapshot.components },
             schema,
         };
