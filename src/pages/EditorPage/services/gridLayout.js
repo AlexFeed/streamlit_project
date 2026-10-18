@@ -5,6 +5,10 @@ export const GRID_ROW_HEIGHT = 20;
 export const GRID_GAP = 16;
 export const CARD_CHROME_HEIGHT = 96;
 
+export const getCardChromeHeight = (type) => (
+    type === 'text' || type === 'metric' ? 0 : CARD_CHROME_HEIGHT
+);
+
 export const getMinimumContentHeight = (type) => (
     paletteItems[type]?.minHeight || 220
 );
@@ -23,7 +27,7 @@ export const normalizeContentHeight = (value, type) => {
 };
 
 export const contentHeightToGridUnits = (height, type) => {
-    const totalHeight = normalizeContentHeight(height, type) + CARD_CHROME_HEIGHT;
+    const totalHeight = normalizeContentHeight(height, type) + getCardChromeHeight(type);
     return Math.max(
         1,
         Math.ceil((totalHeight + GRID_GAP) / (GRID_ROW_HEIGHT + GRID_GAP))
@@ -36,7 +40,7 @@ export const gridUnitsToContentHeight = (units, type) => {
         safeUnits * GRID_ROW_HEIGHT
         + Math.max(0, safeUnits - 1) * GRID_GAP
     );
-    return normalizeContentHeight(totalHeight - CARD_CHROME_HEIGHT, type);
+    return normalizeContentHeight(totalHeight - getCardChromeHeight(type), type);
 };
 
 export const rectanglesOverlap = (left, right) => (
@@ -104,11 +108,107 @@ export const moveGridItem = (layout, id, deltaX, deltaY) => {
     const item = layout.find((entry) => entry.i === id);
     if (!item) return layout;
 
-    return resolveGridCollisions(layout, id, {
+    const requested = clampGridItem({
         ...item,
         x: item.x + Math.round(deltaX),
         y: item.y + Math.round(deltaY),
     });
+    const otherItems = layout.filter((entry) => entry.i !== id);
+    const fitsWithoutMovingOthers = (candidate) => (
+        !otherItems.some((entry) => rectanglesOverlap(candidate, entry))
+    );
+
+    if (fitsWithoutMovingOthers(requested)) {
+        return layout.map((entry) => entry.i === id ? requested : { ...entry });
+    }
+
+    const compact = clampGridItem({
+        ...requested,
+        w: item.minW || 2,
+        h: item.minH || 1,
+    });
+    if (fitsWithoutMovingOthers(compact)) {
+        return layout.map((entry) => entry.i === id ? compact : { ...entry });
+    }
+
+    return resolveGridCollisions(layout, id, compact);
+};
+
+export const findNearestGridPosition = (
+    layout,
+    requestedX,
+    requestedY,
+    width,
+    height,
+) => {
+    const safeWidth = Math.max(2, Math.min(GRID_COLUMNS, Math.round(width)));
+    const safeHeight = Math.max(1, Math.round(height));
+    const originX = Math.max(
+        0,
+        Math.min(GRID_COLUMNS - safeWidth, Math.round(requestedX))
+    );
+    const originY = Math.max(0, Math.round(requestedY));
+
+    for (let radius = 0; radius <= 8; radius += 1) {
+        const candidates = [];
+        for (let deltaY = -radius; deltaY <= radius; deltaY += 1) {
+            for (let deltaX = -radius; deltaX <= radius; deltaX += 1) {
+                if (Math.abs(deltaX) + Math.abs(deltaY) !== radius) continue;
+                candidates.push({
+                    x: Math.max(
+                        0,
+                        Math.min(GRID_COLUMNS - safeWidth, originX + deltaX)
+                    ),
+                    y: Math.max(0, originY + deltaY),
+                    w: safeWidth,
+                    h: safeHeight,
+                });
+            }
+        }
+
+        const free = candidates.find((candidate) => (
+            !layout.some((item) => rectanglesOverlap(candidate, item))
+        ));
+        if (free) return free;
+    }
+
+    return null;
+};
+
+export const findGridInsertionPosition = (
+    layout,
+    requestedX,
+    requestedY,
+    width,
+    height,
+) => {
+    const safeWidth = Math.max(2, Math.min(GRID_COLUMNS, Math.round(width)));
+    const safeHeight = Math.max(1, Math.round(height));
+    const x = Math.max(
+        0,
+        Math.min(GRID_COLUMNS - safeWidth, Math.round(requestedX))
+    );
+    const y = Math.max(0, Math.round(requestedY));
+    const horizontalMatches = layout.filter((item) => (
+        x < item.x + item.w && x + safeWidth > item.x
+    ));
+    const boundaries = Array.from(new Set(
+        horizontalMatches.flatMap((item) => [item.y, item.y + item.h])
+    ));
+    if (boundaries.length === 0) return null;
+
+    const boundary = boundaries.reduce((nearest, current) => (
+        Math.abs(current - y) < Math.abs(nearest - y) ? current : nearest
+    ));
+    if (Math.abs(boundary - y) > 2) return null;
+
+    return {
+        x,
+        y: boundary,
+        w: safeWidth,
+        h: safeHeight,
+        insert: true,
+    };
 };
 
 export const resizeGridItem = (layout, id, deltaWidth, deltaHeight) => {
@@ -163,8 +263,10 @@ export const normalizeComponentLayouts = (components) => {
                 h: gridHeight,
             }
             : null;
+        // Координаты уже размещённых элементов являются пользовательскими
+        // данными. При повторной загрузке их нельзя уплотнять или переносить:
+        // свободную позицию ищем только для нового элемента без x/y.
         const position = requested
-        && !placed.some((item) => rectanglesOverlap(requested, item))
             ? requested
             : {
                 ...findFreePosition(placed, width, gridHeight),

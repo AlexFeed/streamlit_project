@@ -4,12 +4,36 @@ import {
     ChevronDownSquare,
     LineChart,
     ScatterChart,
+    Type,
     WalletCards,
 } from 'lucide-react';
 
-export const PALETTE_GROUPS = ['Данные', 'Графики'];
+export const PALETTE_GROUPS = ['Оформление', 'Данные', 'Графики'];
 
 export const paletteItems = {
+    text: {
+        type: 'text',
+        label: 'Текст',
+        group: 'Оформление',
+        icon: Type,
+        accentClass: 'from-sky-500/20 to-blue-500/5 text-sky-300',
+        isChart: false,
+        supportsPaletteModes: false,
+        description: 'Заголовок, пояснение или комментарий к данным',
+        defaultConfig: {
+            title: '',
+            content: 'Добавьте описание или пояснение',
+            fontSize: 16,
+            fontWeight: 'normal',
+            fontStyle: 'normal',
+            color: '#d4d4d8',
+            textAlign: 'left',
+        },
+        defaultBindings: {},
+        defaultWidth: 6,
+        defaultHeight: 68,
+        minHeight: 60,
+    },
     selectbox: {
         type: 'selectbox',
         label: 'Фильтр',
@@ -156,7 +180,7 @@ export const paletteItems = {
             valueField: '',
         },
         defaultWidth: 3,
-        defaultHeight: 140,
-        minHeight: 120,
+        defaultHeight: 80,
+        minHeight: 60,
     },
 };

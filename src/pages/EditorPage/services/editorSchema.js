@@ -29,7 +29,9 @@ export const buildDashboardSchema = (snapshot) => {
         const base = {
             id: component.id,
             type: component.type,
-            datasetId: resolveDatasetId(component),
+            datasetId: component.type === 'text'
+                ? null
+                : resolveDatasetId(component),
             order: index + 1,
             layout: {
                 x: component.layout?.x || 0,
@@ -73,6 +75,18 @@ export const buildDashboardSchema = (snapshot) => {
                 description: component.config?.description || '',
                 field: component.bindings?.valueField || '',
                 aggregation: component.config?.aggregation || 'sum',
+            });
+        }
+        else if (component.type === 'text') {
+            views.push({
+                ...base,
+                title: component.config?.title || '',
+                content: component.config?.content || '',
+                fontSize: component.config?.fontSize || 16,
+                fontWeight: component.config?.fontWeight || 'normal',
+                fontStyle: component.config?.fontStyle || 'normal',
+                color: component.config?.color || '#d4d4d8',
+                textAlign: component.config?.textAlign || 'left',
             });
         }
     });
@@ -136,8 +150,9 @@ export const validateSchema = (snapshot) => {
             errors.push(`Компонент "${name}": ширина должна быть 3, 4, 6, 8 или 12 колонок.`);
         }
 
-        if (height && (height < 120 || height > 720)) {
-            errors.push(`Компонент "${name}": высота должна быть от 120 до 720 пикселей.`);
+        const minimumHeight = meta?.minHeight || 120;
+        if (height && (height < minimumHeight || height > 720)) {
+            errors.push(`Компонент "${name}": высота должна быть от ${minimumHeight} до 720 пикселей.`);
         }
 
         if (component.type === 'selectbox') {
@@ -203,6 +218,32 @@ export const validateSchema = (snapshot) => {
                 errors.push(`Компонент "${name}": не выбрано поле значения.`);
             } else if (!hasField(valueField)) {
                 errors.push(`Компонент "${name}": поле "${valueField}" отсутствует в выбранном датасете.`);
+            }
+        }
+        else if (component.type === 'text') {
+            const fontSize = Number(component.config?.fontSize || 16);
+            const fontWeight = component.config?.fontWeight || 'normal';
+            const fontStyle = component.config?.fontStyle || 'normal';
+            const color = component.config?.color || '#d4d4d8';
+            const textAlign = component.config?.textAlign || 'left';
+
+            if (!component.config?.content?.trim()) {
+                errors.push(`Компонент "${name}": добавьте текст.`);
+            }
+            if (fontSize < 12 || fontSize > 32) {
+                errors.push(`Компонент "${name}": размер текста должен быть от 12 до 32 пикселей.`);
+            }
+            if (!['normal', 'bold'].includes(fontWeight)) {
+                errors.push(`Компонент "${name}": неизвестное начертание текста.`);
+            }
+            if (!['normal', 'italic'].includes(fontStyle)) {
+                errors.push(`Компонент "${name}": неизвестный стиль текста.`);
+            }
+            if (!/^#[0-9a-fA-F]{6}$/.test(color)) {
+                errors.push(`Компонент "${name}": цвет должен быть в формате #RRGGBB.`);
+            }
+            if (!['left', 'center', 'right'].includes(textAlign)) {
+                errors.push(`Компонент "${name}": неизвестное выравнивание текста.`);
             }
         }
     });

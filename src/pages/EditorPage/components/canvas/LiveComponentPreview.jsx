@@ -214,15 +214,51 @@ const LiveMetric = ({ item, rows, height }) => {
 
     return (
         <div
-            className="flex flex-col justify-center rounded-2xl bg-gradient-to-br from-blue-500/15 via-zinc-950/80 to-violet-500/10 p-6"
+            className="flex flex-col justify-center rounded-xl bg-gradient-to-br from-blue-500/15 via-zinc-950/80 to-violet-500/10 px-4 py-3"
             style={{ height }}
         >
-            <p className="text-4xl font-semibold tracking-tight text-white">
+            <p className="mb-1 text-xs font-medium text-zinc-400">
+                {item.config?.title || 'Метрика'}
+            </p>
+            <p className="text-3xl font-semibold tracking-tight text-white">
                 {formatMetricValue(value)}
             </p>
-            <p className="mt-3 text-sm text-zinc-400">
+            <p className="mt-1 text-xs text-zinc-400">
                 {item.config?.description || `${item.config?.aggregation || 'sum'} · ${item.bindings.valueField}`}
             </p>
+        </div>
+    );
+};
+
+const LiveText = ({ item, height }) => {
+    const content = item.config?.content?.trim();
+
+    if (!content) {
+        return (
+            <EmptyPreview height={height}>
+                Введите текст в панели свойств.
+            </EmptyPreview>
+        );
+    }
+
+    return (
+        <div
+            className="overflow-auto whitespace-pre-wrap rounded-xl bg-zinc-950/40 px-3 py-2 text-sm leading-6 text-zinc-300"
+            style={{
+                height,
+                fontSize: `${item.config?.fontSize || 16}px`,
+                fontWeight: item.config?.fontWeight || 'normal',
+                fontStyle: item.config?.fontStyle || 'normal',
+                color: item.config?.color || '#d4d4d8',
+                textAlign: item.config?.textAlign || 'left',
+            }}
+        >
+            {item.config?.title && (
+                <div className="mb-1 text-xs font-semibold not-italic text-zinc-400">
+                    {item.config.title}
+                </div>
+            )}
+            <div>{item.config.content}</div>
         </div>
     );
 };
@@ -284,6 +320,9 @@ const LiveComponentPreview = (props) => {
     }
     if (item.type === 'metric') {
         return <LiveMetric item={item} rows={props.rows} height={height} />;
+    }
+    if (item.type === 'text') {
+        return <LiveText item={item} height={height} />;
     }
     if (item.type === 'selectbox') {
         return <LiveFilter {...props} />;

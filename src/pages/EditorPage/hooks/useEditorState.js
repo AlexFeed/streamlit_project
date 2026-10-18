@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
     gridUnitsToContentHeight,
+    resolveGridCollisions,
     normalizeComponentLayouts,
     normalizeGridWidth,
+    toReactGridLayout,
 } from '../services/gridLayout.js';
 
 // Hook отвечает за управление состоянием локальных компонентов дашборда, их загрузка в LocalStorage
@@ -34,7 +36,12 @@ const loadDraftComponents = () => {
 };
 
 // Создание компоненты для холста
-const createComponentFromPaletteItem = (paletteItem, index, defaultDatasetId = '') => {
+const createComponentFromPaletteItem = (
+    paletteItem,
+    index,
+    defaultDatasetId = '',
+    targetLayout = null
+) => {
     return {
         id: `${paletteItem.type}-${globalThis.crypto?.randomUUID?.() || `${Date.now()}-${index}`}`,
         type: paletteItem.type,
@@ -44,6 +51,7 @@ const createComponentFromPaletteItem = (paletteItem, index, defaultDatasetId = '
         layout: {
             width: paletteItem.defaultWidth || 6,
             height: paletteItem.defaultHeight || 320,
+            ...(targetLayout || {}),
         },
     };
 };
@@ -90,21 +98,58 @@ export const useEditorState = ({ useDraftStorage = true, defaultDatasetId = ''})
 
 
     // Добавление компонента на холст
-    const addComponent = (paletteItem, targetIndex) => {
+    const addComponent = (paletteItem, targetIndex, targetLayout = null) => {
+        const shouldInsert = Boolean(targetLayout?.insert);
+        const componentLayout = targetLayout
+            ? Object.fromEntries(
+                Object.entries(targetLayout).filter(([key]) => key !== 'insert')
+            )
+            : null;
         const newComponent = createComponentFromPaletteItem(
             paletteItem,
             components.length + 1,
-            defaultDatasetId
+            defaultDatasetId,
+            componentLayout
         );
         setComponents((prev) => {
             const insertIndex = Number.isInteger(targetIndex)
                 ? Math.max(0, Math.min(targetIndex, prev.length))
                 : prev.length;
-            return normalizeComponents([
+            const nextComponents = [
                 ...prev.slice(0, insertIndex),
                 newComponent,
                 ...prev.slice(insertIndex),
-            ]);
+            ];
+            if (!shouldInsert) {
+                return normalizeComponents(nextComponents);
+            }
+
+            const layout = toReactGridLayout(nextComponents);
+            const activeItem = layout.find((item) => item.i === newComponent.id);
+            if (!activeItem) return normalizeComponents(nextComponents);
+            const resolved = resolveGridCollisions(
+                layout,
+                newComponent.id,
+                activeItem
+            );
+            const layoutById = new Map(
+                resolved.map((item) => [item.i, item])
+            );
+
+            return nextComponents.map((component) => {
+                const item = layoutById.get(component.id);
+                if (!item) return component;
+                return {
+                    ...component,
+                    layout: {
+                        ...component.layout,
+                        x: item.x,
+                        y: item.y,
+                        width: normalizeGridWidth(item.w, component.type),
+                        height: gridUnitsToContentHeight(item.h, component.type),
+                    },
+                };
+            });
         });
         setSelectedId(newComponent.id);
     };

@@ -42,7 +42,11 @@ export const useEditorDnd = ({
         if (dragData?.source === 'palette') {
             const overIndex = components.findIndex((item) => item.id === over.id);
             const targetIndex = overIndex >= 0 ? overIndex : components.length;
-            addComponent(dragData.paletteItem, targetIndex);
+            const targetLayout = over.data.current?.getPaletteDropLayout?.(
+                active.rect.current.translated,
+                dragData.paletteItem
+            ) || null;
+            addComponent(dragData.paletteItem, targetIndex, targetLayout);
             return;
         }
 

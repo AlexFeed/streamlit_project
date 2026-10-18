@@ -112,6 +112,51 @@ export const TextField = ({
     );
 };
 
+// Многострочное поле для текста, который будет показан на дашборде
+export const TextAreaField = ({
+    label,
+    value,
+    onChange,
+    placeholder,
+    helperText,
+    rows = 5,
+}) => {
+    return (
+        <div className={panelSectionClassName}>
+            <LabelWithTooltip label={label} helperText={helperText} />
+            <textarea
+                value={value || ''}
+                onChange={(event) => onChange(event.target.value)}
+                className={`${inputClassName} resize-y`}
+                placeholder={placeholder}
+                rows={rows}
+            />
+        </div>
+    );
+};
+
+export const ColorField = ({
+    label,
+    value,
+    onChange,
+    helperText,
+}) => (
+    <div className={panelSectionClassName}>
+        <LabelWithTooltip label={label} helperText={helperText} />
+        <div className="flex items-center gap-3">
+            <input
+                type="color"
+                value={value || '#d4d4d8'}
+                onChange={(event) => onChange(event.target.value)}
+                className="h-10 w-12 cursor-pointer rounded-lg border border-zinc-700 bg-zinc-950 p-1"
+            />
+            <span className="font-mono text-xs uppercase text-zinc-400">
+                {value || '#d4d4d8'}
+            </span>
+        </div>
+    </div>
+);
+
 export const OptionSelect = ({
     label,
     value,

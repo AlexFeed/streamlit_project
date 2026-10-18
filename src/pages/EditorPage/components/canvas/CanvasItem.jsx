@@ -25,6 +25,7 @@ const CanvasItem = ({
                     }) => {
     const meta = paletteItems[item.type];
     const Icon = meta?.icon || WalletCards;
+    const isCompact = item.type === 'text' || item.type === 'metric';
 
     return (
         <article
@@ -37,10 +38,17 @@ const CanvasItem = ({
             }`}
         >
             <header
-                className="canvas-drag-handle flex shrink-0 touch-none cursor-grab items-center justify-between gap-3 border-b border-zinc-800/80 px-4 py-3 active:cursor-grabbing"
-                onPointerDown={(event) => onBeginInteraction(event, item.id, 'drag')}
-                title="Зажмите и перетащите карточку"
+                className={isCompact
+                    ? `absolute right-1 top-1 z-30 flex touch-none items-center rounded-xl border border-zinc-700/70 bg-zinc-950/90 p-0.5 shadow-lg backdrop-blur transition-opacity ${
+                        isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                    }`
+                    : 'canvas-drag-handle flex shrink-0 touch-none cursor-grab items-center justify-between gap-3 border-b border-zinc-800/80 px-4 py-3 active:cursor-grabbing'}
+                onPointerDown={isCompact
+                    ? undefined
+                    : (event) => onBeginInteraction(event, item.id, 'drag')}
+                title={isCompact ? undefined : 'Зажмите и перетащите карточку'}
             >
+                {!isCompact && (
                 <div className="flex min-w-0 items-center gap-3">
                     <div className="rounded-xl border border-zinc-700/80 bg-zinc-800 p-2">
                         <Icon className="h-4 w-4 text-blue-300" />
@@ -49,6 +57,7 @@ const CanvasItem = ({
                         {item.config?.title || meta?.label}
                     </h3>
                 </div>
+                )}
 
                 <div className={`flex shrink-0 items-center gap-0.5 transition-opacity ${
                     isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
@@ -79,14 +88,19 @@ const CanvasItem = ({
                     </button>
                     <span
                         title="Перетащить"
-                        className="rounded-lg p-2 text-zinc-500"
+                        onPointerDown={isCompact
+                            ? (event) => onBeginInteraction(event, item.id, 'drag')
+                            : undefined}
+                        className={`rounded-lg p-2 text-zinc-500 ${
+                            isCompact ? 'canvas-drag-handle cursor-grab active:cursor-grabbing' : ''
+                        }`}
                     >
                         <GripVertical className="h-4 w-4" />
                     </span>
                 </div>
             </header>
 
-            <div className="min-h-0 flex-1 p-4">
+            <div className={`min-h-0 flex-1 ${isCompact ? 'p-2' : 'p-4'}`}>
                 <Suspense
                     fallback={(
                         <div className="h-full animate-pulse rounded-xl bg-zinc-800/60" />

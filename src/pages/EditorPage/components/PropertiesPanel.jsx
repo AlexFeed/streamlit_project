@@ -3,6 +3,8 @@ import { paletteItems } from '../data/paletteItems.js';
 import {
     FieldSelect,
     TextField,
+    TextAreaField,
+    ColorField,
     OptionSelect,
 } from './properties/PropertyFields.jsx';
 import ColorStyleField from './properties/ColorStyleField.jsx';
@@ -25,6 +27,27 @@ const sortOptions = [
 const sortByOptions = [
     { value: 'x', label: 'По значениям X' },
     { value: 'y', label: 'По значениям Y' },
+];
+
+const fontSizeOptions = [12, 14, 16, 18, 20, 24, 28, 32].map((size) => ({
+    value: String(size),
+    label: `${size} px`,
+}));
+
+const fontWeightOptions = [
+    { value: 'normal', label: 'Обычный' },
+    { value: 'bold', label: 'Жирный' },
+];
+
+const fontStyleOptions = [
+    { value: 'normal', label: 'Обычный' },
+    { value: 'italic', label: 'Курсив' },
+];
+
+const textAlignOptions = [
+    { value: 'left', label: 'Слева' },
+    { value: 'center', label: 'По центру' },
+    { value: 'right', label: 'Справа' },
 ];
 
 const PropertiesPanel = ({
@@ -141,21 +164,73 @@ const PropertiesPanel = ({
 
                 <div className="space-y-3 p-4">
                     <TextField
-                        label="Заголовок"
+                        label={type === 'text' ? 'Заголовок (необязательно)' : 'Заголовок'}
                         value={config.title || ''}
                         onChange={(value) => updateConfig('title', value)}
-                        placeholder="Введите заголовок компонента"
-                        helperText="Отображается над графиком или элементом"
+                        placeholder={type === 'text'
+                            ? 'Можно оставить пустым'
+                            : 'Введите заголовок компонента'}
+                        helperText={type === 'text'
+                            ? 'Если поле пустое, в готовом приложении будет показан только текст'
+                            : 'Отображается над графиком или элементом'}
                     />
 
-                    <FieldSelect
-                        label="Источник данных (CSV)"
-                        value={activeDataset?.datasetId || ''}
-                        onChange={updateDataset}
-                        options={datasetOptions}
-                        placeholder="Выберите CSV-файл"
-                        helperText="CSV-файл, из которого компонент берёт данные"
-                    />
+                    {type !== 'text' && (
+                        <FieldSelect
+                            label="Источник данных (CSV)"
+                            value={activeDataset?.datasetId || ''}
+                            onChange={updateDataset}
+                            options={datasetOptions}
+                            placeholder="Выберите CSV-файл"
+                            helperText="CSV-файл, из которого компонент берёт данные"
+                        />
+                    )}
+
+                    {type === 'text' && (
+                        <>
+                            <TextAreaField
+                                label="Текст"
+                                value={config.content || ''}
+                                onChange={(value) => updateConfig('content', value)}
+                                placeholder="Введите пояснение для пользователя"
+                                helperText="Этот текст будет показан на холсте и в готовом Streamlit-приложении"
+                            />
+
+                            <OptionSelect
+                                label="Размер текста"
+                                value={String(config.fontSize || 16)}
+                                onChange={(value) => updateConfig('fontSize', Number(value))}
+                                options={fontSizeOptions}
+                            />
+
+                            <OptionSelect
+                                label="Начертание"
+                                value={config.fontWeight || 'normal'}
+                                onChange={(value) => updateConfig('fontWeight', value)}
+                                options={fontWeightOptions}
+                            />
+
+                            <OptionSelect
+                                label="Стиль"
+                                value={config.fontStyle || 'normal'}
+                                onChange={(value) => updateConfig('fontStyle', value)}
+                                options={fontStyleOptions}
+                            />
+
+                            <ColorField
+                                label="Цвет текста"
+                                value={config.color || '#d4d4d8'}
+                                onChange={(value) => updateConfig('color', value)}
+                            />
+
+                            <OptionSelect
+                                label="Выравнивание"
+                                value={config.textAlign || 'left'}
+                                onChange={(value) => updateConfig('textAlign', value)}
+                                options={textAlignOptions}
+                            />
+                        </>
+                    )}
 
                     {type === 'selectbox' && (
                         <>

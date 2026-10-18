@@ -3,9 +3,12 @@ import {
     useMemo,
     useState,
 } from 'react';
-import { useDroppable } from '@dnd-kit/core';
+import { useDndMonitor, useDroppable } from '@dnd-kit/core';
 import CanvasItem from './canvas/CanvasItem';
-import { GRID_COLUMNS } from '../services/gridLayout.js';
+import {
+    GRID_COLUMNS,
+    contentHeightToGridUnits,
+} from '../services/gridLayout.js';
 import {
     getGridItemStyle,
     useCanvasGrid,
@@ -23,11 +26,8 @@ const Canvas = ({
                     previewRowsByDataset = {},
                     isDataLoading = false,
                 }) => {
-    const { setNodeRef, isOver } = useDroppable({
-        id: 'dashboard-canvas',
-        data: { source: 'canvas' },
-    });
     const [filterValues, setFilterValues] = useState({});
+    const [dropPreview, setDropPreview] = useState(null);
 
     const {
         gridWidth,
@@ -36,10 +36,38 @@ const Canvas = ({
         setGridNode,
         beginInteraction,
         handleItemSelect,
+        getPaletteDropLayout,
+        insertionPreview,
     } = useCanvasGrid({
         components,
         onLayoutChange,
         onSelect,
+    });
+    const { setNodeRef, isOver } = useDroppable({
+        id: 'dashboard-canvas',
+        data: {
+            source: 'canvas',
+            getPaletteDropLayout,
+        },
+    });
+
+    useDndMonitor({
+        onDragMove: ({ active, over }) => {
+            const dragData = active.data.current;
+            if (dragData?.source !== 'palette' || over?.id !== 'dashboard-canvas') {
+                setDropPreview(null);
+                return;
+            }
+            const layout = getPaletteDropLayout(
+                active.rect.current.translated,
+                dragData.paletteItem
+            );
+            setDropPreview(layout
+                ? { ...layout, type: dragData.paletteItem.type }
+                : null);
+        },
+        onDragCancel: () => setDropPreview(null),
+        onDragEnd: () => setDropPreview(null),
     });
 
     const defaultDatasetId = datasets[0]?.datasetId || '';
@@ -91,6 +119,29 @@ const Canvas = ({
             [id]: value,
         }));
     }, []);
+
+    const visibleDropPreview = (
+        insertionPreview
+        || (isDragging ? dropPreview : null)
+    );
+
+    const dropPreviewStyle = useMemo(() => {
+        if (!visibleDropPreview) return null;
+        const style = getGridItemStyle({
+            x: visibleDropPreview.x,
+            y: visibleDropPreview.y,
+            w: visibleDropPreview.width ?? visibleDropPreview.w,
+            h: visibleDropPreview.insert
+                ? 1
+                : contentHeightToGridUnits(
+                    visibleDropPreview.height,
+                    visibleDropPreview.type
+                ),
+        }, gridWidth);
+        return visibleDropPreview.insert
+            ? { ...style, top: style.top - 2, height: 4 }
+            : style;
+    }, [visibleDropPreview, gridWidth]);
 
     return (
         <section
@@ -162,6 +213,22 @@ const Canvas = ({
                     className="dashboard-layout-grid relative w-full"
                     style={{ height: gridHeight }}
                 >
+                    {visibleDropPreview && (
+                        <div
+                            className={`pointer-events-none absolute z-20 ${
+                                visibleDropPreview.insert
+                                    ? 'rounded-full bg-blue-400 shadow-[0_0_14px_rgba(96,165,250,0.9)]'
+                                    : 'rounded-2xl border-2 border-dashed border-blue-400 bg-blue-500/15 shadow-[0_0_32px_rgba(59,130,246,0.18)]'
+                            }`}
+                            style={dropPreviewStyle}
+                        >
+                            {!visibleDropPreview.insert && (
+                                <div className="flex h-full items-center justify-center px-3 text-center text-xs font-medium text-blue-200">
+                                    Разместить здесь
+                                </div>
+                            )}
+                        </div>
+                    )}
                     {gridLayout.map((layoutItem) => {
                         const item = components.find(
                             (component) => component.id === layoutItem.i

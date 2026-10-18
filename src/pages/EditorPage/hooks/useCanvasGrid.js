@@ -9,7 +9,14 @@ import {
     GRID_COLUMNS,
     GRID_GAP,
     GRID_ROW_HEIGHT,
+    contentHeightToGridUnits,
+    findGridInsertionPosition,
+    findNearestGridPosition,
+    getMinimumContentHeight,
+    gridUnitsToContentHeight,
     moveGridItem,
+    rectanglesOverlap,
+    resolveGridCollisions,
     resizeGridItem,
     toReactGridLayout,
 } from '../services/gridLayout.js';
@@ -46,6 +53,7 @@ export const useCanvasGrid = ({
     const interactionRef = useRef(null);
     const suppressSelectionRef = useRef(null);
     const [gridWidth, setGridWidth] = useState(0);
+    const [insertionPreview, setInsertionPreview] = useState(null);
 
     const gridLayout = useMemo(
         () => toReactGridLayout(components),
@@ -143,19 +151,77 @@ export const useCanvasGrid = ({
             nextInteraction.lastRoundedCols = roundedCols;
             nextInteraction.lastRoundedRows = roundedRows;
 
-            const nextLayout = nextInteraction.mode === 'drag'
-                ? moveGridItem(
-                    nextInteraction.startLayout,
-                    nextInteraction.id,
-                    roundedCols,
-                    roundedRows
-                )
-                : resizeGridItem(
+            let nextLayout;
+            if (nextInteraction.mode === 'drag') {
+                const source = nextInteraction.startLayout.find(
+                    (item) => item.i === nextInteraction.id
+                );
+                const otherItems = nextInteraction.startLayout.filter(
+                    (item) => item.i !== nextInteraction.id
+                );
+                const minWidth = source?.minW || 2;
+                const minHeight = source?.minH || 1;
+                const compactX = (source?.x || 0) + roundedCols
+                    + ((source?.w || minWidth) - minWidth) / 2;
+                const compactY = (source?.y || 0) + roundedRows
+                    + ((source?.h || minHeight) - minHeight) / 2;
+                const compactCandidate = {
+                    x: Math.max(
+                        0,
+                        Math.min(
+                            GRID_COLUMNS - minWidth,
+                            Math.round(compactX)
+                        )
+                    ),
+                    y: Math.max(0, Math.round(compactY)),
+                    w: minWidth,
+                    h: minHeight,
+                };
+                const compactIsFree = !otherItems.some((item) => (
+                    rectanglesOverlap(compactCandidate, item)
+                ));
+                const insertion = compactIsFree
+                    ? null
+                    : findGridInsertionPosition(
+                        otherItems,
+                        compactX,
+                        compactY,
+                        minWidth,
+                        minHeight
+                    );
+
+                if (insertion && source) {
+                    const activeItem = {
+                        ...source,
+                        x: insertion.x,
+                        y: insertion.y,
+                        w: insertion.w,
+                        h: insertion.h,
+                    };
+                    nextLayout = resolveGridCollisions(
+                        nextInteraction.startLayout,
+                        nextInteraction.id,
+                        activeItem
+                    );
+                    setInsertionPreview(insertion);
+                } else {
+                    nextLayout = moveGridItem(
+                        nextInteraction.startLayout,
+                        nextInteraction.id,
+                        roundedCols,
+                        roundedRows
+                    );
+                    setInsertionPreview(null);
+                }
+            } else {
+                setInsertionPreview(null);
+                nextLayout = resizeGridItem(
                     nextInteraction.startLayout,
                     nextInteraction.id,
                     roundedCols,
                     roundedRows
                 );
+            }
             const activeItem = nextLayout.find((item) => item.i === id);
             if (!activeItem) return;
 
@@ -190,6 +256,7 @@ export const useCanvasGrid = ({
                 }, 0);
             }
             interactionRef.current = null;
+            setInsertionPreview(null);
         };
 
         window.addEventListener('pointermove', handlePointerMove, {
@@ -206,6 +273,7 @@ export const useCanvasGrid = ({
                 sourceNode.classList.remove('dashboard-interaction-source');
                 document.body.style.userSelect = previousUserSelect;
                 document.body.style.cursor = previousCursor;
+                setInsertionPreview(null);
             },
         };
         event.currentTarget.setPointerCapture?.(event.pointerId);
@@ -226,6 +294,65 @@ export const useCanvasGrid = ({
         onSelect(id);
     }, [onSelect]);
 
+    const getPaletteDropLayout = useCallback((dragRect, paletteItem) => {
+        const gridNode = gridRef.current;
+        if (!gridNode || !gridWidth || !dragRect || !paletteItem) return null;
+
+        const bounds = gridNode.getBoundingClientRect();
+        const columnWidth = (
+            gridWidth - GRID_GAP * (GRID_COLUMNS - 1)
+        ) / GRID_COLUMNS;
+        const unitWidth = columnWidth + GRID_GAP;
+        const unitHeight = GRID_ROW_HEIGHT + GRID_GAP;
+        const minWidth = 2;
+        const minHeight = contentHeightToGridUnits(
+            getMinimumContentHeight(paletteItem.type),
+            paletteItem.type
+        );
+        const centerX = dragRect.left + dragRect.width / 2;
+        const centerY = dragRect.top + dragRect.height / 2;
+        const requestedX = (
+            (centerX - bounds.left) / unitWidth - minWidth / 2
+        );
+        const requestedY = (
+            (centerY - bounds.top) / unitHeight - minHeight / 2
+        );
+        const nearestPosition = findNearestGridPosition(
+            gridLayout,
+            requestedX,
+            requestedY,
+            minWidth,
+            minHeight
+        );
+        const roundedX = Math.max(
+            0,
+            Math.min(GRID_COLUMNS - minWidth, Math.round(requestedX))
+        );
+        const roundedY = Math.max(0, Math.round(requestedY));
+        const position = (
+            nearestPosition
+            && nearestPosition.x === roundedX
+            && nearestPosition.y === roundedY
+        )
+            ? nearestPosition
+            : findGridInsertionPosition(
+                gridLayout,
+                requestedX,
+                requestedY,
+                minWidth,
+                minHeight
+            ) || nearestPosition;
+        if (!position) return null;
+
+        return {
+            x: position.x,
+            y: position.y,
+            width: position.w,
+            height: gridUnitsToContentHeight(position.h, paletteItem.type),
+            insert: Boolean(position.insert),
+        };
+    }, [gridLayout, gridWidth]);
+
     const gridHeight = Math.max(
         MIN_GRID_HEIGHT,
         ...gridLayout.map((item) => (
@@ -240,5 +367,7 @@ export const useCanvasGrid = ({
         setGridNode,
         beginInteraction,
         handleItemSelect,
+        getPaletteDropLayout,
+        insertionPreview,
     };
 };
