@@ -52,7 +52,7 @@ const SaveProjectModal = ({
                     <div>
                         <h2 className="text-xl font-semibold text-white">Сохранить проект</h2>
                         <p className="mt-1 text-sm text-zinc-400">
-                            Укажите название и описание перед сохранением.
+                            Укажите название проекта. Описание можно добавить позже.
                         </p>
                     </div>
                     <button
@@ -80,7 +80,7 @@ const SaveProjectModal = ({
                     </div>
                     <div>
                         <label className="mb-2 block text-sm font-medium text-zinc-300">
-                            Описание
+                            Описание (необязательно)
                         </label>
                         <textarea
                             name="description"

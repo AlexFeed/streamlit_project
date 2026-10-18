@@ -6,7 +6,7 @@ export const GRID_GAP = 16;
 export const CARD_CHROME_HEIGHT = 96;
 
 export const getCardChromeHeight = (type) => (
-    type === 'text' || type === 'metric' ? 0 : CARD_CHROME_HEIGHT
+    ['text', 'metric', 'selectbox'].includes(type) ? 0 : CARD_CHROME_HEIGHT
 );
 
 export const getMinimumContentHeight = (type) => (

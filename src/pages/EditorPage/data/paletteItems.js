@@ -51,8 +51,8 @@ export const paletteItems = {
             field: '',
         },
         defaultWidth: 4,
-        defaultHeight: 120,
-        minHeight: 120,
+        defaultHeight: 80,
+        minHeight: 60,
     },
     line_chart: {
         type: 'line_chart',

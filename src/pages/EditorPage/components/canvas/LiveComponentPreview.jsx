@@ -223,9 +223,11 @@ const LiveMetric = ({ item, rows, height }) => {
             <p className="text-3xl font-semibold tracking-tight text-white">
                 {formatMetricValue(value)}
             </p>
-            <p className="mt-1 text-xs text-zinc-400">
-                {item.config?.description || `${item.config?.aggregation || 'sum'} · ${item.bindings.valueField}`}
-            </p>
+            {item.config?.description?.trim() && (
+                <p className="mt-1 text-xs text-zinc-400">
+                    {item.config.description}
+                </p>
+            )}
         </div>
     );
 };
@@ -292,14 +294,19 @@ const LiveFilter = ({
 
     return (
         <div
-            className="flex items-center rounded-xl bg-zinc-950/60 p-4"
+            className="flex flex-col justify-center rounded-xl bg-zinc-950/60 px-3 py-2"
             style={{ height }}
         >
+            {item.config?.title?.trim() && (
+                <label className="mb-1.5 text-xs font-medium text-zinc-400">
+                    {item.config.title}
+                </label>
+            )}
             <select
                 value={value || ''}
                 onChange={(event) => onChange(event.target.value)}
                 onClick={(event) => event.stopPropagation()}
-                className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-3 text-sm text-white outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
             >
                 <option value="">Все значения</option>
                 {options.map((option) => (

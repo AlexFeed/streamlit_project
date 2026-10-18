@@ -319,11 +319,11 @@ const PropertiesPanel = ({
                             />
 
                             <TextField
-                                label="Описание"
+                                label="Описание (необязательно)"
                                 value={config.description || ''}
                                 onChange={(value) => updateConfig('description', value)}
                                 placeholder="Например: Общая выручка"
-                                helperText="Краткое пояснение для пользователя"
+                                helperText="Если оставить пустым, под метрикой ничего не появится"
                             />
 
                             <OptionSelect

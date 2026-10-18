@@ -25,7 +25,7 @@ const CanvasItem = ({
                     }) => {
     const meta = paletteItems[item.type];
     const Icon = meta?.icon || WalletCards;
-    const isCompact = item.type === 'text' || item.type === 'metric';
+    const isCompact = ['text', 'metric', 'selectbox'].includes(item.type);
 
     return (
         <article
