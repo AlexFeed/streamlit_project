@@ -4,6 +4,7 @@ import Canvas from './components/Canvas';
 import PropertiesPanel from './components/PropertiesPanel';
 import EditorHeader from './components/EditorHeader';
 import SaveProjectModal from './components/modals/SaveProjectModal';
+import UploadDatasetModal from "./components/modals/UploadDatasetModal.jsx";
 import { useParams, useNavigate } from 'react-router-dom';
 import {
     closestCenter,
@@ -21,6 +22,7 @@ import { useProjectState } from './hooks/useProjectState.js';
 import {useGenerateState} from "./hooks/useGenerateState.jsx";
 import { useEditorDnd } from './hooks/useEditorDnd.js';
 
+
 const EditorPage = () => {
     // Получение из адресной строки параметров конкретного проекта
     const { projectId } = useParams();
@@ -28,6 +30,9 @@ const EditorPage = () => {
 
     // Черновик это или уже сохранённый проект (Для управления localStorage)
     const isDraftMode = !(projectId);
+
+    const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
+    const [isUploadDatasetModalOpen, setIsUploadDatasetModalOpen] = useState(false);
 
     // Получение данных связанных с датасетом
     const {
@@ -37,7 +42,7 @@ const EditorPage = () => {
         isDatasetUploading,
         isDatasetClearing,
         isDatasetPreviewLoading,
-        handleFileUpload,
+        uploadNewDataset,
         removeDataset,
     } = useDatasetState({ useDraftStorage: isDraftMode });
 
@@ -95,6 +100,15 @@ const EditorPage = () => {
 
     // Удаление датасета с перепривязкой компонентов на первый оставшийся датасет
     const handleRemoveDataset = async (datasetId) => {
+        const targetDataset = datasets.find((ds) => ds.datasetId === datasetId);
+        const datasetName = targetDataset?.name || 'этот датасет';
+        const confirmed = window.confirm(
+            `Вы уверены, что хотите удалить датасет «${datasetName}»? Файл будет физически удален с сервера, а привязанные компоненты сброшены.`
+        );
+        if (!confirmed) {
+            return;
+        }
+
         const remainingDatasets = datasets.filter((ds) => ds.datasetId !== datasetId);
         const fallbackDataset = remainingDatasets[0] || null;
         const fallbackDatasetId = fallbackDataset?.datasetId || '';
@@ -124,22 +138,17 @@ const EditorPage = () => {
         });
     };
 
-    const getDatasetsMetadata = () =>
-        datasets.map((ds) => {
-            const metadata = { ...ds };
-            delete metadata.sampleRows;
-            return metadata;
-        });
-
     // ЕДИНЫЙ ДИСПЕТЧЕР ДАННЫХ (Snapshot)
     const getProjectSnapshot = (overrideTitle, overrideDescription) => ({
         title: overrideTitle ?? project?.title ?? 'Untitled dashboard',
         description: overrideDescription ?? project?.description ?? '',
         components,
-        datasets: getDatasetsMetadata(),
+        datasets: datasets.map((ds) => {
+            const metadata = { ...ds };
+            delete metadata.sampleRows;
+            return metadata;
+        })
     });
-
-    const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
 
 
     // Перемещение на главную страницу с проектами
@@ -178,6 +187,11 @@ const EditorPage = () => {
         }
     };
 
+    const handleModalDatasetConfirmUpload = async (uploadPayload) => {
+        const res = await uploadNewDataset(uploadPayload);
+        return Boolean(res);
+    };
+
     // Обработчик для кнопки Генерации (использует Snapshot)
     const onGenerateClick = async () => {
         const snapshot = getProjectSnapshot();
@@ -200,15 +214,19 @@ const EditorPage = () => {
                     <EditorHeader
                         onClearCanvas={clearCanvas}
                         onGenerateDashboard={onGenerateClick}
-                        onFileUpload={handleFileUpload}
                         datasets={datasets}
                         onRemoveDataset={handleRemoveDataset}
-                        isDatasetUploading={isDatasetUploading}
                         isDatasetClearing={isDatasetClearing}
                         isGenerating={isGenerating}
                         onSaveProject={handleSaveClick}
                         onGoHome={handleGoHome}
+                        onUploadDataset={() => setIsUploadDatasetModalOpen(true)}
                     />
+
+                    <UploadDatasetModal isOpen={isUploadDatasetModalOpen}
+                                        isUploading={isDatasetUploading}
+                                        onClose={() => setIsUploadDatasetModalOpen(false)}
+                                        onConfirm={handleModalDatasetConfirmUpload}/>
 
                     <SaveProjectModal
                         isOpen={isSaveModalOpen}

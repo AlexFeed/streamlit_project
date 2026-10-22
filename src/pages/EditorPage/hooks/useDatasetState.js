@@ -5,10 +5,9 @@ import {
     getDatasetPreview,
     uploadDataset,
 } from "../../../api/datasetsApi.js";
+import {DATASET_DRAFT_STORAGE_KEY} from "../../../shared/constants/storageKeys.js";
 
 // Hook отвечает за управление состоянием с датасетом
-
-export const DATASET_DRAFT_STORAGE_KEY = 'streamlit-editor-dataset-draft';
 
 // Определение начальных значений состояний датасета из LocalStorage (либо [])
 const loadDatasetInfoFromDraft = () => {
@@ -141,31 +140,16 @@ export const useDatasetState = ({ useDraftStorage = true }) => {
     }, [datasets, useDraftStorage]);
 
     // Обработчик загрузки датасета
-    const handleFileUpload = async (event) => {
-        const file = event.target.files?.[0];
-        if (!file) return null;
-
-        if (!file.name.toLowerCase().endsWith('.csv')) {
-            toast.error('Поддерживаются только CSV-файлы.');
-            return null;
-        }
-
+    const uploadNewDataset = async (payload) => {
         try {
             setIsDatasetUploading(true);
-
-            // Получение данных датасета с сервера (в том числе названия столбцов)
-            const datasetInfo = await uploadDataset(file);
+            const datasetInfo = await uploadDataset(payload);
             setDatasets((prev) => [...prev, datasetInfo]);
-            setPreviewRowsByDataset((prev) => ({
-                ...prev,
-                [datasetInfo.datasetId]: datasetInfo.sampleRows || [],
-            }));
-
-            event.target.value = '';
+            toast.success(`Датасет «${datasetInfo.name}» успешно добавлен`);
             return datasetInfo;
         } catch (error) {
-            console.error('Ошибка загрузки CSV:', error);
-            toast.error('Не удалось загрузить CSV на backend.');
+            console.error('Ошибка загрузки датасета:', error);
+            toast.error(error.message || 'Не удалось загрузить датасет');
             return null;
         } finally {
             setIsDatasetUploading(false);
@@ -175,23 +159,9 @@ export const useDatasetState = ({ useDraftStorage = true }) => {
     // Удаление загруженного датасета
     const removeDataset = async (datasetId) => {
         if (!datasetId) return;
-
-        // В режиме сохранённого проекта удаляем датасет только локально до нажатия «Сохранить»
-        if (!useDraftStorage) {
-            setDatasets((prev) => prev.filter((ds) => ds.datasetId !== datasetId));
-            setPreviewRowsByDataset((prev) => {
-                const next = { ...prev };
-                delete next[datasetId];
-                return next;
-            });
-            return;
-        }
-
         try {
             setIsDatasetClearing(true);
-
             await deleteDataset(datasetId);
-
             setDatasets((prev) => prev.filter((ds) => ds.datasetId !== datasetId));
             setPreviewRowsByDataset((prev) => {
                 const next = { ...prev };
@@ -215,7 +185,7 @@ export const useDatasetState = ({ useDraftStorage = true }) => {
         isDatasetClearing,
         isDatasetPreviewLoading,
 
-        handleFileUpload,
+        uploadNewDataset,
         removeDataset,
     };
 };

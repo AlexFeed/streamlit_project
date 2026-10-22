@@ -11,21 +11,22 @@ import {
 const EditorHeader = ({
                           onClearCanvas,
                           onGenerateDashboard,
-                          onFileUpload,
                           datasets = [],
                           onRemoveDataset,
-                          isDatasetUploading,
                           isDatasetClearing,
                           isGenerating,
                           onSaveProject,
                           onGoHome,
+                          onUploadDataset
                       }) => {
     return (
-        <header className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-4 border-b border-zinc-800/80 bg-zinc-950/90 px-5 py-3 backdrop-blur-xl">
+        <header
+            className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-4 border-b border-zinc-800/80 bg-zinc-950/90 px-5 py-3 backdrop-blur-xl">
             <div>
                 <div className="flex items-center gap-2">
                     <h1 className="text-sm font-semibold text-white">Редактор дашборда</h1>
-                    <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-emerald-300">
+                    <span
+                        className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-emerald-300">
                         Live
                     </span>
                 </div>
@@ -37,7 +38,7 @@ const EditorHeader = ({
                         key={dataset.datasetId}
                         className="flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-200"
                     >
-                        <Database className="h-4 w-4" />
+                        <Database className="h-4 w-4"/>
                         <span className="max-w-[160px] truncate" title={dataset.name}>
                             {dataset.name}
                         </span>
@@ -48,35 +49,26 @@ const EditorHeader = ({
                             className="ml-1 rounded p-0.5 text-emerald-300/60 transition hover:bg-red-500/10 hover:text-red-300 disabled:opacity-40"
                             title="Удалить датасет"
                         >
-                            <X className="h-3.5 w-3.5" />
+                            <X className="h-3.5 w-3.5"/>
                         </button>
                     </div>
                 ))}
 
-                <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 px-3.5 py-2 text-xs font-medium text-zinc-200 transition hover:border-zinc-600 hover:bg-zinc-800">
-                    <Upload className="h-4 w-4" />
-                    {isDatasetUploading
-                        ? 'Загрузка…'
-                        : datasets.length > 0
-                            ? 'Добавить CSV'
-                            : 'Загрузить CSV'}
-                    <input
-                        type="file"
-                        accept=".csv"
-                        onChange={onFileUpload}
-                        className="hidden"
-                        disabled={isDatasetUploading}
-                    />
-                </label>
+                <button
+                    className="flex cursor-pointer items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 px-3.5 py-2 text-xs font-medium text-zinc-200 transition hover:border-zinc-600 hover:bg-zinc-800"
+                    onClick={onUploadDataset}>
+                    <Upload className="h-4 w-4"/>
+                    Загрузить данные
+                </button>
 
-                <div className="mx-1 h-6 w-px bg-zinc-800" />
+                <div className="mx-1 h-6 w-px bg-zinc-800"/>
 
                 <button
                     type="button"
                     onClick={onSaveProject}
                     className="flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 px-3.5 py-2 text-xs font-medium text-zinc-200 transition hover:border-zinc-600 hover:bg-zinc-800"
                 >
-                    <Save className="h-4 w-4" />
+                    <Save className="h-4 w-4"/>
                     Сохранить
                 </button>
 
@@ -86,7 +78,7 @@ const EditorHeader = ({
                     disabled={isGenerating}
                     className="flex items-center gap-2 rounded-xl bg-blue-500 px-3.5 py-2 text-xs font-semibold text-white shadow-lg shadow-blue-950/30 transition hover:bg-blue-400 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                    <Download className="h-4 w-4" />
+                    <Download className="h-4 w-4"/>
                     {isGenerating ? 'Генерация…' : 'Скачать Streamlit'}
                 </button>
 
@@ -96,7 +88,7 @@ const EditorHeader = ({
                     className="rounded-xl p-2 text-zinc-500 transition hover:bg-red-500/10 hover:text-red-300"
                     title="Очистить холст"
                 >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-4 w-4"/>
                 </button>
 
                 <button
@@ -105,7 +97,7 @@ const EditorHeader = ({
                     className="rounded-xl p-2 text-zinc-500 transition hover:bg-zinc-800 hover:text-white"
                     title="Перейти на главную"
                 >
-                    <House className="h-4 w-4" />
+                    <House className="h-4 w-4"/>
                 </button>
             </div>
         </header>

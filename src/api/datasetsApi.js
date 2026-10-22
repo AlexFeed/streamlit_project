@@ -11,16 +11,26 @@ import { authFetch } from './apiClient.js';
 //   datasetId: string,
 //   userId: string,
 //   name: string,
-//   storedName: string,
+//   format: "csv" | "tsv" | "excel",
+//   delimiter: string | null,
+//   sheetName: string | null,
 //   fields: string[],
 //   fieldTypes: Record<string, "number" | "datetime" | "string" | "boolean">,
-//   sampleRows: Record<string, any>[],
-//   size: number,
+//   size: number,
 //   createdAt: string
 // }
-export const uploadDataset = async (file) => {
+export const uploadDataset = async (payload) => {
     const formData = new FormData();
-    formData.append('dataset', file);
+
+    if (payload && payload.file) {
+        const { file, name, delimiter, sheetName } = payload;
+        formData.append('dataset', file);
+        if (name) formData.append('name', name);
+        if (delimiter && delimiter !== 'auto') formData.append('delimiter', delimiter);
+        if (sheetName) formData.append('sheetName', sheetName);
+    } else {
+        throw new Error('Файл для загрузки не указан');
+    }
 
     const response = await authFetch('/datasets/upload', {
         method: 'POST',
@@ -29,7 +39,7 @@ export const uploadDataset = async (file) => {
 
     if (!response.ok) {
         const error = await response.json().catch(() => null);
-        throw new Error(error?.detail || 'Dataset upload failed');
+        throw new Error(error?.detail || 'Не удалось загрузить датасет');
     }
 
     return response.json();
@@ -97,5 +107,30 @@ export const deleteDataset = async (datasetId) => {
         throw new Error(error?.detail || 'Dataset delete failed');
     }
 
+    return response.json();
+};
+
+
+// Получение списка названий листов из excel файла
+//
+// Request:
+// multipart/form-data:
+// file=<excel_file>
+//
+// Response:
+// {
+//   sheets: string[]
+// }
+export const inspectExcelSheets = async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await authFetch('/datasets/inspect-sheets', {
+        method: 'POST',
+        body: formData,
+    });
+    if (!response.ok) {
+        const error = await response.json().catch(() => null);
+        throw new Error(error?.detail || 'Не удалось получить список листов Excel');
+    }
     return response.json();
 };

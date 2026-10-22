@@ -88,7 +88,11 @@ const LiveChart = ({ item, rows, height }) => {
     }
 
     if (!rows.length) {
-        return <EmptyPreview height={height}>Загрузите CSV, чтобы увидеть реальные данные.</EmptyPreview>;
+        return (
+            <EmptyPreview height={height}>
+                В выбранном датасете нет данных (0 строк). Заполните строки файла или выберите другой лист Excel при загрузке.
+            </EmptyPreview>
+        );
     }
 
     if (!chartData.length) {
