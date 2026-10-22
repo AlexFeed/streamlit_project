@@ -1,5 +1,4 @@
-import {EDITOR_DRAFT_STORAGE_KEY} from "../pages/EditorPage/hooks/useEditorState.js";
-import {DATASET_DRAFT_STORAGE_KEY} from "../pages/EditorPage/hooks/useDatasetState.js";
+import {DATASET_DRAFT_STORAGE_KEY, EDITOR_DRAFT_STORAGE_KEY} from "../shared/constants/storageKeys.js";
 
 export const AUTH_TOKEN_KEY = 'streamlit-auth-token';
 export const AUTH_USER_KEY = 'streamlit-auth-user';

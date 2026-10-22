@@ -3,8 +3,7 @@ import { toast } from 'sonner';
 
 import { getProject, createProject, updateProject } from '../../../api/projectsApi.js';
 import {compileDashboardSchema} from '../services/editorSchema.js';
-import { EDITOR_DRAFT_STORAGE_KEY } from './useEditorState.js';
-import { DATASET_DRAFT_STORAGE_KEY } from './useDatasetState.js';
+import {DATASET_DRAFT_STORAGE_KEY, EDITOR_DRAFT_STORAGE_KEY} from "../../../shared/constants/storageKeys.js";
 
 // Hook отвечает за загрузку и сохранение проекта.
 export const useProjectState = ({

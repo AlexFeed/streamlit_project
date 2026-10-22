@@ -6,11 +6,9 @@ import {
     normalizeGridWidth,
     toReactGridLayout,
 } from '../services/gridLayout.js';
+import {EDITOR_DRAFT_STORAGE_KEY} from "../../../shared/constants/storageKeys.js";
 
 // Hook отвечает за управление состоянием локальных компонентов дашборда, их загрузка в LocalStorage
-
-// Ключ хранения состояния в localStorage
-export const EDITOR_DRAFT_STORAGE_KEY = 'streamlit-editor-draft';
 
 const normalizeComponents = normalizeComponentLayouts;
 
