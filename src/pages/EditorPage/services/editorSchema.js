@@ -1,17 +1,14 @@
 // Файл с созданием итоговой Json схемы для отправки на сервер
 import { getPaletteColors } from '../data/chartPalettes.js';
 import { paletteItems } from '../data/paletteItems.js';
-import { DEFAULT_PAGE_ID, normalizePages } from './pageState.js';
 
 export const buildDashboardSchema = (snapshot) => {
     // Извлекаем все нужные данные из единого слепка состояния
     const {
         components = [],
         datasets = [],
-        pages = [],
         title = 'Untitled dashboard'
     } = snapshot;
-    const normalizedPages = normalizePages(pages);
 
     const defaultDatasetId = datasets[0]?.datasetId || null;
     const resolveDatasetId = (component) => {
@@ -32,25 +29,7 @@ export const buildDashboardSchema = (snapshot) => {
         const base = {
             id: component.id,
             type: component.type,
-            pageId: component.pageId || DEFAULT_PAGE_ID,
-            parentId: component.parentId || null,
-            surface: component.config?.surface || meta?.defaultConfig?.surface || 'card',
-            showBorder: component.config?.showBorder,
-            showBackground: component.config?.showBackground,
-            contentAlignment: component.config?.contentAlignment || 'left',
-            verticalAlignment: component.config?.verticalAlignment || 'top',
-            padding: Number(component.config?.padding ?? 12),
-            contentWidth: component.config?.contentWidth || 'stretch',
-            heightMode: component.config?.heightMode || (
-                ['text', 'metric', 'selectbox', 'page_link'].includes(component.type)
-                    ? 'auto'
-                    : 'fixed'
-            ),
-            elementFontSize: component.config?.elementFontSize || 'auto',
-            elementTextColor: component.config?.elementTextColor || '#d4d4d8',
-            elementFontWeight: component.config?.elementFontWeight || 'normal',
-            elementFontStyle: component.config?.elementFontStyle || 'normal',
-            datasetId: ['text', 'page_link', 'layout_group'].includes(component.type)
+            datasetId: component.type === 'text'
                 ? null
                 : resolveDatasetId(component),
             order: index + 1,
@@ -68,7 +47,6 @@ export const buildDashboardSchema = (snapshot) => {
                 title: component.config?.title || 'Фильтр',
                 field: component.bindings?.field || '',
                 scope: 'global',
-                widget: component.config?.widget || 'selectbox',
             });
         }
         else if (meta?.isChart) {
@@ -88,10 +66,6 @@ export const buildDashboardSchema = (snapshot) => {
                     component.config?.palette,
                     component.config?.reversePalette
                 ),
-                axisLabelFontSize: component.config?.axisLabelFontSize || 11,
-                axisLabelColor: component.config?.axisLabelColor || '#94a3b8',
-                axisTitleFontSize: component.config?.axisTitleFontSize || 12,
-                axisTitleColor: component.config?.axisTitleColor || '#94a3b8',
             });
         }
         else if (component.type === 'metric') {
@@ -115,35 +89,6 @@ export const buildDashboardSchema = (snapshot) => {
                 textAlign: component.config?.textAlign || 'left',
             });
         }
-        else if (component.type === 'page_link') {
-            views.push({
-                ...base,
-                title: component.config?.title || 'Открыть страницу',
-                targetPageId: component.config?.targetPageId || '',
-                displayStyle: component.config?.displayStyle || 'button',
-            });
-        }
-        else if (component.type === 'table') {
-            views.push({
-                ...base,
-                title: component.config?.title || 'Таблица',
-                columns: component.bindings?.columns || [],
-                rowLimit: component.config?.rowLimit || 50,
-                hideIndex: component.config?.hideIndex !== false,
-            });
-        }
-        else if (component.type === 'layout_group') {
-            views.push({
-                ...base,
-                title: component.config?.title || '',
-                direction: component.config?.direction || 'vertical',
-                gap: Number(component.config?.gap ?? 8),
-                padding: Number(component.config?.padding ?? 8),
-                horizontalAlignment: component.config?.horizontalAlignment || 'left',
-                verticalAlignment: component.config?.verticalAlignment || 'top',
-                wrap: component.config?.wrap !== false,
-            });
-        }
     });
 
     return {
@@ -154,10 +99,6 @@ export const buildDashboardSchema = (snapshot) => {
                 columns: 12,
             },
         },
-        pages: normalizedPages.map((page, index) => ({
-            ...page,
-            order: index + 1,
-        })),
         dataSources: datasets.map((ds) => ({
             type: 'backend_dataset',
             datasetId: ds.datasetId || null,
@@ -174,18 +115,11 @@ export const buildDashboardSchema = (snapshot) => {
 
 // Проверка JSON-схемы на правильность
 export const validateSchema = (snapshot) => {
-    const { components = [], datasets = [], pages = [] } = snapshot;
+    const { components = [], datasets = [] } = snapshot;
     const errors = [];
-    const normalizedPages = normalizePages(pages);
-    const pageIds = new Set(normalizedPages.map((page) => page.id));
     const allowedAggregations = new Set(['none', 'sum', 'mean', 'count', 'min', 'max']);
     const allowedColorModes = new Set(['solid', 'gradient', 'categorical']);
     const allowedSortFields = new Set(['x', 'y']);
-    const groupsById = new Map(
-        components
-            .filter((component) => component.type === 'layout_group')
-            .map((component) => [component.id, component])
-    );
 
     if (!components.length) {
         errors.push('Холст пуст. Добавьте хотя бы один компонент.');
@@ -210,28 +144,13 @@ export const validateSchema = (snapshot) => {
         // Проверка того, что поле реально есть в выбранном датасете компонента
         const hasField = (field) => availableFields.includes(field);
 
-        if (!pageIds.has(component.pageId || DEFAULT_PAGE_ID)) {
-            errors.push(`Компонент "${name}": страница не найдена.`);
-            return;
-        }
-
         if (!meta) {
             errors.push(`Компонент "${name}": тип "${component.type}" не поддерживается.`);
             return;
         }
 
-        if (component.type === 'layout_group' && component.parentId) {
-            errors.push(`Контейнер "${name}" нельзя поместить в другой контейнер.`);
-        }
-        if (component.parentId) {
-            const parent = groupsById.get(component.parentId);
-            if (!parent || parent.pageId !== component.pageId) {
-                errors.push(`Компонент "${name}": контейнер не найден на этой странице.`);
-            }
-        }
-
-        if (width && (width < 1 || width > 12)) {
-            errors.push(`Компонент "${name}": ширина должна быть от 1 до 12 колонок.`);
+        if (width && (width < 2 || width > 12)) {
+            errors.push(`Компонент "${name}": ширина должна быть 3, 4, 6, 8 или 12 колонок.`);
         }
 
         const minimumHeight = meta?.minHeight || 120;
@@ -241,10 +160,6 @@ export const validateSchema = (snapshot) => {
 
         if (component.type === 'selectbox') {
             const field = component.bindings?.field;
-            const widget = component.config?.widget || 'selectbox';
-            if (!['selectbox', 'radio', 'segmented', 'pills', 'multiselect'].includes(widget)) {
-                errors.push(`Компонент "${name}": неизвестный вид фильтра.`);
-            }
             if (!field) {
                 errors.push(`Компонент "${name}": не выбрано поле данных для фильтра.`);
             } else if (!hasField(field)) {
@@ -332,26 +247,6 @@ export const validateSchema = (snapshot) => {
             }
             if (!['left', 'center', 'right'].includes(textAlign)) {
                 errors.push(`Компонент "${name}": неизвестное выравнивание текста.`);
-            }
-        }
-        else if (component.type === 'page_link') {
-            const targetPageId = component.config?.targetPageId;
-            const displayStyle = component.config?.displayStyle || 'button';
-            if (!targetPageId || !pageIds.has(targetPageId)) {
-                errors.push(`Компонент "${name}": выберите страницу для перехода.`);
-            }
-            if (!['button', 'link'].includes(displayStyle)) {
-                errors.push(`Компонент "${name}": неизвестный вид перехода.`);
-            }
-        }
-        else if (component.type === 'table') {
-            const columns = component.bindings?.columns || [];
-            const rowLimit = Number(component.config?.rowLimit || 50);
-            if (!Array.isArray(columns) || columns.some((field) => !hasField(field))) {
-                errors.push(`Компонент "${name}": одна из колонок отсутствует в данных.`);
-            }
-            if (rowLimit < 1 || rowLimit > 500) {
-                errors.push(`Компонент "${name}": можно показать от 1 до 500 строк.`);
             }
         }
     });

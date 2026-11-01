@@ -5,13 +5,11 @@ import PropertiesPanel from './components/PropertiesPanel';
 import EditorHeader from './components/EditorHeader';
 import SaveProjectModal from './components/modals/SaveProjectModal';
 import UploadDatasetModal from "./components/modals/UploadDatasetModal.jsx";
-import PageTabs from './components/PageTabs.jsx';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
     closestCenter,
     DndContext,
     DragOverlay,
-    pointerWithin,
 } from '@dnd-kit/core';
 
 
@@ -23,19 +21,6 @@ import { useState } from 'react';
 import { useProjectState } from './hooks/useProjectState.js';
 import {useGenerateState} from "./hooks/useGenerateState.jsx";
 import { useEditorDnd } from './hooks/useEditorDnd.js';
-import { normalizeComponentsByPage } from './services/pageState.js';
-
-const editorCollisionDetection = (args) => {
-    const pointerHits = pointerWithin(args);
-    if (pointerHits.length > 0) {
-        return [...pointerHits].sort((left, right) => {
-            const leftIsGroup = String(left.id).startsWith('layout-group-');
-            const rightIsGroup = String(right.id).startsWith('layout-group-');
-            return Number(rightIsGroup) - Number(leftIsGroup);
-        });
-    }
-    return closestCenter(args);
-};
 
 
 const EditorPage = () => {
@@ -64,25 +49,17 @@ const EditorPage = () => {
     // Получения данных связанных с компонентами
     const {
         components,
-        pageComponents,
-        pages,
-        activePageId,
-        setEditorState,
+        setComponents,
         selectedId,
         selectedComponent,
         addComponent,
         reorderComponent,
-        moveComponent,
         duplicateComponent,
         setDashboardLayout,
         selectComponent,
         updateComponent,
         deleteComponent,
         deleteSelectedComponent,
-        selectPage,
-        addPage,
-        renamePage,
-        deletePage,
         clearCanvas,
     } = useEditorState({
         useDraftStorage: isDraftMode,
@@ -98,7 +75,7 @@ const EditorPage = () => {
         saveExistingProject,
     } = useProjectState({
         projectId,
-        setEditorState,
+        setComponents,
         setDatasets,
     });
 
@@ -116,7 +93,7 @@ const EditorPage = () => {
         handleDragCancel,
         handleDragEnd,
     } = useEditorDnd({
-        components: pageComponents,
+        components,
         addComponent,
         reorderComponent,
     });
@@ -147,14 +124,7 @@ const EditorPage = () => {
             updateComponent(component.id, (current) => {
                 const cleanedBindings = { ...current.bindings };
                 Object.keys(cleanedBindings).forEach((key) => {
-                    if (Array.isArray(cleanedBindings[key])) {
-                        cleanedBindings[key] = cleanedBindings[key].filter(
-                            (field) => fallbackFields.has(field)
-                        );
-                    } else if (
-                        cleanedBindings[key]
-                        && !fallbackFields.has(cleanedBindings[key])
-                    ) {
+                    if (cleanedBindings[key] && !fallbackFields.has(cleanedBindings[key])) {
                         cleanedBindings[key] = '';
                     }
                 });
@@ -172,8 +142,7 @@ const EditorPage = () => {
     const getProjectSnapshot = (overrideTitle, overrideDescription) => ({
         title: overrideTitle ?? project?.title ?? 'Untitled dashboard',
         description: overrideDescription ?? project?.description ?? '',
-        components: normalizeComponentsByPage(components, pages),
-        pages,
+        components,
         datasets: datasets.map((ds) => {
             const metadata = { ...ds };
             delete metadata.sampleRows;
@@ -232,7 +201,7 @@ const EditorPage = () => {
     return (
         <DndContext
             sensors={sensors}
-            collisionDetection={editorCollisionDetection}
+            collisionDetection={closestCenter}
             onDragStart={handleDragStart}
             onDragCancel={handleDragCancel}
             onDragEnd={handleDragEnd}
@@ -289,30 +258,17 @@ const EditorPage = () => {
                             : 'grid-cols-1'
                     }`}>
                         <main className="min-h-0 min-w-0 overflow-y-auto p-4">
-                            <PageTabs
-                                pages={pages}
-                                activePageId={activePageId}
-                                onSelect={selectPage}
-                                onAdd={addPage}
-                                onRename={renamePage}
-                                onDelete={deletePage}
-                            />
                             <Canvas
-                                components={pageComponents}
+                                components={components}
                                 selectedId={selectedId}
                                 onSelect={selectComponent}
                                 onDelete={deleteComponent}
                                 onDuplicate={duplicateComponent}
                                 onLayoutChange={setDashboardLayout}
-                                onMoveToContainer={(componentId, containerId, targetLayout) => (
-                                    moveComponent(componentId, containerId, targetLayout)
-                                )}
-                                onReorderComponent={reorderComponent}
                                 isDragging={Boolean(activeDrag)}
                                 datasets={datasets}
                                 previewRowsByDataset={previewRowsByDataset}
                                 isDataLoading={isDatasetPreviewLoading}
-                                pages={pages}
                             />
                         </main>
 
@@ -322,8 +278,6 @@ const EditorPage = () => {
                             onDeleteSelected={deleteSelectedComponent}
                             onClose={() => selectComponent(null)}
                             datasets={datasets}
-                            pages={pages}
-                            components={pageComponents}
                         />
                     </div>
                 </div>
@@ -331,25 +285,13 @@ const EditorPage = () => {
         </div>
             <DragOverlay dropAnimation={null}>
                 {activeDrag && (
-                    <div
-                        className={`flex rounded-xl border border-blue-400/80 bg-zinc-900/95 p-3 shadow-2xl shadow-black/60 ${
-                            activeDrag.paletteItem?.isChart || activeDrag.paletteItem?.type === 'table'
-                                ? 'h-28 w-72 items-start'
-                                : activeDrag.paletteItem?.type === 'layout_group'
-                                    ? 'h-24 w-64 items-center'
-                                    : 'min-h-14 w-56 items-center'
-                        }`}
-                    >
-                        <div className="min-w-0">
-                        <p className="truncate text-sm font-medium text-white">
+                    <div className="w-64 rounded-xl border border-blue-500 bg-zinc-900 p-4 shadow-2xl shadow-black/50">
+                        <p className="text-sm font-medium text-white">
                             {activeDrag.paletteItem?.label || 'Компонент дашборда'}
                         </p>
                         <p className="mt-1 text-xs text-zinc-400">
-                            {activeDrag.source === 'container-child'
-                                ? 'На холст или в другой контейнер'
-                                : 'На холст или в контейнер'}
+                            Переместите в нужную позицию
                         </p>
-                        </div>
                     </div>
                 )}
             </DragOverlay>

@@ -7,12 +7,12 @@ import {
 } from 'react';
 import {
     GRID_COLUMNS,
-    GRID_COLUMN_GAP,
-    GRID_ROW_GAP,
+    GRID_GAP,
     GRID_ROW_HEIGHT,
+    contentHeightToGridUnits,
     findGridInsertionPosition,
     findNearestGridPosition,
-    getComponentGridHeight,
+    getMinimumContentHeight,
     gridUnitsToContentHeight,
     moveGridItem,
     rectanglesOverlap,
@@ -23,47 +23,22 @@ import {
 
 const MIN_GRID_HEIGHT = 560;
 
-export const getInteractionGhostSize = ({
-    mode,
-    activeItem,
-    sourceItem,
-    gridStyle,
-    sourceCardWidth,
-    sourceCardHeight,
-}) => {
-    const dragWidthChanged = mode === 'drag'
-        && activeItem.w !== sourceItem?.w;
-    const dragHeightChanged = mode === 'drag'
-        && activeItem.h !== sourceItem?.h;
-
-    return {
-        width: (
-            (mode === 'drag' && !dragWidthChanged)
-            || (mode === 'resize' && !activeItem.manualWidth)
-        ) ? sourceCardWidth : gridStyle.width,
-        height: (
-            (mode === 'drag' && !dragHeightChanged)
-            || (mode === 'resize' && !activeItem.manualHeight)
-        ) ? sourceCardHeight : gridStyle.height,
-    };
-};
-
 export const getGridItemStyle = (item, gridWidth) => {
     const safeGridWidth = Math.max(
         gridWidth,
-        GRID_COLUMN_GAP * (GRID_COLUMNS - 1) + GRID_COLUMNS
+        GRID_GAP * (GRID_COLUMNS - 1) + GRID_COLUMNS
     );
     const columnWidth = (
-        safeGridWidth - GRID_COLUMN_GAP * (GRID_COLUMNS - 1)
+        safeGridWidth - GRID_GAP * (GRID_COLUMNS - 1)
     ) / GRID_COLUMNS;
-    const unitWidth = columnWidth + GRID_COLUMN_GAP;
-    const unitHeight = GRID_ROW_HEIGHT + GRID_ROW_GAP;
+    const unitWidth = columnWidth + GRID_GAP;
+    const unitHeight = GRID_ROW_HEIGHT + GRID_GAP;
 
     return {
         left: item.x * unitWidth,
         top: item.y * unitHeight,
-        width: item.w * columnWidth + (item.w - 1) * GRID_COLUMN_GAP,
-        height: item.h * GRID_ROW_HEIGHT + (item.h - 1) * GRID_ROW_GAP,
+        width: item.w * columnWidth + (item.w - 1) * GRID_GAP,
+        height: item.h * GRID_ROW_HEIGHT + (item.h - 1) * GRID_GAP,
     };
 };
 
@@ -72,7 +47,6 @@ export const useCanvasGrid = ({
     components,
     onLayoutChange,
     onSelect,
-    onMoveToContainer,
 }) => {
     const gridRef = useRef(null);
     const gridResizeObserverRef = useRef(null);
@@ -80,17 +54,6 @@ export const useCanvasGrid = ({
     const suppressSelectionRef = useRef(null);
     const [gridWidth, setGridWidth] = useState(0);
     const [insertionPreview, setInsertionPreview] = useState(null);
-    const [containerDropTargetId, setContainerDropTargetId] = useState(null);
-
-    const findContainerAtPoint = useCallback((clientX, clientY, sourceId) => {
-        const target = document.elementsFromPoint(clientX, clientY)
-            .map((node) => node.closest?.('[data-layout-group-id]'))
-            .find((node) => (
-                node?.dataset?.layoutGroupId
-                && node.dataset.layoutGroupId !== sourceId
-            ));
-        return target?.dataset?.layoutGroupId || null;
-    }, []);
 
     const gridLayout = useMemo(
         () => toReactGridLayout(components),
@@ -128,28 +91,9 @@ export const useCanvasGrid = ({
         if (!gridNode || !sourceNode) return;
 
         const ghostNode = sourceNode.cloneNode(true);
-        const sourceNodeRect = sourceNode.getBoundingClientRect();
-        const sourceCard = sourceNode.querySelector('[data-canvas-item]');
-        const sourceCardRect = sourceCard?.getBoundingClientRect()
-            || sourceNodeRect;
         ghostNode.removeAttribute('data-grid-item');
         ghostNode.setAttribute('aria-hidden', 'true');
         ghostNode.classList.add('dashboard-interaction-ghost');
-        Object.assign(ghostNode.style, {
-            width: `${sourceCardRect.width}px`,
-            height: `${sourceCardRect.height}px`,
-        });
-        if (mode === 'resize') {
-            ghostNode.classList.add('dashboard-resize-ghost');
-            const ghostCard = ghostNode.querySelector('[data-canvas-item]');
-            if (ghostCard) {
-                Object.assign(ghostCard.style, {
-                    width: '100%',
-                    maxWidth: 'none',
-                    height: '100%',
-                });
-            }
-        }
         sourceNode.classList.add('dashboard-interaction-source');
         gridNode.appendChild(ghostNode);
 
@@ -173,9 +117,6 @@ export const useCanvasGrid = ({
             didMove: false,
             sourceNode,
             ghostNode,
-            sourceCardWidth: sourceCardRect.width,
-            sourceCardHeight: sourceCardRect.height,
-            sourceCardOffsetLeft: sourceCardRect.left - sourceNodeRect.left,
         };
 
         const handlePointerMove = (moveEvent) => {
@@ -188,22 +129,15 @@ export const useCanvasGrid = ({
             ) {
                 nextInteraction.didMove = true;
             }
-            if (nextInteraction.mode === 'drag') {
-                setContainerDropTargetId(findContainerAtPoint(
-                    moveEvent.clientX,
-                    moveEvent.clientY,
-                    nextInteraction.id
-                ));
-            }
             const columnWidth = (
-                gridWidth - GRID_COLUMN_GAP * (GRID_COLUMNS - 1)
+                gridWidth - GRID_GAP * (GRID_COLUMNS - 1)
             ) / GRID_COLUMNS;
             const deltaColumns = (
                 moveEvent.clientX - nextInteraction.startX
-            ) / (columnWidth + GRID_COLUMN_GAP);
+            ) / (columnWidth + GRID_GAP);
             const deltaRows = (
                 moveEvent.clientY - nextInteraction.startY
-            ) / (GRID_ROW_HEIGHT + GRID_ROW_GAP);
+            ) / (GRID_ROW_HEIGHT + GRID_GAP);
 
             const roundedCols = Math.round(deltaColumns);
             const roundedRows = Math.round(deltaRows);
@@ -225,43 +159,35 @@ export const useCanvasGrid = ({
                 const otherItems = nextInteraction.startLayout.filter(
                     (item) => item.i !== nextInteraction.id
                 );
-                // Existing canvas items keep their current footprint while
-                // being inserted next to another item. Shrinking to minW/minH
-                // made wide containers miss neighbouring boundaries and left
-                // an apparently immovable empty row between the cards.
-                const insertionWidth = source?.w || source?.minW || 2;
-                const insertionHeight = source?.h || source?.minH || 1;
-                // Keep the dragged element's top-left corner attached to the
-                // pointer. Recentring a component while reducing it to its
-                // minimum size introduced one or two invisible grid rows,
-                // so taller charts could not be placed directly below text.
-                const compactX = (source?.x || 0) + roundedCols;
-                const compactY = (source?.y || 0) + roundedRows;
-                const requestedCandidate = source ? {
-                    ...source,
+                const minWidth = source?.minW || 2;
+                const minHeight = source?.minH || 1;
+                const compactX = (source?.x || 0) + roundedCols
+                    + ((source?.w || minWidth) - minWidth) / 2;
+                const compactY = (source?.y || 0) + roundedRows
+                    + ((source?.h || minHeight) - minHeight) / 2;
+                const compactCandidate = {
                     x: Math.max(
                         0,
                         Math.min(
-                            GRID_COLUMNS - insertionWidth,
+                            GRID_COLUMNS - minWidth,
                             Math.round(compactX)
                         )
                     ),
                     y: Math.max(0, Math.round(compactY)),
-                    w: insertionWidth,
-                    h: insertionHeight,
-                } : null;
-                const requestedSpaceIsFree = requestedCandidate
-                    && !otherItems.some((item) => (
-                        rectanglesOverlap(requestedCandidate, item)
-                    ));
-                const insertion = requestedSpaceIsFree
+                    w: minWidth,
+                    h: minHeight,
+                };
+                const compactIsFree = !otherItems.some((item) => (
+                    rectanglesOverlap(compactCandidate, item)
+                ));
+                const insertion = compactIsFree
                     ? null
                     : findGridInsertionPosition(
                         otherItems,
                         compactX,
-                        compactY + insertionHeight / 2,
-                        insertionWidth,
-                        insertionHeight
+                        compactY,
+                        minWidth,
+                        minHeight
                     );
 
                 if (insertion && source) {
@@ -277,11 +203,7 @@ export const useCanvasGrid = ({
                         nextInteraction.id,
                         activeItem
                     );
-                    setInsertionPreview({
-                        ...insertion,
-                        displayWidth: nextInteraction.sourceCardWidth,
-                        displayLeftOffset: nextInteraction.sourceCardOffsetLeft,
-                    });
+                    setInsertionPreview(insertion);
                 } else {
                     nextLayout = moveGridItem(
                         nextInteraction.startLayout,
@@ -304,22 +226,11 @@ export const useCanvasGrid = ({
             if (!activeItem) return;
 
             const style = getGridItemStyle(activeItem, gridWidth);
-            const sourceItem = nextInteraction.startLayout.find(
-                (item) => item.i === id
-            );
-            const ghostSize = getInteractionGhostSize({
-                mode: nextInteraction.mode,
-                activeItem,
-                sourceItem,
-                gridStyle: style,
-                sourceCardWidth: nextInteraction.sourceCardWidth,
-                sourceCardHeight: nextInteraction.sourceCardHeight,
-            });
             Object.assign(ghostNode.style, {
                 left: `${style.left}px`,
                 top: `${style.top}px`,
-                width: `${ghostSize.width}px`,
-                height: `${ghostSize.height}px`,
+                width: `${style.width}px`,
+                height: `${style.height}px`,
             });
             nextInteraction.currentLayout = nextLayout;
         };
@@ -334,23 +245,9 @@ export const useCanvasGrid = ({
             sourceNode.classList.remove('dashboard-interaction-source');
             document.body.style.userSelect = previousUserSelect;
             document.body.style.cursor = previousCursor;
-            window.getSelection()?.removeAllRanges();
 
             if (nextInteraction.didMove) {
-                const targetGroupId = findContainerAtPoint(
-                    finishEvent.clientX,
-                    finishEvent.clientY,
-                    nextInteraction.id
-                );
-                if (
-                    nextInteraction.mode === 'drag'
-                    && targetGroupId
-                    && targetGroupId !== nextInteraction.id
-                ) {
-                    onMoveToContainer?.(nextInteraction.id, targetGroupId);
-                } else {
-                    onLayoutChange(nextInteraction.currentLayout);
-                }
+                onLayoutChange(nextInteraction.currentLayout);
                 suppressSelectionRef.current = nextInteraction.id;
                 window.setTimeout(() => {
                     if (suppressSelectionRef.current === nextInteraction.id) {
@@ -360,7 +257,6 @@ export const useCanvasGrid = ({
             }
             interactionRef.current = null;
             setInsertionPreview(null);
-            setContainerDropTargetId(null);
         };
 
         window.addEventListener('pointermove', handlePointerMove, {
@@ -378,11 +274,10 @@ export const useCanvasGrid = ({
                 document.body.style.userSelect = previousUserSelect;
                 document.body.style.cursor = previousCursor;
                 setInsertionPreview(null);
-                setContainerDropTargetId(null);
             },
         };
         event.currentTarget.setPointerCapture?.(event.pointerId);
-    }, [findContainerAtPoint, gridLayout, gridWidth, onLayoutChange, onMoveToContainer]);
+    }, [gridLayout, gridWidth, onLayoutChange]);
 
     useEffect(() => () => {
         gridResizeObserverRef.current?.disconnect();
@@ -405,19 +300,15 @@ export const useCanvasGrid = ({
 
         const bounds = gridNode.getBoundingClientRect();
         const columnWidth = (
-            gridWidth - GRID_COLUMN_GAP * (GRID_COLUMNS - 1)
+            gridWidth - GRID_GAP * (GRID_COLUMNS - 1)
         ) / GRID_COLUMNS;
-        const unitWidth = columnWidth + GRID_COLUMN_GAP;
-        const unitHeight = GRID_ROW_HEIGHT + GRID_ROW_GAP;
-        const minWidth = Math.max(1, Number(paletteItem.minWidth || 2));
-        const minHeight = getComponentGridHeight({
-            type: paletteItem.type,
-            config: paletteItem.defaultConfig || {},
-            layout: {
-                width: paletteItem.defaultWidth,
-                height: paletteItem.defaultHeight,
-            },
-        });
+        const unitWidth = columnWidth + GRID_GAP;
+        const unitHeight = GRID_ROW_HEIGHT + GRID_GAP;
+        const minWidth = 2;
+        const minHeight = contentHeightToGridUnits(
+            getMinimumContentHeight(paletteItem.type),
+            paletteItem.type
+        );
         const centerX = dragRect.left + dragRect.width / 2;
         const centerY = dragRect.top + dragRect.height / 2;
         const requestedX = (
@@ -447,7 +338,7 @@ export const useCanvasGrid = ({
             : findGridInsertionPosition(
                 gridLayout,
                 requestedX,
-                (centerY - bounds.top) / unitHeight,
+                requestedY,
                 minWidth,
                 minHeight
             ) || nearestPosition;
@@ -458,7 +349,6 @@ export const useCanvasGrid = ({
             y: position.y,
             width: position.w,
             height: gridUnitsToContentHeight(position.h, paletteItem.type),
-            gridHeight: position.h,
             insert: Boolean(position.insert),
         };
     }, [gridLayout, gridWidth]);
@@ -466,7 +356,7 @@ export const useCanvasGrid = ({
     const gridHeight = Math.max(
         MIN_GRID_HEIGHT,
         ...gridLayout.map((item) => (
-            (item.y + item.h) * (GRID_ROW_HEIGHT + GRID_ROW_GAP) - GRID_ROW_GAP
+            (item.y + item.h) * (GRID_ROW_HEIGHT + GRID_GAP) - GRID_GAP
         ))
     );
 
@@ -479,6 +369,5 @@ export const useCanvasGrid = ({
         handleItemSelect,
         getPaletteDropLayout,
         insertionPreview,
-        containerDropTargetId,
     };
 };
