@@ -21,13 +21,20 @@ const Canvas = ({
                     onDelete,
                     onDuplicate,
                     onLayoutChange,
+                    onMoveToContainer,
+                    onReorderComponent,
                     isDragging,
                     datasets = [],
                     previewRowsByDataset = {},
                     isDataLoading = false,
+                    pages = [],
                 }) => {
     const [filterValues, setFilterValues] = useState({});
     const [dropPreview, setDropPreview] = useState(null);
+    const layoutComponents = useMemo(
+        () => components.filter((component) => !component.parentId),
+        [components]
+    );
 
     const {
         gridWidth,
@@ -38,10 +45,12 @@ const Canvas = ({
         handleItemSelect,
         getPaletteDropLayout,
         insertionPreview,
+        containerDropTargetId,
     } = useCanvasGrid({
-        components,
+        components: layoutComponents,
         onLayoutChange,
         onSelect,
+        onMoveToContainer,
     });
     const { setNodeRef, isOver } = useDroppable({
         id: 'dashboard-canvas',
@@ -54,7 +63,10 @@ const Canvas = ({
     useDndMonitor({
         onDragMove: ({ active, over }) => {
             const dragData = active.data.current;
-            if (dragData?.source !== 'palette' || over?.id !== 'dashboard-canvas') {
+            if (
+                dragData?.source !== 'palette'
+                || over?.id !== 'dashboard-canvas'
+            ) {
                 setDropPreview(null);
                 return;
             }
@@ -105,6 +117,10 @@ const Canvas = ({
                     const field = filter.bindings?.field;
 
                     if (!selectedValue || !field) return true;
+                    if (Array.isArray(selectedValue)) {
+                        return selectedValue.length === 0
+                            || selectedValue.includes(String(row[field]));
+                    }
                     return String(row[field]) === selectedValue;
                 })
             );
@@ -133,19 +149,27 @@ const Canvas = ({
             w: visibleDropPreview.width ?? visibleDropPreview.w,
             h: visibleDropPreview.insert
                 ? 1
-                : contentHeightToGridUnits(
-                    visibleDropPreview.height,
-                    visibleDropPreview.type
-                ),
+                : visibleDropPreview.gridHeight
+                    ?? contentHeightToGridUnits(
+                        visibleDropPreview.height,
+                        visibleDropPreview.type
+                    ),
         }, gridWidth);
         return visibleDropPreview.insert
-            ? { ...style, top: style.top - 2, height: 4 }
+            ? {
+                ...style,
+                left: style.left + (visibleDropPreview.displayLeftOffset ?? 0),
+                top: style.top - 2,
+                width: visibleDropPreview.displayWidth ?? style.width,
+                height: 4,
+            }
             : style;
     }, [visibleDropPreview, gridWidth]);
 
     return (
         <section
             ref={setNodeRef}
+            data-dashboard-canvas
             onClick={(event) => {
                 if (!event.target.closest('[data-canvas-item]')) {
                     onSelect(null);
@@ -194,7 +218,7 @@ const Canvas = ({
                 </div>
             </div>
 
-            {components.length === 0 ? (
+            {layoutComponents.length === 0 ? (
                 <div className={`flex min-h-[560px] items-center justify-center rounded-2xl border border-dashed bg-zinc-900/40 transition ${
                     isOver ? 'border-blue-500 bg-blue-500/5' : 'border-zinc-800'
                 }`}>
@@ -230,7 +254,7 @@ const Canvas = ({
                         </div>
                     )}
                     {gridLayout.map((layoutItem) => {
-                        const item = components.find(
+                        const item = layoutComponents.find(
                             (component) => component.id === layoutItem.i
                         );
                         if (!item) return null;
@@ -258,6 +282,32 @@ const Canvas = ({
                                     filterValue={filterValues[item.id] || ''}
                                     onFilterChange={handleFilterChange}
                                     onBeginInteraction={beginInteraction}
+                                    pages={pages}
+                                    children={components
+                                        .filter((component) => component.parentId === item.id)
+                                        .map((component) => {
+                                            const datasetId = resolveDatasetId(component);
+                                            return {
+                                                item: component,
+                                                rows: component.type === 'selectbox'
+                                                    ? (previewRowsByDataset[datasetId] || [])
+                                                    : (filteredRowsByDataset[datasetId] || []),
+                                                filterValue: filterValues[component.id] || '',
+                                            };
+                                        })}
+                                    selectedId={selectedId}
+                                    isContainerDropTarget={containerDropTargetId === item.id}
+                                    onMoveChild={(childId, targetContainerId, dragRect, childMeta) => {
+                                        const targetLayout = targetContainerId
+                                            ? null
+                                            : getPaletteDropLayout(dragRect, childMeta);
+                                        onMoveToContainer(
+                                            childId,
+                                            targetContainerId,
+                                            targetLayout
+                                        );
+                                    }}
+                                    onReorderChild={onReorderComponent}
                                 />
                             </div>
                         );
@@ -265,7 +315,7 @@ const Canvas = ({
                 </div>
             )}
 
-            {isDragging && components.length > 0 && (
+            {isDragging && layoutComponents.length > 0 && (
                 <div className="mt-4 rounded-xl border border-dashed border-blue-500/30 bg-blue-500/5 px-4 py-3 text-center text-xs text-blue-200">
                     Отпустите новый компонент над холстом
                 </div>

@@ -6,8 +6,10 @@ import {
     TextAreaField,
     ColorField,
     OptionSelect,
+    MultiFieldSelect,
 } from './properties/PropertyFields.jsx';
 import ColorStyleField from './properties/ColorStyleField.jsx';
+import { getAppearanceDefaults } from '../services/componentAppearance.js';
 
 const aggregationOptions = [
     { value: 'none', label: 'Без агрегации' },
@@ -33,6 +35,10 @@ const fontSizeOptions = [12, 14, 16, 18, 20, 24, 28, 32].map((size) => ({
     value: String(size),
     label: `${size} px`,
 }));
+const elementFontSizeOptions = [
+    { value: 'auto', label: 'Стандартный Streamlit' },
+    ...fontSizeOptions,
+];
 
 const fontWeightOptions = [
     { value: 'normal', label: 'Обычный' },
@@ -50,18 +56,68 @@ const textAlignOptions = [
     { value: 'right', label: 'Справа' },
 ];
 
+const filterWidgetOptions = [
+    { value: 'selectbox', label: 'Выпадающий список' },
+    { value: 'radio', label: 'Radio-кнопки' },
+    { value: 'segmented', label: 'Сегменты' },
+    { value: 'pills', label: 'Кнопки-плашки' },
+    { value: 'multiselect', label: 'Множественный выбор' },
+];
+
+const navigationStyleOptions = [
+    { value: 'button', label: 'Кнопка' },
+    { value: 'link', label: 'Текстовая ссылка' },
+];
+
+const tableRowLimitOptions = [10, 25, 50, 100, 250, 500].map((value) => ({
+    value: String(value),
+    label: `${value} строк`,
+}));
+
+const spacingOptions = [0, 4, 8, 12, 16, 24, 32].map((value) => ({
+    value: String(value),
+    label: value === 0 ? 'Без отступа' : `${value} px`,
+}));
+
+const SectionTitle = ({ children }) => (
+    <div className="pt-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+        {children}
+    </div>
+);
+
 const PropertiesPanel = ({
                              selectedComponent,
                              onUpdateComponent,
                              onDeleteSelected,
                              onClose,
                              datasets = [],
+                             pages = [],
+                             components = [],
                          }) => {
     if (!selectedComponent) {
         return null;
     }
 
     const { type, config, bindings } = selectedComponent;
+    const appearance = getAppearanceDefaults(type, config);
+    const isCompact = ['text', 'metric', 'selectbox', 'page_link'].includes(type);
+    const supportsElementTypography = ['metric', 'page_link'].includes(type);
+    const titleLabel = {
+        text: 'Заголовок текста (необязательно)',
+        layout_group: 'Название контейнера (необязательно)',
+        page_link: 'Текст кнопки или ссылки',
+        selectbox: 'Название фильтра',
+        metric: 'Название метрики',
+        table: 'Название таблицы',
+    }[type] || 'Название графика';
+    const titleHelper = {
+        text: 'Если оставить пустым, будет показан только основной текст',
+        layout_group: 'Используется только как подпись группы',
+        page_link: 'Этот текст увидит пользователь в готовом приложении',
+        selectbox: 'Подпись над элементом выбора',
+        metric: 'Подпись над рассчитанным значением',
+        table: 'Подпись над таблицей',
+    }[type] || 'Подпись над графиком';
 
     const activeDataset =
         datasets.find((ds) => ds.datasetId === selectedComponent.datasetId) ||
@@ -91,6 +147,15 @@ const PropertiesPanel = ({
     const aggregatedValueFieldOptions = config.aggregation === 'count'
         ? fieldOptions
         : valueFieldOptions;
+    const containerOptions = [
+        { value: '', label: 'На странице' },
+        ...components
+            .filter((component) => component.type === 'layout_group')
+            .map((component, index) => ({
+                value: component.id,
+                label: component.config?.title || `Контейнер ${index + 1}`,
+            })),
+    ];
 
     // Обновление значений конфига в схеме (название схемы)
     const updateConfig = (key, value) => {
@@ -99,6 +164,15 @@ const PropertiesPanel = ({
             config: {
                 ...component.config,
                 [key]: value,
+            },
+            layout: {
+                ...component.layout,
+                ...(key === 'heightMode' && value === 'auto'
+                    ? { manualHeight: false }
+                    : {}),
+                ...(key === 'contentWidth' && value === 'content'
+                    ? { manualWidth: false }
+                    : {}),
             },
         }));
     };
@@ -123,7 +197,14 @@ const PropertiesPanel = ({
             const cleanedBindings = { ...component.bindings };
 
             Object.keys(cleanedBindings).forEach((key) => {
-                if (cleanedBindings[key] && !nextFields.has(cleanedBindings[key])) {
+                if (Array.isArray(cleanedBindings[key])) {
+                    cleanedBindings[key] = cleanedBindings[key].filter(
+                        (field) => nextFields.has(field)
+                    );
+                } else if (
+                    cleanedBindings[key]
+                    && !nextFields.has(cleanedBindings[key])
+                ) {
                     cleanedBindings[key] = '';
                 }
             });
@@ -164,18 +245,137 @@ const PropertiesPanel = ({
 
                 <div className="space-y-3 p-4">
                     <TextField
-                        label={type === 'text' ? 'Заголовок (необязательно)' : 'Заголовок'}
+                        label={titleLabel}
                         value={config.title || ''}
                         onChange={(value) => updateConfig('title', value)}
                         placeholder={type === 'text'
                             ? 'Можно оставить пустым'
                             : 'Введите заголовок компонента'}
-                        helperText={type === 'text'
-                            ? 'Если поле пустое, в готовом приложении будет показан только текст'
-                            : 'Отображается над графиком или элементом'}
+                        helperText={titleHelper}
                     />
 
-                    {type !== 'text' && (
+                    {type !== 'layout_group' && containerOptions.length > 1 && (
+                        <OptionSelect
+                            label="Расположение"
+                            value={selectedComponent.parentId || ''}
+                            onChange={(value) => onUpdateComponent(
+                                selectedComponent.id,
+                                (component) => ({ ...component, parentId: value || null })
+                            )}
+                            options={containerOptions}
+                            helperText="Элемент можно оставить на холсте или поместить в контейнер"
+                        />
+                    )}
+
+                    <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-3">
+                        <p className="mb-3 text-xs font-semibold text-zinc-200">
+                            Внешний вид
+                        </p>
+                        <div className="space-y-3">
+                            <OptionSelect
+                                label="Граница"
+                                value={appearance.showBorder ? 'show' : 'hide'}
+                                onChange={(value) => updateConfig('showBorder', value === 'show')}
+                                options={[
+                                    { value: 'hide', label: 'Не показывать' },
+                                    { value: 'show', label: 'Показывать' },
+                                ]}
+                            />
+                            <OptionSelect
+                                label="Фон"
+                                value={appearance.showBackground ? 'show' : 'hide'}
+                                onChange={(value) => updateConfig('showBackground', value === 'show')}
+                                options={[
+                                    { value: 'hide', label: 'Прозрачный' },
+                                    { value: 'show', label: 'Мягкая подложка' },
+                                ]}
+                            />
+                            {isCompact && (
+                                <OptionSelect
+                                    label="Положение содержимого"
+                                    value={appearance.contentAlignment}
+                                    onChange={(value) => updateConfig('contentAlignment', value)}
+                                    options={[
+                                        { value: 'left', label: 'Слева' },
+                                        { value: 'center', label: 'По центру' },
+                                        { value: 'right', label: 'Справа' },
+                                    ]}
+                                />
+                            )}
+                            {isCompact && (
+                                <OptionSelect
+                                    label="Высота блока"
+                                    value={appearance.heightMode}
+                                    onChange={(value) => updateConfig('heightMode', value)}
+                                    options={[
+                                        { value: 'auto', label: 'По содержимому' },
+                                        { value: 'fixed', label: 'Фиксированная' },
+                                    ]}
+                                    helperText="В автоматическом режиме высота зависит от текста и внутреннего отступа"
+                                />
+                            )}
+                            {isCompact && appearance.heightMode === 'fixed' && (
+                                <OptionSelect
+                                    label="По вертикали"
+                                    value={appearance.verticalAlignment}
+                                    onChange={(value) => updateConfig('verticalAlignment', value)}
+                                    options={[
+                                        { value: 'top', label: 'Сверху' },
+                                        { value: 'center', label: 'По центру' },
+                                        { value: 'bottom', label: 'Снизу' },
+                                    ]}
+                                />
+                            )}
+                            {isCompact && (
+                                <OptionSelect
+                                    label="Ширина содержимого"
+                                    value={appearance.contentWidth}
+                                    onChange={(value) => updateConfig('contentWidth', value)}
+                                    options={[
+                                        { value: 'content', label: 'По содержимому' },
+                                        { value: 'stretch', label: 'На всю ширину' },
+                                    ]}
+                                />
+                            )}
+                            {type !== 'layout_group' && (
+                                <OptionSelect
+                                    label="Внутренний отступ"
+                                    value={String(appearance.padding)}
+                                    onChange={(value) => updateConfig('padding', Number(value))}
+                                    options={spacingOptions}
+                                />
+                            )}
+                            {supportsElementTypography && (
+                                <>
+                                    <OptionSelect
+                                        label="Размер текста"
+                                        value={String(appearance.elementFontSize)}
+                                        onChange={(value) => updateConfig('elementFontSize', value)}
+                                        options={elementFontSizeOptions}
+                                    />
+                                    <ColorField
+                                        label="Цвет текста"
+                                        value={appearance.elementTextColor}
+                                        onChange={(value) => updateConfig('elementTextColor', value)}
+                                    />
+                                    <OptionSelect
+                                        label="Начертание"
+                                        value={appearance.elementFontWeight}
+                                        onChange={(value) => updateConfig('elementFontWeight', value)}
+                                        options={fontWeightOptions}
+                                    />
+                                    <OptionSelect
+                                        label="Стиль текста"
+                                        value={appearance.elementFontStyle}
+                                        onChange={(value) => updateConfig('elementFontStyle', value)}
+                                        options={fontStyleOptions}
+                                    />
+                                </>
+                            )}
+                        </div>
+                    </div>
+
+                    {!['text', 'page_link', 'layout_group'].includes(type) && (
                         <FieldSelect
                             label="Источник данных (CSV)"
                             value={activeDataset?.datasetId || ''}
@@ -186,8 +386,47 @@ const PropertiesPanel = ({
                         />
                     )}
 
+                    {type === 'layout_group' && (
+                        <>
+                            <SectionTitle>Настройки контейнера</SectionTitle>
+                            <OptionSelect
+                                label="Направление"
+                                value={config.direction || 'vertical'}
+                                onChange={(value) => updateConfig('direction', value)}
+                                options={[
+                                    { value: 'vertical', label: 'Сверху вниз' },
+                                    { value: 'horizontal', label: 'Слева направо' },
+                                ]}
+                            />
+                            <OptionSelect
+                                label="Расстояние между элементами"
+                                value={String(config.gap ?? 8)}
+                                onChange={(value) => updateConfig('gap', Number(value))}
+                                options={spacingOptions}
+                            />
+                            <OptionSelect
+                                label="Внутренний отступ"
+                                value={String(config.padding ?? 8)}
+                                onChange={(value) => updateConfig('padding', Number(value))}
+                                options={spacingOptions}
+                            />
+                            <OptionSelect
+                                label="Выравнивание"
+                                value={config.horizontalAlignment || 'left'}
+                                onChange={(value) => updateConfig('horizontalAlignment', value)}
+                                options={[
+                                    { value: 'left', label: 'По левому краю' },
+                                    { value: 'center', label: 'По центру' },
+                                    { value: 'right', label: 'По правому краю' },
+                                    { value: 'distribute', label: 'Распределить' },
+                                ]}
+                            />
+                        </>
+                    )}
+
                     {type === 'text' && (
                         <>
+                            <SectionTitle>Содержимое текста</SectionTitle>
                             <TextAreaField
                                 label="Текст"
                                 value={config.content || ''}
@@ -234,6 +473,15 @@ const PropertiesPanel = ({
 
                     {type === 'selectbox' && (
                         <>
+                            <SectionTitle>Настройки фильтра</SectionTitle>
+                            <OptionSelect
+                                label="Вид элемента"
+                                value={config.widget || 'selectbox'}
+                                onChange={(value) => updateConfig('widget', value)}
+                                options={filterWidgetOptions}
+                                helperText="Один фильтр, разные нативные элементы Streamlit"
+                            />
+
                             <FieldSelect
                                 label="Поле данных"
                                 value={bindings.field || ''}
@@ -253,8 +501,59 @@ const PropertiesPanel = ({
                         </>
                     )}
 
+                    {type === 'page_link' && (
+                        <>
+                            <SectionTitle>Переход между страницами</SectionTitle>
+                            <OptionSelect
+                                label="Страница"
+                                value={config.targetPageId || ''}
+                                onChange={(value) => updateConfig('targetPageId', value)}
+                                options={pages.map((page) => ({
+                                    value: page.id,
+                                    label: page.title,
+                                }))}
+                                helperText="Куда перейдёт пользователь"
+                            />
+                            <OptionSelect
+                                label="Вид перехода"
+                                value={config.displayStyle || 'button'}
+                                onChange={(value) => updateConfig('displayStyle', value)}
+                                options={navigationStyleOptions}
+                            />
+                        </>
+                    )}
+
+                    {type === 'table' && (
+                        <>
+                            <SectionTitle>Настройки таблицы</SectionTitle>
+                            <MultiFieldSelect
+                                label="Колонки"
+                                value={bindings.columns || []}
+                                onChange={(value) => updateBinding('columns', value)}
+                                options={fieldOptions}
+                                helperText="Если ничего не выбрано, показываются все колонки"
+                            />
+                            <OptionSelect
+                                label="Количество строк"
+                                value={String(config.rowLimit || 50)}
+                                onChange={(value) => updateConfig('rowLimit', Number(value))}
+                                options={tableRowLimitOptions}
+                            />
+                            <OptionSelect
+                                label="Индекс строк"
+                                value={config.hideIndex === false ? 'show' : 'hide'}
+                                onChange={(value) => updateConfig('hideIndex', value === 'hide')}
+                                options={[
+                                    { value: 'hide', label: 'Скрыть' },
+                                    { value: 'show', label: 'Показывать' },
+                                ]}
+                            />
+                        </>
+                    )}
+
                     {paletteItems[type]?.isChart && (
                         <>
+                            <SectionTitle>Данные и оси графика</SectionTitle>
                             <FieldSelect
                                 label="Поле X"
                                 value={bindings.xField || ''}
@@ -304,11 +603,41 @@ const PropertiesPanel = ({
                                 config={config}
                                 onUpdate={updateConfig}
                             />
+
+                            <OptionSelect
+                                label="Размер подписей осей"
+                                value={String(config.axisLabelFontSize || 11)}
+                                onChange={(value) => updateConfig('axisLabelFontSize', Number(value))}
+                                options={[10, 11, 12, 14, 16, 18].map((value) => ({
+                                    value: String(value),
+                                    label: `${value} px`,
+                                }))}
+                            />
+                            <ColorField
+                                label="Цвет подписей осей"
+                                value={config.axisLabelColor || '#94a3b8'}
+                                onChange={(value) => updateConfig('axisLabelColor', value)}
+                            />
+                            <OptionSelect
+                                label="Размер названий осей"
+                                value={String(config.axisTitleFontSize || 12)}
+                                onChange={(value) => updateConfig('axisTitleFontSize', Number(value))}
+                                options={[10, 11, 12, 14, 16, 18].map((value) => ({
+                                    value: String(value),
+                                    label: `${value} px`,
+                                }))}
+                            />
+                            <ColorField
+                                label="Цвет названий осей"
+                                value={config.axisTitleColor || '#94a3b8'}
+                                onChange={(value) => updateConfig('axisTitleColor', value)}
+                            />
                         </>
                     )}
 
                     {type === 'metric' && (
                         <>
+                            <SectionTitle>Расчёт метрики</SectionTitle>
                             <FieldSelect
                                 label="Поле значения"
                                 value={bindings.valueField || ''}

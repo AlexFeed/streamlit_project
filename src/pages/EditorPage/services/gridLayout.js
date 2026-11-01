@@ -1,12 +1,16 @@
 import { paletteItems } from '../data/paletteItems.js';
+import { withAppearanceDefaults } from './componentAppearance.js';
 
 export const GRID_COLUMNS = 12;
 export const GRID_ROW_HEIGHT = 20;
-export const GRID_GAP = 16;
+export const GRID_COLUMN_GAP = 16;
+export const GRID_ROW_GAP = 8;
 export const CARD_CHROME_HEIGHT = 96;
 
 export const getCardChromeHeight = (type) => (
-    ['text', 'metric', 'selectbox'].includes(type) ? 0 : CARD_CHROME_HEIGHT
+    ['text', 'metric', 'selectbox', 'page_link', 'layout_group'].includes(type)
+        ? 0
+        : CARD_CHROME_HEIGHT
 );
 
 export const getMinimumContentHeight = (type) => (
@@ -15,8 +19,74 @@ export const getMinimumContentHeight = (type) => (
 
 export const normalizeGridWidth = (value, type) => {
     const fallback = paletteItems[type]?.defaultWidth || 6;
+    const minimum = paletteItems[type]?.minWidth || 2;
     const numeric = Math.round(Number(value) || fallback);
-    return Math.max(2, Math.min(GRID_COLUMNS, numeric));
+    return Math.max(minimum, Math.min(GRID_COLUMNS, numeric));
+};
+
+const compactWidthTypes = new Set(['text', 'metric', 'selectbox', 'page_link']);
+
+const getRequiredContainerGridWidth = (container, components) => {
+    const children = (components || []).filter(
+        (item) => item.parentId === container.id
+    );
+    if (children.length === 0) {
+        return normalizeGridWidth(container.layout?.width, container.type);
+    }
+
+    const childWidths = children.map((child) => (
+        getComponentGridWidth(child, components)
+    ));
+    const direction = container.config?.direction || 'vertical';
+    const contentWidth = direction === 'horizontal'
+        ? childWidths.reduce((total, width) => total + width, 0)
+        : Math.max(...childWidths);
+    const hasHorizontalSpacing = (
+        Number(container.config?.padding ?? 8) > 0
+        || (direction === 'horizontal'
+            && Number(container.config?.gap ?? 8) > 0
+            && children.length > 1)
+    );
+
+    return Math.max(
+        1,
+        Math.min(GRID_COLUMNS, contentWidth + (hasHorizontalSpacing ? 1 : 0))
+    );
+};
+
+export const getComponentGridWidth = (component, components = []) => {
+    const normalized = normalizeGridWidth(
+        component.layout?.width,
+        component.type
+    );
+    const config = withAppearanceDefaults(
+        component.type,
+        component.config || {}
+    );
+
+    if (
+        component.type === 'layout_group'
+        && !component.layout?.manualWidth
+    ) {
+        return getRequiredContainerGridWidth(component, components);
+    }
+
+    if (
+        !component.layout?.manualWidth
+        &&
+        compactWidthTypes.has(component.type)
+        && config.contentWidth === 'content'
+    ) {
+        if (
+            component.type === 'selectbox'
+            && ['selectbox', 'multiselect'].includes(config.widget || 'selectbox')
+        ) {
+            return 3;
+        }
+        return paletteItems[component.type]?.minWidth || 2;
+    }
+
+    return normalized;
 };
 
 export const normalizeContentHeight = (value, type) => {
@@ -30,15 +100,96 @@ export const contentHeightToGridUnits = (height, type) => {
     const totalHeight = normalizeContentHeight(height, type) + getCardChromeHeight(type);
     return Math.max(
         1,
-        Math.ceil((totalHeight + GRID_GAP) / (GRID_ROW_HEIGHT + GRID_GAP))
+        Math.ceil((totalHeight + GRID_ROW_GAP) / (GRID_ROW_HEIGHT + GRID_ROW_GAP))
     );
+};
+
+const getAutomaticContentHeight = (component) => {
+    const config = withAppearanceDefaults(component.type, component.config || {});
+    const padding = Number(config.padding || 0) * 2;
+
+    if (component.type === 'text') {
+        const fontSize = Number(config.fontSize || 16);
+        const width = getComponentGridWidth({
+            ...component,
+            config,
+        });
+        const charactersPerLine = Math.max(18, width * 10);
+        const contentLines = String(config.content || '')
+            .split('\n')
+            .reduce((total, line) => (
+                total + Math.max(1, Math.ceil(line.length / charactersPerLine))
+            ), 0);
+        const titleLines = config.title ? 1 : 0;
+        return Math.ceil(
+            contentLines * fontSize * 1.5
+            + titleLines * 20
+            + padding
+        );
+    }
+    if (component.type === 'page_link') return 40 + padding;
+    if (component.type === 'metric') {
+        return 58 + (config.description ? 18 : 0) + padding;
+    }
+    if (component.type === 'selectbox') {
+        return (config.widget === 'radio' ? 72 : 56) + padding;
+    }
+    return normalizeContentHeight(component.layout?.height, component.type);
+};
+
+const getRequiredContainerHeight = (container, components) => {
+    const children = components.filter((item) => item.parentId === container.id);
+    if (children.length === 0) {
+        return paletteItems.layout_group.defaultHeight;
+    }
+
+    const gap = Math.max(0, Number(container.config?.gap ?? 8));
+    const padding = Math.max(0, Number(container.config?.padding ?? 8)) * 2;
+    const childHeights = children.map((child) => {
+        const childConfig = withAppearanceDefaults(child.type, {
+            ...(paletteItems[child.type]?.defaultConfig || {}),
+            ...child.config,
+        });
+        if (['text', 'metric', 'selectbox', 'page_link'].includes(child.type)) {
+            return Math.max(40, getAutomaticContentHeight({
+                ...child,
+                config: childConfig,
+            }));
+        }
+        return normalizeContentHeight(child.layout?.height, child.type) + 40;
+    });
+    const contentHeight = container.config?.direction === 'horizontal'
+        ? Math.max(...childHeights)
+        : childHeights.reduce((total, height) => total + height, 0)
+            + gap * Math.max(0, children.length - 1);
+
+    return Math.min(720, Math.ceil(contentHeight + padding));
+};
+
+export const getComponentGridHeight = (component) => {
+    const config = withAppearanceDefaults(component.type, component.config || {});
+    if (
+        ['text', 'metric', 'selectbox', 'page_link'].includes(component.type)
+        && config.heightMode === 'auto'
+        && !component.layout?.manualHeight
+    ) {
+        const height = getAutomaticContentHeight({ ...component, config });
+        return Math.max(
+            1,
+            Math.ceil(
+                (height + GRID_ROW_GAP)
+                / (GRID_ROW_HEIGHT + GRID_ROW_GAP)
+            )
+        );
+    }
+    return contentHeightToGridUnits(component.layout?.height, component.type);
 };
 
 export const gridUnitsToContentHeight = (units, type) => {
     const safeUnits = Math.max(1, Math.round(Number(units) || 1));
     const totalHeight = (
         safeUnits * GRID_ROW_HEIGHT
-        + Math.max(0, safeUnits - 1) * GRID_GAP
+        + Math.max(0, safeUnits - 1) * GRID_ROW_GAP
     );
     return normalizeContentHeight(totalHeight - getCardChromeHeight(type), type);
 };
@@ -141,7 +292,7 @@ export const findNearestGridPosition = (
     width,
     height,
 ) => {
-    const safeWidth = Math.max(2, Math.min(GRID_COLUMNS, Math.round(width)));
+    const safeWidth = Math.max(1, Math.min(GRID_COLUMNS, Math.round(width)));
     const safeHeight = Math.max(1, Math.round(height));
     const originX = Math.max(
         0,
@@ -182,7 +333,7 @@ export const findGridInsertionPosition = (
     width,
     height,
 ) => {
-    const safeWidth = Math.max(2, Math.min(GRID_COLUMNS, Math.round(width)));
+    const safeWidth = Math.max(1, Math.min(GRID_COLUMNS, Math.round(width)));
     const safeHeight = Math.max(1, Math.round(height));
     const x = Math.max(
         0,
@@ -200,7 +351,7 @@ export const findGridInsertionPosition = (
     const boundary = boundaries.reduce((nearest, current) => (
         Math.abs(current - y) < Math.abs(nearest - y) ? current : nearest
     ));
-    if (Math.abs(boundary - y) > 2) return null;
+    if (Math.abs(boundary - y) > 3) return null;
 
     return {
         x,
@@ -215,13 +366,22 @@ export const resizeGridItem = (layout, id, deltaWidth, deltaHeight) => {
     const item = layout.find((entry) => entry.i === id);
     if (!item) return layout;
 
+    const isWidthResize = Math.round(deltaWidth) !== 0;
+    const isHeightResize = Math.round(deltaHeight) !== 0;
+
     return resolveGridCollisions(layout, id, {
         ...item,
+        minH: isHeightResize ? (item.resizeMinH || 1) : item.minH,
+        maxH: isHeightResize
+            ? (item.resizeMaxH || Number.POSITIVE_INFINITY)
+            : item.maxH,
         w: Math.min(
             GRID_COLUMNS - item.x,
             item.w + Math.round(deltaWidth)
         ),
         h: item.h + Math.round(deltaHeight),
+        manualWidth: item.manualWidth || isWidthResize,
+        manualHeight: item.manualHeight || isHeightResize,
     });
 };
 
@@ -237,21 +397,74 @@ const findFreePosition = (placed, width, height) => {
     return { x: 0, y: 0 };
 };
 
+const pushBelowOverlaps = (candidate, placed) => {
+    let next = { ...candidate };
+    let guard = 0;
+
+    while (guard < placed.length + 1) {
+        const overlaps = placed.filter((item) => rectanglesOverlap(next, item));
+        if (overlaps.length === 0) break;
+        next = {
+            ...next,
+            y: Math.max(...overlaps.map((item) => item.y + item.h)),
+        };
+        guard += 1;
+    }
+
+    return next;
+};
+
 export const normalizeComponentLayouts = (components) => {
     if (!Array.isArray(components)) return [];
     const placed = [];
 
     return components.map((component) => {
-        const width = normalizeGridWidth(component.layout?.width, component.type);
+        const defaultConfig = paletteItems[component.type]?.defaultConfig || {};
+        const normalizedConfig = withAppearanceDefaults(component.type, {
+            ...defaultConfig,
+            ...component.config,
+            sortBy: component.config?.sortBy
+                || (component.type === 'bar_chart' ? 'y' : 'x'),
+        });
+        const width = getComponentGridWidth({
+            ...component,
+            config: normalizedConfig,
+        }, components);
+        const requestedHeight = component.type === 'layout_group'
+            ? Math.max(
+                Number(component.layout?.height || 0),
+                getRequiredContainerHeight(component, components)
+            )
+            : component.layout?.height;
         const height = normalizeContentHeight(
-            component.layout?.height,
+            requestedHeight,
             component.type
         );
-        const gridHeight = contentHeightToGridUnits(height, component.type);
+        const gridHeight = getComponentGridHeight({
+            ...component,
+            config: normalizedConfig,
+            layout: {
+                ...component.layout,
+                width,
+                height,
+            },
+        });
         const hasPosition = (
             Number.isInteger(component.layout?.x)
             && Number.isInteger(component.layout?.y)
         );
+        if (component.parentId) {
+            return {
+                ...component,
+                config: normalizedConfig,
+                bindings: { ...component.bindings },
+                layout: {
+                    ...component.layout,
+                    width,
+                    height,
+                },
+            };
+        }
         const requested = hasPosition
             ? {
                 x: Math.max(
@@ -267,7 +480,7 @@ export const normalizeComponentLayouts = (components) => {
         // данными. При повторной загрузке их нельзя уплотнять или переносить:
         // свободную позицию ищем только для нового элемента без x/y.
         const position = requested
-            ? requested
+            ? pushBelowOverlaps(requested, placed)
             : {
                 ...findFreePosition(placed, width, gridHeight),
                 w: width,
@@ -278,11 +491,7 @@ export const normalizeComponentLayouts = (components) => {
 
         return {
             ...component,
-            config: {
-                ...component.config,
-                sortBy: component.config?.sortBy
-                    || (component.type === 'bar_chart' ? 'y' : 'x'),
-            },
+            config: normalizedConfig,
             bindings: { ...component.bindings },
             layout: {
                 ...component.layout,
@@ -295,17 +504,45 @@ export const normalizeComponentLayouts = (components) => {
     });
 };
 
-export const toReactGridLayout = (components) => components.map((component) => ({
-    i: component.id,
-    x: component.layout?.x || 0,
-    y: component.layout?.y || 0,
-    w: normalizeGridWidth(component.layout?.width, component.type),
-    h: contentHeightToGridUnits(component.layout?.height, component.type),
-    minW: 2,
-    maxW: GRID_COLUMNS,
-    minH: contentHeightToGridUnits(
-        getMinimumContentHeight(component.type),
-        component.type
-    ),
-    maxH: contentHeightToGridUnits(720, component.type),
-}));
+export const toReactGridLayout = (components) => {
+    const placed = [];
+
+    return components.map((component) => {
+    const height = getComponentGridHeight(component);
+    const config = withAppearanceDefaults(component.type, component.config || {});
+    const usesAutomaticHeight = (
+        ['text', 'metric', 'selectbox', 'page_link'].includes(component.type)
+        && config.heightMode === 'auto'
+        && !component.layout?.manualHeight
+    );
+
+    const requested = {
+        i: component.id,
+        x: component.layout?.x || 0,
+        y: component.layout?.y || 0,
+        w: getComponentGridWidth(component, components),
+        h: height,
+        minW: paletteItems[component.type]?.minWidth || 2,
+        maxW: GRID_COLUMNS,
+        minH: usesAutomaticHeight
+            ? height
+            : contentHeightToGridUnits(
+                getMinimumContentHeight(component.type),
+                component.type
+            ),
+        maxH: usesAutomaticHeight
+            ? height
+            : contentHeightToGridUnits(720, component.type),
+        resizeMinH: contentHeightToGridUnits(
+            getMinimumContentHeight(component.type),
+            component.type
+        ),
+        resizeMaxH: contentHeightToGridUnits(720, component.type),
+        manualWidth: Boolean(component.layout?.manualWidth),
+        manualHeight: Boolean(component.layout?.manualHeight),
+    };
+    const resolved = pushBelowOverlaps(requested, placed);
+    placed.push(resolved);
+    return resolved;
+    });
+};

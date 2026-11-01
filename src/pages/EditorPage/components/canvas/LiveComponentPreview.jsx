@@ -34,11 +34,6 @@ const tooltipStyle = {
     boxShadow: '0 16px 40px rgba(0, 0, 0, 0.35)',
 };
 
-const axisTick = {
-    fill: '#71717a',
-    fontSize: 11,
-};
-
 const EmptyPreview = ({ children, height = 240 }) => (
     <div
         className="flex items-center justify-center rounded-xl border border-dashed border-zinc-800 bg-zinc-950/50 px-6 text-center"
@@ -61,6 +56,14 @@ const LiveChart = ({ item, rows, height }) => {
         item.config?.palette,
         item.config?.reversePalette
     );
+    const axisTick = {
+        fill: item.config?.axisLabelColor || '#94a3b8',
+        fontSize: item.config?.axisLabelFontSize || 11,
+    };
+    const axisTitle = {
+        fill: item.config?.axisTitleColor || '#94a3b8',
+        fontSize: item.config?.axisTitleFontSize || 12,
+    };
     const yValues = chartData.map((point) => point.y);
     const minValue = yValues.length ? Math.min(...yValues) : 0;
     const maxValue = yValues.length ? Math.max(...yValues) : 0;
@@ -113,6 +116,12 @@ const LiveChart = ({ item, rows, height }) => {
                 tickLine={false}
                 axisLine={{ stroke: '#3f3f46' }}
                 minTickGap={24}
+                label={{
+                    value: xField,
+                    position: 'insideBottom',
+                    offset: -2,
+                    style: axisTitle,
+                }}
             />
             <YAxis
                 dataKey={item.type === 'scatter_plot' ? 'y' : undefined}
@@ -121,6 +130,12 @@ const LiveChart = ({ item, rows, height }) => {
                 tickLine={false}
                 axisLine={false}
                 width={46}
+                label={{
+                    value: yField,
+                    angle: -90,
+                    position: 'insideLeft',
+                    style: axisTitle,
+                }}
             />
             <Tooltip
                 contentStyle={tooltipStyle}
@@ -139,7 +154,7 @@ const LiveChart = ({ item, rows, height }) => {
         <div className="w-full" style={{ height }}>
             <ResponsiveContainer width="100%" height="100%">
                 {item.type === 'line_chart' ? (
-                    <LineChart data={chartData} margin={{ top: 12, right: 12, left: -8, bottom: 0 }}>
+                    <LineChart data={chartData} margin={{ top: 12, right: 12, left: 8, bottom: 24 }}>
                         {common}
                         <Line
                             type="monotone"
@@ -151,7 +166,7 @@ const LiveChart = ({ item, rows, height }) => {
                         />
                     </LineChart>
                 ) : item.type === 'bar_chart' ? (
-                    <BarChart data={chartData} margin={{ top: 12, right: 12, left: -8, bottom: 0 }}>
+                    <BarChart data={chartData} margin={{ top: 12, right: 12, left: 8, bottom: 24 }}>
                         {common}
                         <Bar
                             dataKey="y"
@@ -168,7 +183,7 @@ const LiveChart = ({ item, rows, height }) => {
                         </Bar>
                     </BarChart>
                 ) : item.type === 'area_chart' ? (
-                    <AreaChart data={chartData} margin={{ top: 12, right: 12, left: -8, bottom: 0 }}>
+                    <AreaChart data={chartData} margin={{ top: 12, right: 12, left: 8, bottom: 24 }}>
                         <defs>
                             <linearGradient id={`area-${item.id}`} x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="5%" stopColor={color} stopOpacity={0.45} />
@@ -185,7 +200,7 @@ const LiveChart = ({ item, rows, height }) => {
                         />
                     </AreaChart>
                 ) : (
-                    <ScatterChart margin={{ top: 12, right: 12, left: -8, bottom: 0 }}>
+                    <ScatterChart margin={{ top: 12, right: 12, left: 8, bottom: 24 }}>
                         {common}
                         <Scatter data={chartData} fill={color}>
                             {chartData.map((point, index) => (
@@ -218,17 +233,24 @@ const LiveMetric = ({ item, rows, height }) => {
 
     return (
         <div
-            className="flex flex-col justify-center rounded-xl bg-gradient-to-br from-blue-500/15 via-zinc-950/80 to-violet-500/10 px-4 py-3"
-            style={{ height }}
+            className="flex flex-col justify-center"
+            style={{
+                height,
+                color: item.config?.elementTextColor || '#d4d4d8',
+                fontStyle: item.config?.elementFontStyle || 'normal',
+            }}
         >
-            <p className="mb-1 text-xs font-medium text-zinc-400">
+            <p className="mb-1 text-xs font-medium opacity-70">
                 {item.config?.title || 'Метрика'}
             </p>
-            <p className="text-3xl font-semibold tracking-tight text-white">
+            <p
+                className="text-3xl tracking-tight"
+                style={{ fontWeight: item.config?.elementFontWeight || 'bold' }}
+            >
                 {formatMetricValue(value)}
             </p>
             {item.config?.description?.trim() && (
-                <p className="mt-1 text-xs text-zinc-400">
+                <p className="mt-1 text-xs opacity-70">
                     {item.config.description}
                 </p>
             )}
@@ -249,7 +271,7 @@ const LiveText = ({ item, height }) => {
 
     return (
         <div
-            className="overflow-auto whitespace-pre-wrap rounded-xl bg-zinc-950/40 px-3 py-2 text-sm leading-6 text-zinc-300"
+            className="overflow-auto whitespace-pre-wrap text-sm leading-6 text-zinc-300"
             style={{
                 height,
                 fontSize: `${item.config?.fontSize || 16}px`,
@@ -296,29 +318,169 @@ const LiveFilter = ({
         );
     }
 
-    return (
-        <div
-            className="flex flex-col justify-center rounded-xl bg-zinc-950/60 px-3 py-2"
-            style={{ height }}
-        >
-            {item.config?.title?.trim() && (
-                <label className="mb-1.5 text-xs font-medium text-zinc-400">
-                    {item.config.title}
-                </label>
-            )}
+    const widget = item.config?.widget || 'selectbox';
+    const singleValue = Array.isArray(value) ? '' : (value || '');
+    const allOptions = ['Все значения', ...options];
+
+    const renderControl = () => {
+        if (widget === 'radio') {
+            return (
+                <div className="flex flex-wrap gap-x-3 gap-y-1.5 overflow-auto text-sm">
+                    {allOptions.map((option) => {
+                        const optionValue = option === 'Все значения' ? '' : option;
+                        return (
+                            <label key={option} className="flex items-center gap-1.5">
+                                <input
+                                    type="radio"
+                                    checked={singleValue === optionValue}
+                                    onChange={() => onChange(optionValue)}
+                                    onClick={(event) => event.stopPropagation()}
+                                />
+                                {option}
+                            </label>
+                        );
+                    })}
+                </div>
+            );
+        }
+
+        if (['segmented', 'pills'].includes(widget)) {
+            return (
+                <div className="flex flex-wrap gap-1.5 overflow-auto">
+                    {allOptions.map((option) => {
+                        const optionValue = option === 'Все значения' ? '' : option;
+                        return (
+                            <button
+                                key={option}
+                                type="button"
+                                onClick={(event) => {
+                                    event.stopPropagation();
+                                    onChange(optionValue);
+                                }}
+                                className={`${widget === 'pills' ? 'rounded-full' : 'rounded-lg'} px-2.5 py-1.5 text-xs transition ${
+                                    singleValue === optionValue
+                                        ? 'bg-blue-500 text-white'
+                                        : 'bg-zinc-800 text-zinc-300'
+                                }`}
+                            >
+                                {option}
+                            </button>
+                        );
+                    })}
+                </div>
+            );
+        }
+
+        if (widget === 'multiselect') {
+            const selected = Array.isArray(value) ? value : [];
+            return (
+                <select
+                    multiple
+                    value={selected}
+                    onChange={(event) => onChange(
+                        Array.from(event.target.selectedOptions, (option) => option.value)
+                    )}
+                    onClick={(event) => event.stopPropagation()}
+                    className="min-h-16 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none"
+                >
+                    {options.map((option) => (
+                        <option key={option} value={option}>{option}</option>
+                    ))}
+                </select>
+            );
+        }
+
+        return (
             <select
-                value={value || ''}
+                value={singleValue}
                 onChange={(event) => onChange(event.target.value)}
                 onClick={(event) => event.stopPropagation()}
                 className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
             >
                 <option value="">Все значения</option>
                 {options.map((option) => (
-                    <option key={option} value={option}>
-                        {option}
-                    </option>
+                    <option key={option} value={option}>{option}</option>
                 ))}
             </select>
+        );
+    };
+
+    return (
+        <div
+            className="flex flex-col justify-center"
+            style={{ height }}
+        >
+            {item.config?.title?.trim() && (
+                <label className="mb-1.5 text-xs font-medium opacity-70">
+                    {item.config.title}
+                </label>
+            )}
+            {renderControl()}
+        </div>
+    );
+};
+
+const LivePageLink = ({ item, pages, height }) => {
+    const target = pages?.find((page) => page.id === item.config?.targetPageId);
+    const label = item.config?.title || 'Открыть страницу';
+    const isLink = item.config?.displayStyle === 'link';
+
+    return (
+        <div
+            data-canvas-drag-surface
+            className="flex cursor-grab touch-none items-center active:cursor-grabbing"
+            style={{ height }}
+        >
+            <span
+                className={isLink
+                    ? 'text-sm font-medium text-blue-400 underline decoration-blue-400/40 underline-offset-4'
+                    : 'rounded-lg bg-blue-500 px-4 py-2 text-sm font-semibold text-white'}
+            >
+                {label}
+            </span>
+            {!target && (
+                <span className="ml-3 text-xs text-amber-400">Выберите страницу</span>
+            )}
+        </div>
+    );
+};
+
+const LiveTable = ({ item, rows, height }) => {
+    const selectedColumns = item.bindings?.columns || [];
+    const availableColumns = rows[0] ? Object.keys(rows[0]) : [];
+    const columns = selectedColumns.length > 0
+        ? selectedColumns.filter((column) => availableColumns.includes(column))
+        : availableColumns;
+    const visibleRows = rows.slice(0, item.config?.rowLimit || 50);
+
+    if (columns.length === 0) {
+        return <EmptyPreview height={height}>Нет данных для таблицы.</EmptyPreview>;
+    }
+
+    return (
+        <div className="h-full overflow-auto rounded-xl border border-zinc-800 bg-zinc-950/60">
+            <table className="min-w-full border-collapse text-left text-xs text-zinc-300">
+                <thead className="sticky top-0 bg-zinc-900 text-zinc-100">
+                    <tr>
+                        {columns.map((column) => (
+                            <th key={column} className="border-b border-zinc-700 px-3 py-2 font-semibold">
+                                {column}
+                            </th>
+                        ))}
+                    </tr>
+                </thead>
+                <tbody>
+                    {visibleRows.map((row, index) => (
+                        <tr key={index} className="border-b border-zinc-800/80">
+                            {columns.map((column) => (
+                                <td key={column} className="max-w-52 truncate px-3 py-2">
+                                    {String(row[column] ?? '')}
+                                </td>
+                            ))}
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
         </div>
     );
 };
@@ -337,6 +499,12 @@ const LiveComponentPreview = (props) => {
     }
     if (item.type === 'selectbox') {
         return <LiveFilter {...props} />;
+    }
+    if (item.type === 'page_link') {
+        return <LivePageLink item={item} pages={props.pages} height={height} />;
+    }
+    if (item.type === 'table') {
+        return <LiveTable item={item} rows={props.rows} height={height} />;
     }
 
     return <EmptyPreview>Неизвестный тип компонента.</EmptyPreview>;

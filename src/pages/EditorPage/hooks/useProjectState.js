@@ -3,12 +3,16 @@ import { toast } from 'sonner';
 
 import { getProject, createProject, updateProject } from '../../../api/projectsApi.js';
 import {compileDashboardSchema} from '../services/editorSchema.js';
-import {DATASET_DRAFT_STORAGE_KEY, EDITOR_DRAFT_STORAGE_KEY} from "../../../shared/constants/storageKeys.js";
+import {
+    DATASET_DRAFT_STORAGE_KEY,
+    EDITOR_DRAFT_STORAGE_KEY,
+    EDITOR_PAGES_DRAFT_STORAGE_KEY,
+} from '../../../shared/constants/storageKeys.js';
 
 // Hook отвечает за загрузку и сохранение проекта.
 export const useProjectState = ({
                                     projectId,
-                                    setComponents,
+                                    setEditorState,
                                     setDatasets,
                                 }) => {
     const [isProjectLoading, setIsProjectLoading] = useState(false);
@@ -29,7 +33,10 @@ export const useProjectState = ({
                 const fetchedProject = await getProject(projectId);
 
                 setProject(fetchedProject);
-                setComponents(fetchedProject.editorState?.components || []);
+                setEditorState(
+                    fetchedProject.editorState?.components || [],
+                    fetchedProject.editorState?.pages || fetchedProject.schema?.pages
+                );
                 setDatasets(fetchedProject.datasets || []);
             } catch (error) {
                 console.error('Ошибка загрузки проекта:', error);
@@ -40,7 +47,7 @@ export const useProjectState = ({
         };
 
         loadProject();
-    }, [projectId, setComponents, setDatasets]);
+    }, [projectId, setEditorState, setDatasets]);
 
 
     // Операция 1: Создание проекта из черновика (с модалкой)
@@ -55,7 +62,10 @@ export const useProjectState = ({
             title: snapshot.title,
             description: snapshot.description,
             datasets: snapshot.datasets,
-            editorState: { components: snapshot.components },
+            editorState: {
+                components: snapshot.components,
+                pages: snapshot.pages,
+            },
             schema,
         };
 
@@ -65,6 +75,7 @@ export const useProjectState = ({
 
             // Удаляем данные черновика после успешного создания проекта
             localStorage.removeItem(EDITOR_DRAFT_STORAGE_KEY);
+            localStorage.removeItem(EDITOR_PAGES_DRAFT_STORAGE_KEY);
             localStorage.removeItem(DATASET_DRAFT_STORAGE_KEY);
 
             setProject(savedProject);
@@ -93,7 +104,10 @@ export const useProjectState = ({
             title: snapshot.title,
             description: snapshot.description,
             datasets: snapshot.datasets,
-            editorState: { components: snapshot.components },
+            editorState: {
+                components: snapshot.components,
+                pages: snapshot.pages,
+            },
             schema,
         };
 

@@ -179,3 +179,42 @@ export const OptionSelect = ({
         </select>
     </div>
 );
+
+export const MultiFieldSelect = ({
+    label,
+    value = [],
+    onChange,
+    options = [],
+    helperText,
+}) => (
+    <div className={panelSectionClassName}>
+        <LabelWithTooltip label={label} helperText={helperText} />
+        <div className="max-h-44 space-y-1 overflow-y-auto rounded-xl border border-zinc-800 bg-zinc-950 p-2">
+            {options.length === 0 ? (
+                <p className="px-1 py-2 text-xs text-zinc-500">Нет доступных полей</p>
+            ) : options.map((entry) => {
+                const option = typeof entry === 'string'
+                    ? { value: entry, label: entry }
+                    : entry;
+                const checked = value.includes(option.value);
+                return (
+                    <label
+                        key={option.value}
+                        className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-zinc-300 hover:bg-zinc-900"
+                    >
+                        <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => onChange(
+                                checked
+                                    ? value.filter((item) => item !== option.value)
+                                    : [...value, option.value]
+                            )}
+                        />
+                        <span className="truncate">{option.label}</span>
+                    </label>
+                );
+            })}
+        </div>
+    </div>
+);
