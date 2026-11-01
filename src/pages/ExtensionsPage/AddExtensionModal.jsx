@@ -94,7 +94,7 @@ const AddExtensionModal = ({ onClose, onAdd }) => {
             <button
               type="submit"
               disabled={!newExtension.name.trim()}
-              className="button-submit"
+              className="btn btn-primary button-submit"
             >
               Добавить
             </button>

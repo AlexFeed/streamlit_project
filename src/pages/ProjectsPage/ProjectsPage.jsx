@@ -148,7 +148,7 @@ const ProjectsPage = () => {
   };
 
   return (
-    <div className="sp-projects-page">
+    <div className="page-container sp-projects-page">
       <Sidebar 
         projectsCount={projects.length} 
         onLogout={handleLogout} 

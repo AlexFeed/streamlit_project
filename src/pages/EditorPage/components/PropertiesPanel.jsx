@@ -142,12 +142,12 @@ const PropertiesPanel = ({
                 type="button"
                 aria-label="Закрыть панель свойств"
                 onClick={onClose}
-                className="fixed inset-0 top-[65px] z-30 bg-transparent xl:hidden"
+                className="properties-backdrop"
             />
-            <aside className="fixed bottom-0 right-0 top-[65px] z-40 w-[360px] overflow-y-auto border-l border-zinc-800 bg-zinc-950 shadow-2xl shadow-black/60 xl:static xl:z-20 xl:h-full xl:w-auto xl:min-w-0 xl:shadow-none">
-                <div className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-zinc-800 bg-zinc-950/95 p-4 backdrop-blur-xl">
+            <aside className="properties-panel">
+                <div className="properties-panel-header">
                     <div>
-                        <h2 className="text-base font-semibold text-white">
+                        <h2 className="properties-panel-title">
                             {config.title || 'Без названия'}
                         </h2>
                     </div>
@@ -155,14 +155,14 @@ const PropertiesPanel = ({
                     <button
                         type="button"
                         onClick={onClose}
-                        className="flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-2 text-xs font-medium text-zinc-300 transition hover:border-zinc-700 hover:text-white"
+                        className="btn btn-secondary properties-close-button"
                     >
-                        <X className="h-3.5 w-3.5" />
+                        <X aria-hidden="true" />
                         Закрыть
                     </button>
                 </div>
 
-                <div className="space-y-3 p-4">
+                <div className="properties-panel-fields">
                     <TextField
                         label={type === 'text' ? 'Заголовок (необязательно)' : 'Заголовок'}
                         value={config.title || ''}
@@ -337,13 +337,13 @@ const PropertiesPanel = ({
                     )}
                 </div>
 
-                <div className="sticky bottom-0 border-t border-zinc-800 bg-zinc-950/95 p-4 backdrop-blur-xl">
+                <div className="properties-panel-footer">
                     <button
                         type="button"
                         onClick={onDeleteSelected}
-                        className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-2.5 text-xs font-medium text-red-300 transition hover:bg-red-500/10"
+                        className="btn properties-delete-button"
                     >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 aria-hidden="true" />
                         Удалить компонент
                     </button>
                 </div>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Zap } from 'lucide-react';
+import ThemeToggle from '../../../shared/ThemeToggle.jsx';
 
 const Sidebar = ({ isLogin }) => {
   return (
@@ -28,6 +29,9 @@ const Sidebar = ({ isLogin }) => {
             {isLogin ? 'Войдите в свой аккаунт для продолжения' : 'Начните создавать no-code приложения'}
           </p>
         </div>
+      </div>
+      <div className="auth-sidebar-footer">
+        <ThemeToggle />
       </div>
     </aside>
   );

@@ -77,7 +77,7 @@ const AuthForm = ({ isLogin, showPassword, setShowPassword, formData, handleInpu
 
           <button
             type="submit"
-            className="submit-button"
+            className="btn btn-primary submit-button"
             disabled={loading}
           >
             {loading ? (isLogin ? 'Входим...' : 'Создаём...') : isLogin ? 'Войти' : 'Создать аккаунт'}

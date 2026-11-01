@@ -8,7 +8,7 @@ const ExtensionGrid = ({ extensions, categories, onToggle, onDelete, onConfig, o
         <div className="empty-icon">🔌</div>
         <h3 className="empty-title">Нет расширений</h3>
         <p className="empty-description">Добавьте первое расширение для вашего проекта</p>
-        <button className="empty-button" onClick={onAddClick}>
+        <button className="btn btn-secondary empty-button" onClick={onAddClick}>
           Добавить расширение
         </button>
       </div>

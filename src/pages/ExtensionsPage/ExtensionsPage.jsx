@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Zap } from 'lucide-react';
-import { logout } from '../../api/authApi.js';
 import Sidebar from './Sidebar';
 import ExtensionHeader from './ExtensionHeader';
 import ExtensionGrid from './ExtensionGrid';
@@ -12,10 +11,7 @@ import './ExtensionsPage.css';
 const ExtensionsPage = () => {
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    logout();
-    navigate('/auth', { replace: true });
-  };
+  const handleProjectsNavigation = () => navigate('/', { replace: true });
   const [extensions, setExtensions] = useState([
     {
       id: 1,
@@ -119,7 +115,7 @@ const ExtensionsPage = () => {
   };
 
   return (
-    <div className="extensions-page">
+    <div className="page-container extensions-page">
       <Sidebar 
         categories={categories}
         selectedCategory={selectedCategory}
@@ -127,7 +123,7 @@ const ExtensionsPage = () => {
         activeCount={activeCount}
         totalCount={extensions.length}
         onAddClick={() => setIsAddModalOpen(true)}
-        onLogout={handleLogout}
+        onProjectsClick={handleProjectsNavigation}
       />
 
       <div className="main-content">

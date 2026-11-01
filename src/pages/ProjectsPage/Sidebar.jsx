@@ -1,5 +1,6 @@
 import React from 'react';
 import { BookOpen, Folder, Settings, User, Zap, Cpu, LogOut, Puzzle } from 'lucide-react';
+import ThemeToggle from '../../shared/ThemeToggle.jsx';
 
 const Sidebar = ({ projectsCount = 0, onLogout, onExtensionsClick }) => {
   return (
@@ -71,6 +72,9 @@ const Sidebar = ({ projectsCount = 0, onLogout, onExtensionsClick }) => {
             </div>
           </button>
         </div>
+      </div>
+      <div className="sp-sidebar-footer">
+        <ThemeToggle />
       </div>
     </aside>
   );

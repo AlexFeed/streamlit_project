@@ -4,8 +4,8 @@
 .extensions-page {
   display: flex;
   height: 100vh;
-  background-color: #131313;
-  color: white;
+  background-color: var(--color-bg);
+  color: var(--color-text);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
   overflow: hidden;
 }
@@ -22,23 +22,23 @@
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: #1f1f24;
+  background: var(--color-surface-raised);
   border-radius: 4px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #2b2b2b;
+  background: var(--color-border);
   border-radius: 4px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #ea580c;
+  background: var(--color-accent-hover);
 }
 
 /* ==================== САЙДБАР ==================== */
 .sidebar {
   width: 288px;
-  background-color: #131313;
+  background-color: var(--color-surface);
   border-right: 1px solid rgba(249, 115, 22, 0.3);
   display: flex;
   flex-direction: column;
@@ -109,7 +109,7 @@
 .status-text {
   font-size: 0.75rem;
   font-family: monospace;
-  color: #fed7aa;
+  color: var(--color-accent-hover);
 }
 
 .sidebar-content {
@@ -117,6 +117,12 @@
   z-index: 10;
   flex: 1;
   padding: 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-content > .theme-toggle {
+  margin-top: auto;
 }
 
 .categories-section {
@@ -143,7 +149,7 @@
   gap: 12px;
   padding: 8px 12px;
   border-radius: 8px;
-  transition: all 0.2s;
+  transition: transform 240ms ease, background 240ms ease, border-color 240ms ease, color 240ms ease, box-shadow 240ms ease;
   background: none;
   border: none;
   cursor: pointer;
@@ -168,10 +174,10 @@
 
 /* Двухцветное свечение при наведении для неактивных кнопок */
 .category-button.inactive:hover {
-  background: #171717;
-  border: 1px solid linear-gradient(90deg, #f97316, #ffca43) 1;
-  box-shadow: 0 0 15px rgba(249, 116, 22, 0.795),
-              0 0 3px rgba(251, 190, 36, 0.89);
+  background: var(--glass-hover);
+  border-color: var(--glass-border);
+  box-shadow: var(--glass-glow);
+  transform: scale(1.025);
 }
 
 .add-button {
@@ -187,7 +193,7 @@
   font-weight: 500;
   color: #fb923c;
   cursor: pointer;
-  transition: all 0.5s;
+  transition: transform 240ms ease, background 240ms ease, border-color 240ms ease, color 240ms ease, box-shadow 240ms ease;
 }
 
 .add-button:hover {
@@ -207,7 +213,7 @@
   flex-direction: column;
   min-width: 0;
   position: relative;
-  background-color: #131313;
+  background-color: var(--color-bg);
 }
 
 .gradient-bg {
@@ -216,7 +222,7 @@
   left: 0;
   width: 100%;
   height: 384px;
-  background: #131313;
+  background: var(--color-bg);
   pointer-events: none;
   z-index: 0;
 }
@@ -225,7 +231,7 @@
 .extensions-header {
   position: relative;
   z-index: 10;
-  background-color: #131313;
+  background-color: var(--color-surface);
   backdrop-filter: blur(4px);
   position: sticky;
   top: 0;
@@ -250,13 +256,13 @@
 
 .search-input {
   width: 100%;
-  background-color: #1a1a1a;
-  color: white;
+  background-color: var(--color-surface-raised);
+  color: var(--color-text);
   padding: 10px 18px; /* Чуть больше padding для комфорта */
   font-size: 1rem;
   border-radius: 8px;
   transition: all 0.2s;
-  border: 2px solid rgba(249, 115, 22, 0.3); /* Меняем border-bottom на полноценную рамку */
+  border: 2px solid var(--color-border);
 }
 
 .search-input:focus {
@@ -266,7 +272,7 @@
 }
 
 .search-input::placeholder {
-  color: #ffffff9f;
+  color: var(--color-text-muted);
   font-size: 0.95rem;
 }
 
@@ -401,7 +407,7 @@
   padding: 32px;
   position: relative;
   z-index: 10;
-  background-color: #151515;
+  background-color: var(--color-bg);
 }
 
 .page-title {
@@ -475,7 +481,7 @@
 
 /* ==================== КАРТОЧКА РАСШИРЕНИЯ ==================== */
 .extension-card {
-  background: rgba(23, 23, 23, 0.45);
+  background: color-mix(in srgb, var(--color-surface) 94%, transparent);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-radius: 20px;
@@ -483,12 +489,12 @@
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--color-border);
 }
 
 .extension-card.active {
   border: 1px solid rgba(255, 219, 101, 0.6);
-  background: rgba(23, 23, 23, 0.55);
+  background: var(--color-surface-raised);
   backdrop-filter: blur(16px);
   box-shadow: 
     -5px 0 20px -3px rgba(249, 94, 22, 0.4),
@@ -499,7 +505,7 @@
 }
 
 .extension-card.inactive {
-  background: rgba(23, 23, 23, 0.4);
+  background: var(--color-surface);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border-radius: 20px;
@@ -543,7 +549,7 @@
 
 .extension-card.inactive:hover {
   border-color: rgba(255, 186, 13, 0.4);
-  background: rgba(23, 23, 23, 0.5);
+  background: var(--color-surface-raised);
   backdrop-filter: blur(16px);
   transform: translateY(-2px);
   box-shadow: 
@@ -589,7 +595,7 @@
 .card-title {
   font-size: 1.125rem;
   font-weight: 600;
-  color: white;
+  color: var(--color-text);
 }
 
 .card-category {
@@ -648,22 +654,22 @@
 }
 
 .toggle-inactive {
-  color: #838383;
-  background-color: #1f1f1f;
+  color: var(--color-text-muted);
+  background-color: var(--color-surface-raised);
 }
 
 .toggle-inactive:hover {
-  background-color: #2a2a2a;
+  background-color: var(--color-border);
 }
 
 .config-button {
-  color: #9ca3af;
-  background-color: #1f1f1f;
+  color: var(--color-text-muted);
+  background-color: var(--color-surface-raised);
 }
 
 .config-button:hover {
-  color: white;
-  background-color: #2a2a2a;
+  color: var(--color-text);
+  background-color: var(--color-border);
 }
 
 .delete-button {
@@ -705,8 +711,8 @@
 }
 
 .status-inactive {
-  background-color: #2e2e2e;
-  color: #ce3aba;
+  background-color: var(--color-surface-raised);
+  color: var(--color-text-muted);
 }
 
 /* ==================== МОДАЛЬНЫЕ ОКНА ==================== */
@@ -732,7 +738,7 @@
 }
 
 .modal-container {
-  background-color: #1a1a1a;
+  background-color: var(--color-surface);
   border: 1px solid rgba(249, 115, 22, 0.3);
   border-radius: 12px;
   box-shadow: 0 25px 50px -12px rgba(249, 115, 22, 0.2);
@@ -765,7 +771,7 @@
 .modal-title {
   font-size: 1.25rem;
   font-weight: bold;
-  color: white;
+  color: var(--color-text);
 }
 
 .modal-close {
@@ -777,7 +783,7 @@
 }
 
 .modal-close:hover {
-  color: white;
+  color: var(--color-text);
 }
 
 .modal-close svg {
@@ -802,9 +808,9 @@
 .form-textarea,
 .form-select {
   width: 100%;
-  background-color: #151515;
-  border: 1px solid rgba(249, 115, 22, 0.3);
-  color: white;
+  background-color: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
   padding: 12px 16px;
   border-radius: 8px;
   transition: all 0.2s;
@@ -849,7 +855,7 @@
   height: 16px;
   border-radius: 4px;
   border: 1px solid rgba(249, 115, 22, 0.3);
-  background-color: #151515;
+  background-color: var(--color-surface-raised);
 }
 
 .checkbox-input:focus {
@@ -884,23 +890,23 @@
 }
 
 .button-cancel:hover {
-  color: white;
+  color: var(--color-text);
 }
 
 .button-submit {
   padding: 8px 24px;
-  background-color: #1f1f1f;
+  background-color: var(--color-accent);
   border: 1px solid rgba(249, 115, 22, 0.3);
   border-radius: 8px;
   font-weight: 500;
-  color: #fb923c;
+  color: var(--color-accent-contrast);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .button-submit:hover {
-  background-color: #2a2a2a;
-  border-color: rgba(249, 115, 22, 0.5);
+  background-color: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
 }
 
 .button-submit:disabled {
@@ -922,18 +928,18 @@
   justify-content: center;
   gap: 8px;
   padding: 8px 16px;
-  background-color: #1f1f1f;
+  background-color: var(--color-surface-raised);
   border: 1px solid rgba(239, 68, 188, 0.3);
   border-radius: 8px;
   font-weight: 500;
-  color: #ce3aba;
+  color: var(--color-danger);
   cursor: pointer;
-  transition: all 0.5s;
+  transition: transform 240ms ease, background 240ms ease, border-color 240ms ease, color 240ms ease, box-shadow 240ms ease;
   margin-top: 16px;
 }
 
 .logout-button:hover {
-  background-color: #2a2a2a;
+  background-color: var(--color-surface);
   border-color: rgba(239, 68, 196, 0.5);
-  color: #ff87f5;
+  color: var(--color-danger);
 }

@@ -20,55 +20,51 @@ const EditorHeader = ({
                           onUploadDataset
                       }) => {
     return (
-        <header
-            className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-4 border-b border-zinc-800/80 bg-zinc-950/90 px-5 py-3 backdrop-blur-xl">
+        <header className="editor-header">
             <div>
-                <div className="flex items-center gap-2">
-                    <h1 className="text-sm font-semibold text-white">Редактор дашборда</h1>
-                    <span
-                        className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-emerald-300">
-                        Live
-                    </span>
+                <div className="editor-header-title">
+                    <h1>Редактор дашборда</h1>
+                    <span className="editor-live-badge">Live</span>
                 </div>
             </div>
 
-            <div className="flex flex-wrap items-center justify-end gap-2">
+            <div className="editor-header-actions">
                 {datasets.map((dataset) => (
                     <div
                         key={dataset.datasetId}
-                        className="flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-200"
+                        className="editor-dataset-badge"
                     >
-                        <Database className="h-4 w-4"/>
-                        <span className="max-w-[160px] truncate" title={dataset.name}>
+                        <Database aria-hidden="true" />
+                        <span title={dataset.name}>
                             {dataset.name}
                         </span>
                         <button
                             type="button"
                             onClick={() => onRemoveDataset(dataset.datasetId)}
                             disabled={isDatasetClearing}
-                            className="ml-1 rounded p-0.5 text-emerald-300/60 transition hover:bg-red-500/10 hover:text-red-300 disabled:opacity-40"
+                            className="editor-icon-button editor-remove-dataset"
                             title="Удалить датасет"
                         >
-                            <X className="h-3.5 w-3.5"/>
+                            <X aria-hidden="true" />
                         </button>
                     </div>
                 ))}
 
                 <button
-                    className="flex cursor-pointer items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 px-3.5 py-2 text-xs font-medium text-zinc-200 transition hover:border-zinc-600 hover:bg-zinc-800"
+                    className="btn btn-secondary editor-action-button"
                     onClick={onUploadDataset}>
-                    <Upload className="h-4 w-4"/>
+                    <Upload aria-hidden="true" />
                     Загрузить данные
                 </button>
 
-                <div className="mx-1 h-6 w-px bg-zinc-800"/>
+                <div className="editor-header-divider"/>
 
                 <button
                     type="button"
                     onClick={onSaveProject}
-                    className="flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 px-3.5 py-2 text-xs font-medium text-zinc-200 transition hover:border-zinc-600 hover:bg-zinc-800"
+                    className="btn btn-secondary editor-action-button"
                 >
-                    <Save className="h-4 w-4"/>
+                    <Save aria-hidden="true" />
                     Сохранить
                 </button>
 
@@ -76,28 +72,28 @@ const EditorHeader = ({
                     type="button"
                     onClick={onGenerateDashboard}
                     disabled={isGenerating}
-                    className="flex items-center gap-2 rounded-xl bg-blue-500 px-3.5 py-2 text-xs font-semibold text-white shadow-lg shadow-blue-950/30 transition hover:bg-blue-400 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="btn btn-primary editor-action-button"
                 >
-                    <Download className="h-4 w-4"/>
+                    <Download aria-hidden="true" />
                     {isGenerating ? 'Генерация…' : 'Скачать Streamlit'}
                 </button>
 
                 <button
                     type="button"
                     onClick={onClearCanvas}
-                    className="rounded-xl p-2 text-zinc-500 transition hover:bg-red-500/10 hover:text-red-300"
+                    className="editor-icon-button editor-clear-button"
                     title="Очистить холст"
                 >
-                    <Trash2 className="h-4 w-4"/>
+                    <Trash2 aria-hidden="true" />
                 </button>
 
                 <button
                     type="button"
                     onClick={onGoHome}
-                    className="rounded-xl p-2 text-zinc-500 transition hover:bg-zinc-800 hover:text-white"
+                    className="editor-icon-button"
                     title="Перейти на главную"
                 >
-                    <House className="h-4 w-4"/>
+                    <House aria-hidden="true" />
                 </button>
             </div>
         </header>

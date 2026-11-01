@@ -1,0 +1,828 @@
+@import './variables.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  min-width: 320px;
+  overflow-x: hidden;
+  background-color: var(--color-bg);
+  background-image: var(--page-texture);
+  color: var(--color-text);
+  font-family: var(--font-family);
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+.page-container {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--color-bg);
+  background-image: var(--page-texture);
+  color: var(--color-text);
+  font-family: var(--font-family);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-4);
+  font-weight: 600;
+  line-height: 1.25;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.btn-primary {
+  border-color: var(--color-accent);
+  background: linear-gradient(125deg, var(--color-accent), var(--color-accent-end));
+  color: var(--color-accent-contrast);
+  box-shadow: var(--warm-glow), var(--material-highlight);
+}
+
+.btn-primary:hover:not(:disabled) {
+  border-color: var(--color-accent-hover);
+  background: linear-gradient(125deg, var(--color-accent-hover), var(--color-accent-end));
+  box-shadow: var(--warm-glow), var(--material-highlight);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  border-color: var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  border-color: var(--color-accent);
+  background: var(--color-surface-raised);
+}
+
+.btn:disabled {
+  opacity: 0.55;
+}
+
+.theme-toggle {
+  display: inline-flex;
+  width: 100%;
+  min-height: 48px;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3) var(--space-2) var(--space-4);
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  font-size: 0.875rem;
+  font-weight: 600;
+  box-shadow: var(--material-highlight);
+  transition: background 240ms ease, border-color 240ms ease, color 240ms ease, box-shadow 240ms ease, transform 240ms ease;
+}
+
+.theme-toggle-label {
+  white-space: nowrap;
+}
+
+.theme-toggle-track {
+  position: relative;
+  display: inline-flex;
+  width: 62px;
+  height: 34px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-bg) 76%, var(--color-accent-soft));
+  padding: 0 7px;
+  color: var(--color-accent);
+  box-shadow: inset 0 1px 3px var(--color-shadow);
+}
+
+.theme-toggle-track svg {
+  position: relative;
+  z-index: 1;
+  transition: opacity 240ms ease, color 240ms ease;
+}
+
+.theme-toggle-moon {
+  color: #8d68ad;
+  opacity: 0.48;
+}
+
+.theme-toggle-sun {
+  color: var(--color-accent);
+  opacity: 1;
+}
+
+.theme-toggle-track.is-dark .theme-toggle-sun {
+  opacity: 0.48;
+}
+
+.theme-toggle-track.is-dark .theme-toggle-moon {
+  color: #c09bdc;
+  opacity: 1;
+}
+
+.theme-toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgb(255 255 255 / 58%);
+  border-radius: 50%;
+  background: linear-gradient(145deg, #fff6e8, #f8c46b);
+  box-shadow: 0 2px 6px var(--color-shadow), inset 0 1px 0 rgb(255 255 255 / 86%);
+  transition: transform 280ms cubic-bezier(0.2, 0.8, 0.2, 1), background 240ms ease, box-shadow 240ms ease;
+}
+
+.theme-toggle-track.is-dark .theme-toggle-thumb {
+  transform: translateX(28px);
+  background: linear-gradient(145deg, #e8d9f4, #a982c4);
+  box-shadow: 0 2px 8px rgb(8 5 10 / 42%), inset 0 1px 0 rgb(255 255 255 / 62%);
+}
+
+.theme-toggle:hover .theme-toggle-track {
+  border-color: var(--glass-border);
+  box-shadow: inset 0 1px 3px var(--color-shadow), var(--warm-glow);
+}
+
+.theme-toggle:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.page-container .sidebar,
+.page-container .sp-projects-sidebar {
+  background-color: var(--color-surface);
+  background-image: var(--surface-texture);
+  border-color: var(--color-border);
+  box-shadow: 0 12px 30px var(--color-shadow), var(--material-highlight);
+}
+
+.page-container .editor-palette {
+  background-color: var(--color-surface);
+  background-image: var(--surface-texture);
+}
+
+.page-container .main-area,
+.page-container .main-content,
+.page-container .sp-projects-main,
+.page-container .content-wrapper,
+.page-container .sp-projects-content,
+.page-container .gradient-bg,
+.page-container .extensions-header,
+.page-container .sp-projects-header {
+  background-color: var(--color-bg);
+}
+
+.page-container .sidebar-header,
+.page-container .logo-section,
+.page-container .sp-sidebar-logo {
+  border-color: var(--color-border);
+}
+
+.page-container .status-badge,
+.page-container .badge,
+.page-container .sp-badge,
+.page-container .sp-view-toggle,
+.page-container .sp-tool-button,
+.page-container .sp-card-banner,
+.page-container .sp-empty-icon-wrapper {
+  border-color: var(--color-border);
+  background-color: var(--color-surface-raised);
+}
+
+.page-container .extensions-header,
+.page-container .sp-projects-header {
+  border-bottom-color: var(--color-border);
+}
+
+.page-container .form-wrapper,
+.page-container .extension-card,
+.page-container .sp-project-card-grid,
+.page-container .sp-project-card-list,
+.page-container .modal-container {
+  border-color: var(--color-border);
+  background-color: var(--color-surface);
+  background-image: var(--surface-texture);
+  color: var(--color-text);
+}
+
+.page-container .modal-overlay {
+  background-color: var(--color-overlay);
+}
+
+.page-container .sp-view-btn.sp-active {
+  background-color: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+
+.page-container .sp-tool-button {
+  color: var(--color-accent);
+}
+
+.page-container .category-button.inactive,
+.page-container .sp-menu-button,
+.page-container .modal-close,
+.page-container .button-cancel,
+.page-container .sp-menu-section-title,
+.page-container .sp-menu-badge {
+  color: var(--color-text-muted);
+}
+
+.page-container .sidebar-title,
+.page-container .badge-text,
+.page-container .sp-badge-text {
+  color: var(--color-accent);
+}
+
+.page-container .category-button.inactive:hover,
+.page-container .sp-menu-button:hover,
+.page-container .sp-view-btn:hover:not(.sp-active),
+.page-container .sp-tool-button:hover,
+.page-container .editor-icon-button:hover,
+.page-container .palette-item:hover {
+  border-color: var(--glass-border);
+  background: var(--glass-hover);
+  color: var(--color-text);
+  box-shadow: var(--glass-glow), var(--material-highlight);
+  transform: scale(1.025);
+}
+
+.page-container .btn-secondary,
+.page-container .theme-toggle,
+.page-container .sp-tool-button,
+.page-container .sp-view-toggle,
+.page-container .sp-card-banner,
+.page-container .sp-empty-icon-wrapper,
+.page-container .editor-dataset-badge,
+.page-container .properties-panel,
+.page-container .editor-canvas-panel {
+  background-image: var(--surface-texture);
+  box-shadow: var(--material-highlight);
+}
+
+.page-container .sp-view-btn.sp-active,
+.page-container .category-button.active,
+.page-container .sp-menu-button.sp-active,
+.page-container .sp-create-btn,
+.page-container .btn-primary {
+  background-image: var(--button-gradient);
+  border-color: var(--color-accent-hover);
+  color: var(--color-accent-contrast);
+  box-shadow: var(--warm-glow), var(--material-highlight);
+}
+
+.page-container .sp-menu-button:hover,
+.page-container .category-button.inactive:hover,
+.page-container .sp-tool-button:hover,
+.page-container .sp-view-btn:hover:not(.sp-active),
+.page-container .theme-toggle:hover,
+.page-container .btn-secondary:hover:not(:disabled),
+.page-container .add-button:hover,
+.page-container .empty-button:hover,
+.page-container .button-submit:hover,
+.page-container .editor-action-button.btn-secondary:hover {
+  border-color: var(--glass-border);
+  background: var(--glass-hover);
+  color: var(--color-text);
+  box-shadow: var(--glass-glow), var(--material-highlight);
+  transform: scale(1.025);
+}
+
+.page-container .sp-projects-sidebar,
+.page-container .sidebar {
+  position: relative;
+  isolation: isolate;
+}
+
+.page-container .sp-sidebar-logo,
+.page-container .sidebar-header,
+.page-container .logo-section {
+  box-shadow: var(--material-highlight);
+}
+
+.page-container .extension-card,
+.page-container .sp-project-card-grid,
+.page-container .sp-project-card-list,
+.page-container .form-wrapper,
+.page-container .modal-container,
+.page-container .palette-item,
+.page-container .editor-properties-panel {
+  background-image: var(--surface-texture);
+  box-shadow: 0 8px 24px var(--color-shadow), var(--material-highlight);
+}
+
+.page-container .extension-card:hover,
+.page-container .sp-project-card-grid:hover,
+.page-container .sp-project-card-list:hover {
+  border-color: var(--glass-border);
+  box-shadow: var(--warm-glow), var(--material-highlight);
+}
+
+.page-container .sp-logout-button,
+.page-container .logout-button,
+.page-container .delete-button,
+.page-container .sp-delete-card-btn,
+.page-container .sp-delete-list-btn,
+.page-container .editor-remove-dataset,
+.page-container .editor-clear-button,
+.page-container .properties-delete-button {
+  border-color: rgb(141 104 173 / 34%);
+  background-color: var(--color-destructive-soft);
+  color: var(--color-destructive);
+}
+
+.page-container .sp-logout-button:hover,
+.page-container .logout-button:hover,
+.page-container .delete-button:hover,
+.page-container .sp-delete-card-btn:hover,
+.page-container .sp-delete-list-btn:hover,
+.page-container .editor-remove-dataset:hover,
+.page-container .editor-clear-button:hover,
+.page-container .properties-delete-button:hover {
+  border-color: var(--color-destructive);
+  background: linear-gradient(125deg, var(--color-destructive-soft), rgb(239 218 250 / 42%));
+  color: var(--color-destructive-hover);
+  box-shadow: 0 5px 16px var(--color-destructive-soft), var(--material-highlight);
+}
+
+.page-container .editor-palette-footer,
+.page-container .sp-sidebar-footer {
+  margin-top: auto;
+  border-top: 1px solid var(--color-border);
+  padding: var(--space-3);
+  background: var(--surface-texture);
+}
+
+.editor-page .editor-palette {
+  background-color: var(--color-surface);
+  background-image: var(--surface-texture);
+  box-shadow: 8px 0 24px var(--color-shadow), var(--material-highlight);
+}
+
+.editor-page .editor-palette-footer {
+  margin-top: auto;
+  border-top: 1px solid var(--color-border);
+  padding: var(--space-3);
+  background-image: var(--surface-texture);
+}
+
+.editor-page .editor-header,
+.editor-page .properties-panel-header,
+.editor-page .properties-panel-footer {
+  background-image: var(--surface-texture);
+}
+
+.editor-page .properties-panel,
+.editor-page .dashboard-stat,
+.editor-page .editor-dataset-badge {
+  background-image: var(--surface-texture);
+  box-shadow: var(--material-highlight);
+}
+
+.editor-page .palette-item:hover,
+.editor-page .editor-icon-button:hover,
+.editor-page .editor-action-button.btn-secondary:hover {
+  border-color: var(--glass-border);
+  background: var(--glass-hover);
+  color: var(--color-text);
+  box-shadow: var(--glass-glow), var(--material-highlight);
+  transform: scale(1.025);
+}
+
+.editor-page .editor-remove-dataset,
+.editor-page .editor-clear-button,
+.editor-page .properties-delete-button {
+  border-color: rgb(141 104 173 / 34%);
+  background-color: var(--color-destructive-soft);
+  color: var(--color-destructive);
+}
+
+.editor-page .editor-remove-dataset:hover,
+.editor-page .editor-clear-button:hover,
+.editor-page .properties-delete-button:hover {
+  border-color: var(--color-destructive);
+  background: linear-gradient(125deg, var(--color-destructive-soft), rgb(239 218 250 / 42%));
+  color: var(--color-destructive-hover);
+  box-shadow: 0 5px 16px var(--color-destructive-soft), var(--material-highlight);
+}
+
+.page-container .config-button,
+.page-container .toggle-inactive {
+  background-color: var(--color-surface-raised);
+  color: var(--color-text-muted);
+}
+
+.page-container .config-button:hover,
+.page-container .toggle-inactive:hover {
+  background-color: var(--color-border);
+  color: var(--color-text);
+}
+
+.page-container .form-wrapper::before,
+.page-container .extension-card.inactive::before {
+  opacity: 0.4;
+}
+
+.page-container input,
+.page-container select,
+.page-container textarea {
+  border-color: var(--color-border);
+  background-color: var(--color-surface-raised);
+  color: var(--color-text);
+}
+
+.page-container .form-label,
+.page-container .form-subtitle,
+.page-container .welcome-subtitle,
+.page-container .categories-title,
+.page-container .page-subtitle,
+.page-container .card-description,
+.page-container .sp-section-subtitle,
+.page-container .sp-card-desc,
+.page-container .sp-list-desc {
+  color: var(--color-text-muted);
+}
+
+.page-container .logo-text,
+.page-container .welcome-title,
+.page-container .page-title,
+.page-container .empty-title,
+.page-container .card-title,
+.page-container .modal-title,
+.page-container .sp-section-title,
+.page-container .sp-card-title,
+.page-container .sp-list-title,
+.page-container .sp-empty-title {
+  color: var(--color-text);
+}
+
+.page-container .input-field:focus,
+.page-container .search-input:focus,
+.page-container .sp-search-input:focus,
+.page-container .form-input:focus,
+.page-container .form-textarea:focus,
+.page-container .form-select:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px var(--color-accent-soft);
+}
+
+.page-container .btn-primary {
+  border-color: var(--color-accent-hover);
+  background: var(--button-gradient);
+  color: var(--color-accent-contrast);
+  box-shadow: var(--warm-glow), var(--material-highlight);
+}
+
+.page-container .btn-primary:hover:not(:disabled) {
+  border-color: var(--color-accent-hover);
+  background: var(--button-gradient-hover);
+  box-shadow: var(--warm-glow), var(--material-highlight);
+  transform: scale(1.02);
+}
+
+.page-container .btn-secondary {
+  border-color: var(--color-border);
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+}
+
+.page-container .btn-secondary:hover:not(:disabled) {
+  border-color: var(--color-accent);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.editor-page {
+  background-color: var(--color-bg);
+  background-image: var(--page-texture);
+}
+
+.page-container .sp-projects-sidebar button,
+.page-container .sidebar button,
+.auth-page .sidebar button,
+.editor-page .editor-palette button {
+  transition:
+    transform 240ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    background 240ms ease,
+    background-color 240ms ease,
+    border-color 240ms ease,
+    color 240ms ease,
+    box-shadow 240ms ease;
+  transform-origin: center;
+}
+
+.page-container .sp-projects-sidebar button:hover:not(:disabled),
+.page-container .sidebar button:hover:not(:disabled),
+.auth-page .sidebar button:hover:not(:disabled),
+.editor-page .editor-palette button:hover:not(:disabled) {
+  transform: scale(1.025);
+}
+
+.page-container .sp-menu-button.sp-active::before {
+  display: none;
+}
+
+.page-container .sp-menu-button.sp-active .sp-menu-icon {
+  filter: none;
+}
+
+.page-container .sp-menu-button.sp-active .sp-menu-badge {
+  box-shadow: none;
+}
+
+.page-container .theme-toggle:hover,
+.auth-page .theme-toggle:hover {
+  border-color: var(--glass-border);
+  background: var(--glass-hover);
+  color: var(--color-text);
+  box-shadow: var(--glass-glow), var(--material-highlight);
+}
+
+[data-theme="dark"] .btn-primary,
+[data-theme="dark"] .page-container .btn-primary,
+[data-theme="dark"] .page-container .sp-create-btn,
+[data-theme="dark"] .page-container .category-button.active,
+[data-theme="dark"] .page-container .sp-menu-button.sp-active,
+[data-theme="dark"] .page-container .sp-view-btn.sp-active,
+[data-theme="dark"] .editor-page .btn-primary {
+  border-color: #a63d16;
+  background-color: #a63d16;
+  background-image: var(--button-gradient);
+  color: #f3e7dd;
+  box-shadow: var(--warm-glow), inset 0 1px 0 rgb(255 235 214 / 18%);
+}
+
+[data-theme="dark"] .btn-primary:hover:not(:disabled),
+[data-theme="dark"] .page-container .btn-primary:hover:not(:disabled),
+[data-theme="dark"] .page-container .sp-create-btn:hover,
+[data-theme="dark"] .page-container .category-button.active:hover,
+[data-theme="dark"] .page-container .sp-menu-button.sp-active:hover,
+[data-theme="dark"] .page-container .sp-view-btn.sp-active:hover,
+[data-theme="dark"] .editor-page .btn-primary:hover:not(:disabled) {
+  border-color: #b54820;
+  background-color: #b54820;
+  background-image: var(--button-gradient-hover);
+  color: #fff0e6;
+  box-shadow: var(--warm-glow), inset 0 1px 0 rgb(255 235 214 / 18%);
+}
+
+[data-theme="dark"] .btn-secondary,
+[data-theme="dark"] .page-container .btn-secondary,
+[data-theme="dark"] .page-container .sp-menu-button,
+[data-theme="dark"] .page-container .category-button.inactive,
+[data-theme="dark"] .page-container .sp-tool-button,
+[data-theme="dark"] .page-container .sp-view-toggle,
+[data-theme="dark"] .page-container .sp-view-btn,
+[data-theme="dark"] .page-container .theme-toggle,
+[data-theme="dark"] .page-container .logout-button,
+[data-theme="dark"] .page-container .sp-logout-button {
+  border-color: var(--color-border);
+  background-color: var(--color-surface-raised);
+  background-image: none;
+  color: var(--color-text);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 3%);
+}
+
+[data-theme="dark"] .page-container .sp-menu-button:hover,
+[data-theme="dark"] .page-container .category-button.inactive:hover,
+[data-theme="dark"] .page-container .sp-tool-button:hover,
+[data-theme="dark"] .page-container .sp-view-btn:hover:not(.sp-active),
+[data-theme="dark"] .page-container .theme-toggle:hover,
+[data-theme="dark"] .page-container .btn-secondary:hover:not(:disabled),
+[data-theme="dark"] .page-container .add-button:hover,
+[data-theme="dark"] .page-container .empty-button:hover,
+[data-theme="dark"] .page-container .button-submit:hover {
+  border-color: var(--glass-border);
+  background-color: #24211f;
+  background-image: none;
+  color: #e4b79c;
+  box-shadow: var(--glass-glow);
+}
+
+[data-theme="dark"] .page-container .sp-logout-button,
+[data-theme="dark"] .page-container .logout-button,
+[data-theme="dark"] .page-container .delete-button,
+[data-theme="dark"] .page-container .sp-delete-card-btn,
+[data-theme="dark"] .page-container .sp-delete-list-btn {
+  border-color: #5b456b;
+  background-color: #302638;
+  background-image: none;
+  color: #d3b5e8;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 4%);
+}
+
+[data-theme="dark"] .page-container .sp-logout-button:hover,
+[data-theme="dark"] .page-container .logout-button:hover,
+[data-theme="dark"] .page-container .delete-button:hover,
+[data-theme="dark"] .page-container .sp-delete-card-btn:hover,
+[data-theme="dark"] .page-container .sp-delete-list-btn:hover {
+  border-color: #8d68ad;
+  background-color: #3a2c43;
+  background-image: none;
+  color: #ead9f5;
+}
+
+[data-theme="dark"] .auth-page .sidebar,
+[data-theme="dark"] .page-container .sidebar,
+[data-theme="dark"] .page-container .sp-projects-sidebar {
+  border-color: var(--color-border);
+  box-shadow: 0 8px 20px var(--color-shadow), var(--material-highlight);
+}
+
+[data-theme="dark"] .auth-page .logo-section,
+[data-theme="dark"] .page-container .sidebar-header,
+[data-theme="dark"] .page-container .sp-sidebar-logo {
+  border-color: var(--color-border);
+}
+
+[data-theme="dark"] .auth-page .logo-icon,
+[data-theme="dark"] .auth-page .logo-icon:hover,
+[data-theme="dark"] .page-container .sidebar-icon,
+[data-theme="dark"] .page-container .sp-logo-icon,
+[data-theme="dark"] .page-container .sp-logo-icon:hover {
+  box-shadow: var(--warm-glow);
+  transform: none;
+}
+
+[data-theme="dark"] .auth-page .badge,
+[data-theme="dark"] .page-container .status-badge,
+[data-theme="dark"] .page-container .sp-badge {
+  border-color: var(--color-border);
+  background-color: var(--color-surface-raised);
+  background-image: none;
+  box-shadow: var(--material-highlight);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+[data-theme="dark"] .page-container .sp-menu-button.sp-active::before {
+  display: none;
+}
+
+[data-theme="dark"] .page-container .sp-menu-button.sp-active .sp-menu-icon {
+  filter: none;
+}
+
+[data-theme="dark"] .page-container .sp-menu-button.sp-active .sp-menu-badge {
+  box-shadow: none;
+}
+
+[data-theme="dark"] .editor-page .editor-palette,
+[data-theme="dark"] .editor-page .editor-header,
+[data-theme="dark"] .editor-page .editor-palette-footer,
+[data-theme="dark"] .editor-page .properties-panel,
+[data-theme="dark"] .editor-page .properties-panel-header,
+[data-theme="dark"] .editor-page .properties-panel-footer,
+[data-theme="dark"] .editor-page .dashboard-canvas,
+[data-theme="dark"] .editor-page .dashboard-stat,
+[data-theme="dark"] .editor-page .editor-dataset-badge {
+  background-color: var(--color-surface);
+  background-image: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 3%);
+}
+
+[data-theme="dark"] .editor-page .dashboard-canvas {
+  background-color: #0e0d0b;
+  background-image: radial-gradient(var(--canvas-dot) 1px, transparent 1.15px);
+}
+
+[data-theme="dark"] .editor-page .palette-item,
+[data-theme="dark"] .editor-page .editor-icon-button,
+[data-theme="dark"] .editor-page .editor-brand-button,
+[data-theme="dark"] .editor-page .editor-action-button.btn-secondary,
+[data-theme="dark"] .editor-page .properties-close-button {
+  border-color: #40302a;
+  background-color: var(--color-surface-raised);
+  background-image: none;
+  color: var(--color-text);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 3%);
+}
+
+[data-theme="dark"] .editor-page .palette-item:hover,
+[data-theme="dark"] .editor-page .editor-icon-button:hover,
+[data-theme="dark"] .editor-page .editor-brand-button:hover,
+[data-theme="dark"] .editor-page .editor-action-button.btn-secondary:hover,
+[data-theme="dark"] .editor-page .properties-close-button:hover {
+  border-color: var(--glass-border);
+  background-color: #24211f;
+  background-image: none;
+  color: #e4b79c;
+  box-shadow: var(--glass-glow);
+  transform: none;
+}
+
+[data-theme="dark"] .editor-page .palette-item {
+  border-color: var(--color-border);
+  background-color: #1f1c1a;
+  background-image: none;
+  transition: all 0.3s ease;
+}
+
+[data-theme="dark"] .editor-page .palette-item:hover:not(:disabled) {
+  border-color: rgb(240 123 40 / 30%);
+  background-color: #1f1c1a;
+  background-image: linear-gradient(135deg, rgb(240 123 40 / 15%), rgb(240 123 40 / 2%));
+  box-shadow: 0 4px 15px rgb(240 123 40 / 10%), inset 0 1px 0 rgb(255 230 208 / 5%);
+}
+
+[data-theme="dark"] .editor-page .palette-item:hover .palette-item-icon {
+  filter: brightness(1.18);
+}
+
+[data-theme="dark"] .editor-page .editor-remove-dataset,
+[data-theme="dark"] .editor-page .editor-clear-button,
+[data-theme="dark"] .editor-page .properties-delete-button {
+  border-color: #5b456b;
+  background-color: #302638;
+  background-image: none;
+  color: #d3b5e8;
+  box-shadow: none;
+}
+
+[data-theme="dark"] .editor-page .editor-remove-dataset:hover,
+[data-theme="dark"] .editor-page .editor-clear-button:hover,
+[data-theme="dark"] .editor-page .properties-delete-button:hover {
+  border-color: #8d68ad;
+  background-color: #3a2c43;
+  background-image: none;
+  color: #ead9f5;
+}
+
+[data-theme="dark"] .editor-page button:hover:not(:disabled) {
+  transform: none;
+}
+
+[data-theme="dark"] .editor-page [data-canvas-item] button {
+  border: 1px solid #40302a;
+  background-color: var(--color-surface-raised);
+  background-image: none;
+  color: #c9c0b8;
+  box-shadow: none;
+}
+
+[data-theme="dark"] .editor-page [data-canvas-item] button:hover:not(:disabled) {
+  border-color: var(--glass-border);
+  background-color: #24211f;
+  background-image: none;
+  color: #e4b79c;
+  box-shadow: var(--glass-glow);
+  transform: none;
+}
+
+[data-theme="dark"] .editor-page [data-canvas-item] button[title="Удалить"] {
+  border-color: #5b456b;
+  background-color: #302638;
+  color: #d3b5e8;
+}
+
+[data-theme="dark"] .editor-page [data-canvas-item] button[title="Удалить"]:hover:not(:disabled) {
+  border-color: #8d68ad;
+  background-color: #3a2c43;
+  color: #ead9f5;
+}
+
+[data-theme="dark"] body,
+[data-theme="dark"] .page-container,
+[data-theme="dark"] .editor-page {
+  background-color: var(--color-bg);
+  background-image: none;
+}
+
+[data-theme="dark"] .gradient-bg {
+  background: none;
+}

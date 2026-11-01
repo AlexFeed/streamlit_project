@@ -21,6 +21,7 @@ import { useState } from 'react';
 import { useProjectState } from './hooks/useProjectState.js';
 import {useGenerateState} from "./hooks/useGenerateState.jsx";
 import { useEditorDnd } from './hooks/useEditorDnd.js';
+import './EditorPage.css';
 
 
 const EditorPage = () => {
@@ -206,11 +207,11 @@ const EditorPage = () => {
             onDragCancel={handleDragCancel}
             onDragEnd={handleDragEnd}
         >
-        <div className="h-screen overflow-hidden bg-zinc-950 text-white">
-            <div className="grid h-full grid-cols-[252px_minmax(0,1fr)]">
+        <div className="editor-page">
+            <div className="editor-layout">
                 <ComponentsPalette onAddComponent={addComponent} onGoHome={handleGoHome}/>
 
-                <div className="flex min-h-0 min-w-0 flex-col overflow-hidden">
+                <div className="editor-main">
                     <EditorHeader
                         onClearCanvas={clearCanvas}
                         onGenerateDashboard={onGenerateClick}
@@ -237,27 +238,23 @@ const EditorPage = () => {
 
                     {/* UI загрузки */}
                     {isProjectLoading && (
-                        <div className="px-4 pt-4">
-                            <div className="rounded-2xl border border-blue-500/30 bg-blue-500/10 p-4 text-sm text-blue-200">
+                        <div className="editor-loading-wrap">
+                            <div className="editor-loading">
                                 Загрузка проекта...
                             </div>
                         </div>
                     )}
 
                     {isProjectSaving && (
-                        <div className="px-4 pt-4">
-                            <div className="rounded-2xl border border-blue-500/30 bg-blue-500/10 p-4 text-sm text-blue-200">
+                        <div className="editor-loading-wrap">
+                            <div className="editor-loading">
                                 Сохранение проекта...
                             </div>
                         </div>
                     )}
 
-                    <div className={`grid min-h-0 min-w-0 flex-1 overflow-hidden ${
-                        selectedComponent
-                            ? 'xl:grid-cols-[minmax(0,1fr)_360px]'
-                            : 'grid-cols-1'
-                    }`}>
-                        <main className="min-h-0 min-w-0 overflow-y-auto p-4">
+                    <div className={`editor-workspace${selectedComponent ? ' has-properties' : ''}`}>
+                        <main className="editor-canvas-area">
                             <Canvas
                                 components={components}
                                 selectedId={selectedId}
@@ -285,11 +282,11 @@ const EditorPage = () => {
         </div>
             <DragOverlay dropAnimation={null}>
                 {activeDrag && (
-                    <div className="w-64 rounded-xl border border-blue-500 bg-zinc-900 p-4 shadow-2xl shadow-black/50">
-                        <p className="text-sm font-medium text-white">
+                    <div className="editor-drag-overlay">
+                        <p className="editor-drag-overlay-title">
                             {activeDrag.paletteItem?.label || 'Компонент дашборда'}
                         </p>
-                        <p className="mt-1 text-xs text-zinc-400">
+                        <p className="editor-drag-overlay-description">
                             Переместите в нужную позицию
                         </p>
                     </div>

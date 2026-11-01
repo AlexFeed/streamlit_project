@@ -57,7 +57,7 @@ const AuthPage = () => {
   };
 
   return (
-    <div className="auth-page">
+    <div className="page-container auth-page">
       <Sidebar isLogin={isLogin} />
 
       {/* Основная область */}

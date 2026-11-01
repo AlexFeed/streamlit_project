@@ -32,7 +32,7 @@ const Header = ({ searchQuery, setSearchQuery, viewMode, setViewMode, onCreatePr
               <List size={18} />
             </button>
           </div>
-          <button onClick={onCreateProject} className="sp-create-btn">
+          <button onClick={onCreateProject} className="btn btn-primary sp-create-btn">
             <Plus size={18} />
             <span>Новый проект</span>
           </button>
