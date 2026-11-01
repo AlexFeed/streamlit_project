@@ -7,8 +7,7 @@ import {
     toReactGridLayout,
 } from '../services/gridLayout.js';
 import {EDITOR_DRAFT_STORAGE_KEY} from "../../../shared/constants/storageKeys.js";
-
-// Hook отвечает за управление состоянием локальных компонентов дашборда, их загрузка в LocalStorage
+import useTranslation from '../../../shared/i18n/useTranslation.js';
 
 const normalizeComponents = normalizeComponentLayouts;
 
@@ -28,12 +27,11 @@ const loadDraftComponents = () => {
 
         return normalizeComponents(parsed);
     } catch (error) {
-        console.error('Ошибка чтения черновика editor из localStorage:', error);
+        console.error('Could not read the editor draft from local storage:', error);
         return [];
     }
 };
 
-// Создание компоненты для холста
 const createComponentFromPaletteItem = (
     paletteItem,
     index,
@@ -54,9 +52,8 @@ const createComponentFromPaletteItem = (
     };
 };
 
-// Управление всем состоянием редактора
 export const useEditorState = ({ useDraftStorage = true, defaultDatasetId = ''}) => {
-    // Управление состоянием компонентов для draft (только для /editor)
+    const { t } = useTranslation();
     const [components, setComponents] = useState(() => {
         if (!useDraftStorage) {
             return [];
@@ -65,7 +62,6 @@ export const useEditorState = ({ useDraftStorage = true, defaultDatasetId = ''})
         return loadDraftComponents();
     });
 
-    // Управление состоянием выбранного элемента на холсте
     const [selectedId, setSelectedId] = useState(null);
 
     const replaceComponents = useCallback((nextComponents) => {
@@ -73,7 +69,6 @@ export const useEditorState = ({ useDraftStorage = true, defaultDatasetId = ''})
         setSelectedId(null);
     }, []);
 
-    // При изменении components сохраняем draft (только для /editor)
     useEffect(() => {
         if (!useDraftStorage) {
             return;
@@ -85,7 +80,7 @@ export const useEditorState = ({ useDraftStorage = true, defaultDatasetId = ''})
                 JSON.stringify(components)
             );
         } catch (error) {
-            console.error('Ошибка сохранения черновика editor в localStorage:', error);
+            console.error('Could not save the editor draft to local storage:', error);
         }
     }, [components, useDraftStorage]);
 
@@ -95,7 +90,6 @@ export const useEditorState = ({ useDraftStorage = true, defaultDatasetId = ''})
     }, [components, selectedId]);
 
 
-    // Добавление компонента на холст
     const addComponent = (paletteItem, targetIndex, targetLayout = null) => {
         const shouldInsert = Boolean(targetLayout?.insert);
         const componentLayout = targetLayout
@@ -216,12 +210,10 @@ export const useEditorState = ({ useDraftStorage = true, defaultDatasetId = ''})
         }));
     }, []);
 
-    // Выбор текущего компонента на холсте
     const selectComponent = useCallback((id) => {
         setSelectedId(id);
     }, []);
 
-    // Изменение данных в компоненте на холсте (например название графика)
     const updateComponent = (id, updater) => {
         setComponents((prev) =>
             prev.map((item) =>
@@ -230,23 +222,20 @@ export const useEditorState = ({ useDraftStorage = true, defaultDatasetId = ''})
         );
     };
 
-    // Удаление компонента с холста
     const deleteComponent = useCallback((id) => {
         setComponents((prev) => prev.filter((item) => item.id !== id));
         setSelectedId((prev) => (prev === id ? null : prev));
     }, []);
 
-    // Удаление выбранного компонента с холста
     const deleteSelectedComponent = () => {
         if (!selectedId) return;
         deleteComponent(selectedId);
     };
 
-    // Очистка холста целиком
     const clearCanvas = () => {
         if (components.length === 0) return;
         const confirmed = window.confirm(
-            'Вы уверены, что хотите очистить холст? Все добавленные компоненты будут удалены.'
+            t('editor.clearConfirm')
         );
         if (!confirmed) {
             return;

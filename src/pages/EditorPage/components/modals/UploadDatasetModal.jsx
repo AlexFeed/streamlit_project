@@ -2,14 +2,15 @@ import {Loader2, X, Upload, FileText, FileSpreadsheet} from "lucide-react";
 import { inspectExcelSheets } from "../../../../api/datasetsApi.js";
 import {useEffect, useRef, useState} from "react";
 import {toast} from "sonner";
+import useTranslation from "../../../../shared/i18n/useTranslation.js";
 
 
 const DELIMITER_OPTIONS = [
-    {value: 'auto', label: 'Автоопределение (рекомендуется)'},
-    {value: ',', label: 'Запятая (,)'},
-    {value: ';', label: 'Точка с запятой (;)'},
-    {value: '\t', label: 'Таб'},
-    {value: '|', label: 'Пайп (|)'},
+    {value: 'auto', labelKey: 'editor.delimiter.auto'},
+    {value: ',', labelKey: 'editor.delimiter.comma'},
+    {value: ';', labelKey: 'editor.delimiter.semicolon'},
+    {value: '\t', labelKey: 'editor.delimiter.tab'},
+    {value: '|', labelKey: 'editor.delimiter.pipe'},
 ];
 
 const UploadDatasetModal = ({
@@ -18,6 +19,7 @@ const UploadDatasetModal = ({
                                 onClose,
                                 onConfirm,
                             }) => {
+    const { t } = useTranslation();
 
     const fileInputRef = useRef(null);
     const mouseDownTargetRef = useRef(null);
@@ -28,7 +30,7 @@ const UploadDatasetModal = ({
     const [availableSheets, setAvailableSheets] = useState([]);
     const [isInspectingSheets, setIsInspectingSheets] = useState(false);
 
-    // Сброс формы при закрытии
+    // Reset form state when the modal closes.
     useEffect(() => {
         if (!isOpen) {
             setSelectedFile(null);
@@ -41,7 +43,7 @@ const UploadDatasetModal = ({
         }
     }, [isOpen]);
 
-    // Закрытие по Escape
+    // Allow closing with Escape while idle.
     useEffect(() => {
         if (!isOpen) return undefined;
         const handleKeyDown = (e) => {
@@ -65,18 +67,18 @@ const UploadDatasetModal = ({
 
         const isValid = validExtensions.some((ext) => lowerName.endsWith(ext));
         if (!isValid) {
-            toast.error('Поддерживаются только форматы CSV, TSV и Excel (.xlsx, .xls)');
+            toast.error(t('editor.dataUploadError'));
             return;
         }
 
         setSelectedFile(file);
 
-        // Предзаполняем поле названия изначальным именем файла
+        // Prefill the dataset name from the selected file.
         const nameWithoutExt = file.name.replace(/\.[^/.]+$/, "");
         setDatasetName(nameWithoutExt);
 
         if (isExcelFile(file.name)) {
-            // Загрузка всех листов из excel файла
+            // Read available sheets from Excel files.
             try {
                 setIsInspectingSheets(true);
                 const result = await inspectExcelSheets(file);
@@ -84,8 +86,8 @@ const UploadDatasetModal = ({
                 setAvailableSheets(sheets);
                 if (sheets.length > 0) setSheetName(sheets[0]);
             } catch (error) {
-                toast.error('Ошибка анализа листов Excel');
-                console.error('Ошибка анализа листов Excel:', error);
+                toast.error(t('editor.inspectSheetsError'));
+                console.error('Could not inspect Excel sheets:', error);
                 setAvailableSheets([]);
             } finally {
                 setIsInspectingSheets(false);
@@ -108,12 +110,12 @@ const UploadDatasetModal = ({
     const handleSubmit = async (event) => {
         event.preventDefault();
         if (!selectedFile) {
-            toast.error('Пожалуйста, выберите файл для загрузки.');
+            toast.error(t('editor.chooseFileError'));
             return;
         }
         const trimmedName = datasetName.trim();
         if (!trimmedName) {
-            toast.error('Укажите название датасета.');
+            toast.error(t('editor.datasetNameError'));
             return;
         }
         const isExcel = isExcelFile(selectedFile.name);
@@ -125,7 +127,7 @@ const UploadDatasetModal = ({
             sheetName: isExcel ? sheetName : null,
         });
 
-        // Если файл загрузился, то закрываем модалку
+        // Close only after a successful upload.
         if (res) onClose();
     };
 
@@ -134,10 +136,10 @@ const UploadDatasetModal = ({
 
     const hasDotInName = datasetName.includes('.');
     const isNameEmpty = !datasetName.trim();
-    // Кнопка блокируется, если файл не выбран, имя пустое, есть точка или идёт загрузка
+    // Disable submission when required input is invalid or upload is in progress.
     const isSubmitDisabled = isUploading || !selectedFile || hasDotInName || isNameEmpty;
 
-    // Проверяем, что файл выбран и для него нужен разделитель
+    // Delimiter selection is available for delimited text files.
     const isDelimitedFile = Boolean(
         selectedFile && (
             selectedFile.name.toLowerCase().endsWith('.csv') ||
@@ -150,7 +152,7 @@ const UploadDatasetModal = ({
     return (
         <div
             onMouseDown={(e) => {
-                // Запоминаем, на каком элементе нажали кнопку мыши
+                // Remember where the pointer press started.
                 mouseDownTargetRef.current = e.target;
             }}
             onClick={(e) => {
@@ -169,12 +171,12 @@ const UploadDatasetModal = ({
                 onClick={(event) => event.stopPropagation()}
                 className="w-full max-w-lg rounded-3xl border border-zinc-800 bg-zinc-950 p-6 shadow-2xl shadow-black/50"
             >
-                {/* Шапка модального окна */}
+                {/* Modal header */}
                 <div className="relative text-center">
                     <div className="px-8">
-                        <h2 className="text-xl font-semibold text-white">Загрузить данные</h2>
+                        <h2 className="text-xl font-semibold text-white">{t('editor.upload')}</h2>
                         <p className="mt-1 text-xs text-zinc-400">
-                            Поддерживаются форматы CSV, TSV и Excel (.xlsx, .xls)
+                            {t('editor.uploadFormats')}
                         </p>
                     </div>
                     <button
@@ -182,12 +184,13 @@ const UploadDatasetModal = ({
                         onClick={onClose}
                         disabled={isUploading}
                         className="absolute -right-3 -top-5 rounded-lg p-1.5 text-zinc-400 transition hover:bg-zinc-900 hover:text-white disabled:opacity-50"
+                        aria-label={t('common.close')}
                     >
                         <X className="h-5 w-5"/>
                     </button>
                 </div>
                 <div className="mt-5 space-y-4">
-                    {/* Дропзона / выбор файла */}
+                    {/* File dropzone */}
                     <div
                         onDragOver={(e) => e.preventDefault()}
                         onDrop={handleDrop}
@@ -223,7 +226,9 @@ const UploadDatasetModal = ({
                                         {selectedFile.name}
                                     </p>
                                     <p className="text-xs text-zinc-400">
-                                        {(selectedFile.size / 1024).toFixed(1)} КБ • Нажмите, чтобы выбрать другой
+                                        {t('editor.fileSizeChooseOther', {
+                                            size: (selectedFile.size / 1024).toFixed(1),
+                                        })}
                                     </p>
                                 </div>
                             </div>
@@ -235,7 +240,7 @@ const UploadDatasetModal = ({
                                 </div>
                                 <div>
                                     <p className="text-sm font-medium text-zinc-200">
-                                        Перетащите файл сюда или нажмите для выбора
+                                        {t('editor.dropFile')}
                                     </p>
                                     <p className="mt-0.5 text-xs text-zinc-500">
                                         .csv, .tsv, .xlsx, .xls
@@ -244,17 +249,17 @@ const UploadDatasetModal = ({
                             </div>
                         )}
                     </div>
-                    {/* Поле названия датасета */}
+                    {/* Dataset name */}
                     <div>
                         <label className="mb-1.5 block text-xs font-medium text-zinc-300">
-                            Название датасета
+                            {t('editor.datasetName')}
                         </label>
                         <input
                             type="text"
                             value={datasetName}
                             onChange={(e) => setDatasetName(e.target.value)}
                             disabled={isUploading}
-                            placeholder="Например: Продажи за 2024 год"
+                            placeholder={t('editor.datasetNamePlaceholder')}
                             className={`w-full rounded-2xl border bg-zinc-900 px-4 py-2.5 text-sm text-white outline-none transition ${
                                 hasDotInName
                                     ? 'border-red-500/60 focus:border-red-500'
@@ -263,15 +268,15 @@ const UploadDatasetModal = ({
                         />
                         {hasDotInName && (
                             <p className="mt-1.5 text-xs text-red-400">
-                                Название не должно содержать точек и расширений файлов. Расширение будет добавлено автоматически.
+                                {t('editor.datasetNameValidation')}
                             </p>
                         )}
                     </div>
-                    {/* Выбор разделителя: только для CSV и TSV */}
+                    {/* Delimiter selection for CSV and TSV */}
                     {isDelimitedFile && (
                         <div>
                             <label className="mb-1.5 block text-xs font-medium text-zinc-300">
-                                Разделитель колонок
+                                {t('editor.delimiter')}
                             </label>
                             <select
                                 value={delimiter}
@@ -281,23 +286,23 @@ const UploadDatasetModal = ({
                             >
                                 {DELIMITER_OPTIONS.map((opt) => (
                                     <option key={opt.value} value={opt.value} className="bg-zinc-900 text-white">
-                                        {opt.label}
+                                        {t(opt.labelKey)}
                                     </option>
                                 ))}
                             </select>
                         </div>
                     )}
-                    {/* Выбор листа: только для Excel */}
+                    {/* Sheet selection for Excel */}
                     {isExcel && (
                         <div>
                             <div className="mb-1.5 flex items-center justify-between">
                                 <label className="block text-xs font-medium text-zinc-300">
-                                    Загружаемый лист
+                                    {t('editor.sheet')}
                                 </label>
                                 {isInspectingSheets && (
                                     <span className="flex items-center gap-1.5 text-xs text-blue-400">
                                         <Loader2 className="h-3 w-3 animate-spin"/>
-                                        Считывание листов…
+                                        {t('editor.readingSheets')}
                                     </span>
                                 )}
                             </div>
@@ -320,14 +325,14 @@ const UploadDatasetModal = ({
                                     value={sheetName}
                                     onChange={(e) => setSheetName(e.target.value)}
                                     disabled={isUploading || isInspectingSheets}
-                                    placeholder="Первый лист (по умолчанию)"
+                                    placeholder={t('editor.defaultSheet')}
                                     className="w-full rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-sm text-white outline-none transition focus:border-blue-500"
                                 />
                             )}
                         </div>
                     )}
                 </div>
-                {/* Кнопки действий */}
+                {/* Actions */}
                 <div className="mt-6 flex flex-col gap-2.5 sm:flex-row sm:justify-end">
                     <button
                         type="button"
@@ -335,7 +340,7 @@ const UploadDatasetModal = ({
                         disabled={isUploading}
                         className="rounded-2xl border border-zinc-800 bg-zinc-900 px-5 py-2.5 text-xs font-medium text-white transition hover:bg-zinc-800 disabled:opacity-50"
                     >
-                        Отмена
+                        {t('common.cancel')}
                     </button>
                     <button
                         type="submit"
@@ -343,7 +348,7 @@ const UploadDatasetModal = ({
                         className="flex items-center justify-center gap-2 rounded-2xl bg-blue-500 px-5 py-2.5 text-xs font-semibold text-white shadow-lg shadow-blue-950/30 transition hover:bg-blue-400 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         {isUploading && <Loader2 className="h-4 w-4 animate-spin"/>}
-                        {isUploading ? 'Загрузка…' : 'Загрузить датасет'}
+                        {isUploading ? t('editor.uploading') : t('editor.uploadDataset')}
                     </button>
                 </div>
             </form>

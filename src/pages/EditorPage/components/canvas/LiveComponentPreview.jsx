@@ -25,6 +25,7 @@ import {
     prepareChartData,
 } from '../../services/chartData';
 import { paletteItems } from '../../data/paletteItems.js';
+import useTranslation from '../../../../shared/i18n/useTranslation.js';
 
 const tooltipStyle = {
     backgroundColor: '#18181b',
@@ -48,7 +49,7 @@ const EmptyPreview = ({ children, height = 240 }) => (
     </div>
 );
 
-const LiveChart = ({ item, rows, height }) => {
+const LiveChart = ({ item, rows, height, t }) => {
     const chartData = useMemo(
         () => prepareChartData(rows, item),
         [rows, item]
@@ -82,7 +83,7 @@ const LiveChart = ({ item, rows, height }) => {
     if (!xField || !yField) {
         return (
             <EmptyPreview height={height}>
-                Выберите поля X и Y в панели свойств — график появится сразу.
+                {t('editor.chartNeedFields')}
             </EmptyPreview>
         );
     }
@@ -90,7 +91,7 @@ const LiveChart = ({ item, rows, height }) => {
     if (!rows.length) {
         return (
             <EmptyPreview height={height}>
-                В выбранном датасете нет данных (0 строк). Заполните строки файла или выберите другой лист Excel при загрузке.
+                {t('editor.chartNoRows')}
             </EmptyPreview>
         );
     }
@@ -98,7 +99,7 @@ const LiveChart = ({ item, rows, height }) => {
     if (!chartData.length) {
         return (
             <EmptyPreview height={height}>
-                Для выбранных полей нет числовых данных. Попробуйте изменить Y или агрегацию.
+                {t('editor.chartNoNumeric')}
             </EmptyPreview>
         );
     }
@@ -202,7 +203,7 @@ const LiveChart = ({ item, rows, height }) => {
     );
 };
 
-const LiveMetric = ({ item, rows, height }) => {
+const LiveMetric = ({ item, rows, height, t }) => {
     const value = useMemo(
         () => calculateMetric(rows, item),
         [rows, item]
@@ -211,7 +212,7 @@ const LiveMetric = ({ item, rows, height }) => {
     if (!item.bindings?.valueField) {
         return (
             <EmptyPreview height={height}>
-                Выберите поле метрики в панели свойств.
+                {t('editor.metricNeedField')}
             </EmptyPreview>
         );
     }
@@ -222,7 +223,7 @@ const LiveMetric = ({ item, rows, height }) => {
             style={{ height }}
         >
             <p className="mb-1 text-xs font-medium text-zinc-400">
-                {item.config?.title || 'Метрика'}
+                {item.config?.title || t(paletteItems.metric.labelKey)}
             </p>
             <p className="text-3xl font-semibold tracking-tight text-white">
                 {formatMetricValue(value)}
@@ -236,13 +237,14 @@ const LiveMetric = ({ item, rows, height }) => {
     );
 };
 
-const LiveText = ({ item, height }) => {
-    const content = item.config?.content?.trim();
+const LiveText = ({ item, height, t }) => {
+    const content = item.config?.content?.trim()
+        || (item.config?.contentKey ? t(item.config.contentKey) : '');
 
     if (!content) {
         return (
             <EmptyPreview height={height}>
-                Введите текст в панели свойств.
+                {t('editor.textNeedContent')}
             </EmptyPreview>
         );
     }
@@ -264,7 +266,7 @@ const LiveText = ({ item, height }) => {
                     {item.config.title}
                 </div>
             )}
-            <div>{item.config.content}</div>
+            <div>{content}</div>
         </div>
     );
 };
@@ -275,6 +277,8 @@ const LiveFilter = ({
                         value,
                         onChange,
                         height,
+                        t,
+                        language,
                     }) => {
     const field = item.bindings?.field;
     const options = useMemo(() => {
@@ -285,13 +289,13 @@ const LiveFilter = ({
                 .map((row) => row[field])
                 .filter((option) => option != null)
                 .map(String)
-        )).sort((left, right) => left.localeCompare(right, 'ru', { numeric: true }));
-    }, [field, rows]);
+        )).sort((left, right) => left.localeCompare(right, language, { numeric: true }));
+    }, [field, rows, language]);
 
     if (!field) {
         return (
             <EmptyPreview height={height}>
-                Выберите поле фильтра в панели свойств.
+                {t('editor.filterNeedField')}
             </EmptyPreview>
         );
     }
@@ -312,7 +316,7 @@ const LiveFilter = ({
                 onClick={(event) => event.stopPropagation()}
                 className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
             >
-                <option value="">Все значения</option>
+                <option value="">{t('editor.allValues')}</option>
                 {options.map((option) => (
                     <option key={option} value={option}>
                         {option}
@@ -325,21 +329,22 @@ const LiveFilter = ({
 
 const LiveComponentPreview = (props) => {
     const { item, height } = props;
+    const { t, language } = useTranslation();
 
     if (paletteItems[item.type]?.isChart) {
-        return <LiveChart item={item} rows={props.rows} height={height} />;
+        return <LiveChart item={item} rows={props.rows} height={height} t={t} />;
     }
     if (item.type === 'metric') {
-        return <LiveMetric item={item} rows={props.rows} height={height} />;
+        return <LiveMetric item={item} rows={props.rows} height={height} t={t} />;
     }
     if (item.type === 'text') {
-        return <LiveText item={item} height={height} />;
+        return <LiveText item={item} height={height} t={t} />;
     }
     if (item.type === 'selectbox') {
-        return <LiveFilter {...props} />;
+        return <LiveFilter {...props} t={t} language={language} />;
     }
 
-    return <EmptyPreview>Неизвестный тип компонента.</EmptyPreview>;
+    return <EmptyPreview>{t('editor.unknownComponent')}</EmptyPreview>;
 };
 
 export default LiveComponentPreview;

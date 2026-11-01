@@ -2,8 +2,12 @@ import React from 'react';
 import { Plus, Zap, FolderOpen } from 'lucide-react';
 import * as Icons from 'lucide-react';
 import ThemeToggle from '../../shared/ThemeToggle.jsx';
+import LanguageToggle from '../../shared/LanguageToggle.jsx';
+import useTranslation from '../../shared/i18n/useTranslation.js';
 
 const Sidebar = ({ categories, selectedCategory, onSelectCategory, activeCount, totalCount, onAddClick, onProjectsClick }) => {
+  const { t } = useTranslation();
+
   const getIconComponent = (iconName) => {
     const IconComponent = Icons[iconName];
     return IconComponent ? <IconComponent size={16} /> : null;
@@ -20,13 +24,13 @@ const Sidebar = ({ categories, selectedCategory, onSelectCategory, activeCount, 
           Stream<span>lit</span>
         </h1>
         <div className="status-badge">
-          <span className="status-text">{activeCount} / {totalCount} активны</span>
+          <span className="status-text">{t('extensions.count', { active: activeCount, total: totalCount })}</span>
         </div>
       </div>
 
       <div className="sidebar-content">
         <div className="categories-section">
-          <h3 className="categories-title">Категории</h3>
+          <h3 className="categories-title">{t('extensions.categories')}</h3>
           <div className="categories-list">
             {categories.map(cat => (
               <button
@@ -35,7 +39,7 @@ const Sidebar = ({ categories, selectedCategory, onSelectCategory, activeCount, 
                 className={`category-button ${selectedCategory === cat.id ? 'active' : 'inactive'}`}
               >
                 {getIconComponent(cat.icon)}
-                <span>{cat.name}</span>
+                <span>{t(`extensions.${cat.id === 'chart' ? 'charts' : cat.id === 'map' ? 'maps' : cat.id}`)}</span>
               </button>
             ))}
           </div>
@@ -43,14 +47,17 @@ const Sidebar = ({ categories, selectedCategory, onSelectCategory, activeCount, 
 
         <button className="btn btn-secondary add-button" onClick={onAddClick}>
           <Plus size={18} />
-          <span>Добавить расширение</span>
+          <span>{t('extensions.add')}</span>
         </button>
 
         <button className="logout-button" onClick={onProjectsClick}>
           <FolderOpen size={18} />
-          <span>К проектам</span>
+          <span>{t('extensions.toProjects')}</span>
         </button>
-        <ThemeToggle />
+        <div className="sidebar-controls">
+          <LanguageToggle />
+          <ThemeToggle />
+        </div>
       </div>
     </aside>
   );

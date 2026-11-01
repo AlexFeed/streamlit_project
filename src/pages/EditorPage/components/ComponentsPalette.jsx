@@ -5,8 +5,11 @@ import {
 import { useDraggable } from '@dnd-kit/core';
 import { PALETTE_GROUPS, paletteItems } from '../data/paletteItems';
 import ThemeToggle from '../../../shared/ThemeToggle.jsx';
+import LanguageToggle from '../../../shared/LanguageToggle.jsx';
+import useTranslation from '../../../shared/i18n/useTranslation.js';
 
 const PaletteItem = ({ item, onAddComponent }) => {
+    const { t } = useTranslation();
     const Icon = item.icon || LayoutDashboard;
     const {
         attributes,
@@ -35,7 +38,7 @@ const PaletteItem = ({ item, onAddComponent }) => {
                     <Icon aria-hidden="true" />
                 </div>
                 <div className="palette-item-details">
-                    <span className="palette-item-label">{item.label}</span>
+                    <span className="palette-item-label">{t(item.labelKey)}</span>
                     <GripVertical className="palette-item-grip" aria-hidden="true" />
                 </div>
             </div>
@@ -43,14 +46,17 @@ const PaletteItem = ({ item, onAddComponent }) => {
     );
 };
 
-const ComponentsPalette = ({ onAddComponent, onGoHome }) => (
+const ComponentsPalette = ({ onAddComponent, onGoHome }) => {
+    const { t } = useTranslation();
+
+    return (
     <aside className="editor-palette">
         <div className="editor-palette-brand">
             <button
                 type="button"
                 onClick={onGoHome}
                 className="editor-brand-button"
-                title="На главную (Мои проекты)"
+                title={t('editor.goHomeTitle')}
             >
                 <div className="editor-brand-icon">
                     <LayoutDashboard aria-hidden="true" />
@@ -63,16 +69,16 @@ const ComponentsPalette = ({ onAddComponent, onGoHome }) => (
 
         <div className="editor-palette-content">
             <div className="editor-palette-heading">
-                <p>Компоненты</p>
+                <p>{t('editor.components')}</p>
             </div>
 
             <div className="editor-palette-groups">
                 {PALETTE_GROUPS.map((groupTitle) => (
                     <section className="editor-palette-group" key={groupTitle}>
-                        <h2>{groupTitle}</h2>
+                        <h2>{t(groupTitle)}</h2>
                         <div className="editor-palette-items">
                             {Object.values(paletteItems)
-                                .filter((item) => item.group === groupTitle)
+                                .filter((item) => item.groupKey === groupTitle)
                                 .map((item) => (
                                     <PaletteItem
                                         key={item.type}
@@ -86,9 +92,13 @@ const ComponentsPalette = ({ onAddComponent, onGoHome }) => (
             </div>
         </div>
         <div className="editor-palette-footer">
-            <ThemeToggle />
+            <div className="sidebar-controls">
+                <LanguageToggle />
+                <ThemeToggle />
+            </div>
         </div>
     </aside>
-);
+    );
+};
 
 export default ComponentsPalette;

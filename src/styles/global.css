@@ -108,7 +108,47 @@ button:disabled {
   transition: background 240ms ease, border-color 240ms ease, color 240ms ease, box-shadow 240ms ease, transform 240ms ease;
 }
 
+.sidebar-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-2);
+  padding-bottom: var(--space-4);
+}
+
+.language-toggle {
+  display: inline-flex;
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-2);
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  font-size: 0.8rem;
+  font-weight: 700;
+  box-shadow: var(--material-highlight);
+  transition: background 240ms ease, border-color 240ms ease, color 240ms ease, box-shadow 240ms ease, transform 240ms ease;
+}
+
+.language-toggle:hover {
+  border-color: var(--glass-border);
+  background: var(--glass-hover);
+  box-shadow: var(--glass-glow), var(--material-highlight);
+  transform: scale(1.02);
+}
+
+.language-toggle:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
 .theme-toggle-label {
+  min-width: 0;
   white-space: nowrap;
 }
 
@@ -180,6 +220,25 @@ button:disabled {
 .theme-toggle:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
+}
+
+.page-container .sidebar-controls {
+  margin-top: auto;
+  padding-bottom: var(--space-4);
+}
+
+.page-container .language-toggle,
+.page-container .theme-toggle {
+  background-image: var(--surface-texture);
+}
+
+.page-container .language-toggle:hover,
+.auth-page .language-toggle:hover {
+  border-color: var(--glass-border);
+  background: var(--glass-hover);
+  color: var(--color-text);
+  box-shadow: var(--glass-glow), var(--material-highlight);
+  transform: scale(1.02);
 }
 
 .page-container .sidebar,
@@ -804,13 +863,13 @@ button:disabled {
   transform: none;
 }
 
-[data-theme="dark"] .editor-page [data-canvas-item] button[title="Удалить"] {
+[data-theme="dark"] .editor-page [data-canvas-item] button[title] {
   border-color: #5b456b;
   background-color: #302638;
   color: #d3b5e8;
 }
 
-[data-theme="dark"] .editor-page [data-canvas-item] button[title="Удалить"]:hover:not(:disabled) {
+[data-theme="dark"] .editor-page [data-canvas-item] button[title]:hover:not(:disabled) {
   border-color: #8d68ad;
   background-color: #3a2c43;
   color: #ead9f5;

@@ -6,6 +6,7 @@ import EditorPage from "./pages/EditorPage/EditorPage.jsx";
 import ExtensionsPage from './pages/ExtensionsPage/ExtensionsPage.jsx';
 import ProtectedRoute from "./pages/AuthPage/components/ProtectedRoute.jsx";
 import { ThemeProvider } from './shared/ThemeContext.jsx';
+import { I18nProvider } from './shared/i18n/I18nContext.jsx';
 import useTheme from './shared/useTheme.js';
 
 function AppContent() {
@@ -26,7 +27,7 @@ function AppContent() {
                     }
                 />
 
-                {/*  Новый проект */}
+                {/* New project route */}
                 <Route
                     path="/editor"
                     element={
@@ -35,7 +36,7 @@ function AppContent() {
                         </ProtectedRoute>
                     }
                 />
-                {/* Сохранённый проект из главной страницы */}
+                {/* Saved project opened from the projects page */}
                 <Route
                     path="/editor/:projectId"
                     element={
@@ -61,7 +62,9 @@ function AppContent() {
 function App() {
     return (
         <ThemeProvider>
-            <AppContent />
+            <I18nProvider>
+                <AppContent />
+            </I18nProvider>
         </ThemeProvider>
     );
 }

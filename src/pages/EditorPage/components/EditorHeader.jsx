@@ -7,6 +7,7 @@ import {
     X,
     House
 } from 'lucide-react';
+import useTranslation from '../../../shared/i18n/useTranslation.js';
 
 const EditorHeader = ({
                           onClearCanvas,
@@ -19,11 +20,13 @@ const EditorHeader = ({
                           onGoHome,
                           onUploadDataset
                       }) => {
+    const { t } = useTranslation();
+
     return (
         <header className="editor-header">
             <div>
                 <div className="editor-header-title">
-                    <h1>Редактор дашборда</h1>
+                    <h1>{t('editor.title')}</h1>
                     <span className="editor-live-badge">Live</span>
                 </div>
             </div>
@@ -43,7 +46,8 @@ const EditorHeader = ({
                             onClick={() => onRemoveDataset(dataset.datasetId)}
                             disabled={isDatasetClearing}
                             className="editor-icon-button editor-remove-dataset"
-                            title="Удалить датасет"
+                            title={t('editor.deleteDataset')}
+                            aria-label={t('editor.deleteDataset')}
                         >
                             <X aria-hidden="true" />
                         </button>
@@ -54,7 +58,7 @@ const EditorHeader = ({
                     className="btn btn-secondary editor-action-button"
                     onClick={onUploadDataset}>
                     <Upload aria-hidden="true" />
-                    Загрузить данные
+                    {t('editor.upload')}
                 </button>
 
                 <div className="editor-header-divider"/>
@@ -65,7 +69,7 @@ const EditorHeader = ({
                     className="btn btn-secondary editor-action-button"
                 >
                     <Save aria-hidden="true" />
-                    Сохранить
+                    {t('editor.save')}
                 </button>
 
                 <button
@@ -75,14 +79,15 @@ const EditorHeader = ({
                     className="btn btn-primary editor-action-button"
                 >
                     <Download aria-hidden="true" />
-                    {isGenerating ? 'Генерация…' : 'Скачать Streamlit'}
+                    {isGenerating ? t('editor.generating') : t('editor.download')}
                 </button>
 
                 <button
                     type="button"
                     onClick={onClearCanvas}
                     className="editor-icon-button editor-clear-button"
-                    title="Очистить холст"
+                    title={t('editor.clearCanvas')}
+                    aria-label={t('editor.clearCanvas')}
                 >
                     <Trash2 aria-hidden="true" />
                 </button>
@@ -91,7 +96,8 @@ const EditorHeader = ({
                     type="button"
                     onClick={onGoHome}
                     className="editor-icon-button"
-                    title="Перейти на главную"
+                    title={t('editor.goHome')}
+                    aria-label={t('editor.goHome')}
                 >
                     <House aria-hidden="true" />
                 </button>

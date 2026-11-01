@@ -1,17 +1,16 @@
-// Этот файл отвечает за управление состоянием генерации кода
-
 import { useState } from 'react';
 import { toast } from 'sonner';
 import {compileDashboardSchema} from '../services/editorSchema.js';
 import { generateProjectZip } from '../../../api/generateApi.js';
+import useTranslation from '../../../shared/i18n/useTranslation.js';
 
 export const useGenerateState = () => {
+    const { t } = useTranslation();
     const [isGenerating, setIsGenerating] = useState(false);
 
     const handleGenerate = async (snapshot) => {
         try {
-            // Сборка схемы
-            const { schema, errors } = compileDashboardSchema(snapshot);
+            const { schema, errors } = compileDashboardSchema(snapshot, t);
             if (errors.length > 0) {
                 errors.forEach((err) => toast.error(err));
                 return null;
@@ -19,12 +18,10 @@ export const useGenerateState = () => {
 
             setIsGenerating(true);
 
-            // Отправка на бэкенд
             const blob = await generateProjectZip({
                 schema,
             });
 
-            // Скачивание архива
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
@@ -35,8 +32,8 @@ export const useGenerateState = () => {
             URL.revokeObjectURL(url);
 
         } catch (error) {
-            console.error('Ошибка генерации дашборда:', error);
-            toast.error(error.message || 'Не удалось сгенерировать Streamlit-файл.');
+            console.error('Could not generate the dashboard:', error);
+            toast.error(t('editor.generateFailure'));
         } finally {
             setIsGenerating(false);
         }

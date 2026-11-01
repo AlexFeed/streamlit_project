@@ -1,6 +1,6 @@
 import { authFetch } from './apiClient.js';
 
-// Получение списка проектов текущего пользователя (краткие карточки для главной страницы)
+// Retrieve the current user's project cards.
 //
 // Response:
 // [
@@ -24,7 +24,7 @@ export const listProjects = async () => {
     return response.json();
 };
 
-// Создание нового проекта
+// Create a project.
 //
 // Request:
 // {
@@ -64,7 +64,7 @@ export const createProject = async (payload) => {
     return response.json();
 };
 
-// Получение полного проекта по id (для восстановления состояния редактора)
+// Retrieve a full project for restoring the editor state.
 //
 // Response:
 // {
@@ -89,9 +89,9 @@ export const getProject = async (projectId) => {
     return response.json();
 };
 
-// Частичное или полное обновление проекта
+// Partially or fully update a project.
 //
-// Request (все поля опциональны):
+// Request body fields are optional.
 // {
 //   title?: string,
 //   description?: string,
@@ -129,7 +129,7 @@ export const updateProject = async (projectId, payload) => {
     return response.json();
 };
 
-// Удаление проекта
+// Delete a project.
 //
 // Response:
 // {

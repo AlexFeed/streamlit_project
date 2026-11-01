@@ -8,25 +8,26 @@ import {
     OptionSelect,
 } from './properties/PropertyFields.jsx';
 import ColorStyleField from './properties/ColorStyleField.jsx';
+import useTranslation from '../../../shared/i18n/useTranslation.js';
 
 const aggregationOptions = [
-    { value: 'none', label: 'Без агрегации' },
-    { value: 'sum', label: 'Сумма' },
-    { value: 'mean', label: 'Среднее' },
-    { value: 'count', label: 'Количество' },
-    { value: 'min', label: 'Минимум' },
-    { value: 'max', label: 'Максимум' },
+    { value: 'none', labelKey: 'editor.noAggregation' },
+    { value: 'sum', labelKey: 'editor.sum' },
+    { value: 'mean', labelKey: 'editor.mean' },
+    { value: 'count', labelKey: 'editor.count' },
+    { value: 'min', labelKey: 'editor.min' },
+    { value: 'max', labelKey: 'editor.max' },
 ];
 
 const sortOptions = [
-    { value: 'none', label: 'Не сортировать' },
-    { value: 'asc', label: 'По возрастанию' },
-    { value: 'desc', label: 'По убыванию' },
+    { value: 'none', labelKey: 'editor.noSort' },
+    { value: 'asc', labelKey: 'editor.ascending' },
+    { value: 'desc', labelKey: 'editor.descending' },
 ];
 
 const sortByOptions = [
-    { value: 'x', label: 'По значениям X' },
-    { value: 'y', label: 'По значениям Y' },
+    { value: 'x', labelKey: 'editor.sortX' },
+    { value: 'y', labelKey: 'editor.sortY' },
 ];
 
 const fontSizeOptions = [12, 14, 16, 18, 20, 24, 28, 32].map((size) => ({
@@ -35,19 +36,19 @@ const fontSizeOptions = [12, 14, 16, 18, 20, 24, 28, 32].map((size) => ({
 }));
 
 const fontWeightOptions = [
-    { value: 'normal', label: 'Обычный' },
-    { value: 'bold', label: 'Жирный' },
+    { value: 'normal', labelKey: 'editor.normal' },
+    { value: 'bold', labelKey: 'editor.bold' },
 ];
 
 const fontStyleOptions = [
-    { value: 'normal', label: 'Обычный' },
-    { value: 'italic', label: 'Курсив' },
+    { value: 'normal', labelKey: 'editor.normal' },
+    { value: 'italic', labelKey: 'editor.italic' },
 ];
 
 const textAlignOptions = [
-    { value: 'left', label: 'Слева' },
-    { value: 'center', label: 'По центру' },
-    { value: 'right', label: 'Справа' },
+    { value: 'left', labelKey: 'editor.alignLeft' },
+    { value: 'center', labelKey: 'editor.alignCenter' },
+    { value: 'right', labelKey: 'editor.alignRight' },
 ];
 
 const PropertiesPanel = ({
@@ -57,11 +58,18 @@ const PropertiesPanel = ({
                              onClose,
                              datasets = [],
                          }) => {
+    const { t } = useTranslation();
+
     if (!selectedComponent) {
         return null;
     }
 
     const { type, config, bindings } = selectedComponent;
+    const componentLabel = t(paletteItems[type]?.labelKey || 'editor.componentLabel');
+    const localizeOptions = (options) => options.map(({ labelKey, ...option }) => ({
+        ...option,
+        label: t(labelKey),
+    }));
 
     const activeDataset =
         datasets.find((ds) => ds.datasetId === selectedComponent.datasetId) ||
@@ -92,18 +100,17 @@ const PropertiesPanel = ({
         ? fieldOptions
         : valueFieldOptions;
 
-    // Обновление значений конфига в схеме (название схемы)
     const updateConfig = (key, value) => {
         onUpdateComponent(selectedComponent.id, (component) => ({
             ...component,
             config: {
                 ...component.config,
                 [key]: value,
+                ...(key === 'content' ? { contentKey: undefined } : {}),
             },
         }));
     };
 
-    // Обновление значений полей в схеме
     const updateBinding = (key, value) => {
         onUpdateComponent(selectedComponent.id, (component) => ({
             ...component,
@@ -114,7 +121,6 @@ const PropertiesPanel = ({
         }));
     };
 
-    // Смена источника данных (CSV) для компонента со сбросом отсутствующих полей
     const updateDataset = (nextDatasetId) => {
         const nextDataset = datasets.find((ds) => ds.datasetId === nextDatasetId);
         const nextFields = new Set(nextDataset?.fields || []);
@@ -140,7 +146,7 @@ const PropertiesPanel = ({
         <>
             <button
                 type="button"
-                aria-label="Закрыть панель свойств"
+                aria-label={t('editor.properties')}
                 onClick={onClose}
                 className="properties-backdrop"
             />
@@ -148,7 +154,7 @@ const PropertiesPanel = ({
                 <div className="properties-panel-header">
                     <div>
                         <h2 className="properties-panel-title">
-                            {config.title || 'Без названия'}
+                            {config.title || componentLabel}
                         </h2>
                     </div>
 
@@ -158,76 +164,76 @@ const PropertiesPanel = ({
                         className="btn btn-secondary properties-close-button"
                     >
                         <X aria-hidden="true" />
-                        Закрыть
+                        {t('common.close')}
                     </button>
                 </div>
 
                 <div className="properties-panel-fields">
                     <TextField
-                        label={type === 'text' ? 'Заголовок (необязательно)' : 'Заголовок'}
+                        label={type === 'text' ? t('editor.optionalTitle') : t('editor.chartTitle')}
                         value={config.title || ''}
                         onChange={(value) => updateConfig('title', value)}
                         placeholder={type === 'text'
-                            ? 'Можно оставить пустым'
-                            : 'Введите заголовок компонента'}
+                            ? t('editor.leaveBlank')
+                            : t('editor.enterComponentTitle')}
                         helperText={type === 'text'
-                            ? 'Если поле пустое, в готовом приложении будет показан только текст'
-                            : 'Отображается над графиком или элементом'}
+                            ? t('editor.titleIfBlank')
+                            : t('editor.titleAbove')}
                     />
 
                     {type !== 'text' && (
                         <FieldSelect
-                            label="Источник данных (CSV)"
+                            label={t('editor.dataSource')}
                             value={activeDataset?.datasetId || ''}
                             onChange={updateDataset}
                             options={datasetOptions}
-                            placeholder="Выберите CSV-файл"
-                            helperText="CSV-файл, из которого компонент берёт данные"
+                            placeholder={t('editor.chooseCsv')}
+                            helperText={t('editor.csvSource')}
                         />
                     )}
 
                     {type === 'text' && (
                         <>
                             <TextAreaField
-                                label="Текст"
-                                value={config.content || ''}
+                                label={t('editor.text')}
+                                value={config.content || (config.contentKey ? t(config.contentKey) : '')}
                                 onChange={(value) => updateConfig('content', value)}
-                                placeholder="Введите пояснение для пользователя"
-                                helperText="Этот текст будет показан на холсте и в готовом Streamlit-приложении"
+                                placeholder={t('editor.textPlaceholder')}
+                                helperText={t('editor.textDescription')}
                             />
 
                             <OptionSelect
-                                label="Размер текста"
+                                label={t('editor.fontSize')}
                                 value={String(config.fontSize || 16)}
                                 onChange={(value) => updateConfig('fontSize', Number(value))}
                                 options={fontSizeOptions}
                             />
 
                             <OptionSelect
-                                label="Начертание"
+                                label={t('editor.fontWeight')}
                                 value={config.fontWeight || 'normal'}
                                 onChange={(value) => updateConfig('fontWeight', value)}
-                                options={fontWeightOptions}
+                                options={localizeOptions(fontWeightOptions)}
                             />
 
                             <OptionSelect
-                                label="Стиль"
+                                label={t('editor.fontStyle')}
                                 value={config.fontStyle || 'normal'}
                                 onChange={(value) => updateConfig('fontStyle', value)}
-                                options={fontStyleOptions}
+                                options={localizeOptions(fontStyleOptions)}
                             />
 
                             <ColorField
-                                label="Цвет текста"
+                                label={t('editor.textColor')}
                                 value={config.color || '#d4d4d8'}
                                 onChange={(value) => updateConfig('color', value)}
                             />
 
                             <OptionSelect
-                                label="Выравнивание"
+                                label={t('editor.alignment')}
                                 value={config.textAlign || 'left'}
                                 onChange={(value) => updateConfig('textAlign', value)}
-                                options={textAlignOptions}
+                                options={localizeOptions(textAlignOptions)}
                             />
                         </>
                     )}
@@ -235,20 +241,20 @@ const PropertiesPanel = ({
                     {type === 'selectbox' && (
                         <>
                             <FieldSelect
-                                label="Поле данных"
+                                label={t('editor.dataField')}
                                 value={bindings.field || ''}
                                 onChange={(value) => updateBinding('field', value)}
                                 options={fieldOptions}
-                                placeholder="Выберите поле"
-                                helperText="Поле, по которому строится список значений"
+                                placeholder={t('editor.chooseField')}
+                                helperText={t('editor.filterFieldHelp')}
                             />
 
                             <TextField
-                                label="Подсказка"
+                                label={t('editor.filterPlaceholder')}
                                 value={config.placeholder || ''}
                                 onChange={(value) => updateConfig('placeholder', value)}
-                                placeholder="Например: Выберите отдел"
-                                helperText="Отображается до выбора значения"
+                                placeholder={t('editor.filterExample')}
+                                helperText={t('editor.shownBeforeSelect')}
                             />
                         </>
                     )}
@@ -256,46 +262,46 @@ const PropertiesPanel = ({
                     {paletteItems[type]?.isChart && (
                         <>
                             <FieldSelect
-                                label="Поле X"
+                                label={t('editor.fieldX')}
                                 value={bindings.xField || ''}
                                 onChange={(value) => updateBinding('xField', value)}
                                 options={xFieldOptions}
-                                placeholder="Выберите поле X"
-                                helperText="Горизонтальная ось графика"
+                                placeholder={t('editor.chooseFieldX')}
+                                helperText={t('editor.xAxisHelp')}
                             />
 
                             <FieldSelect
-                                label="Поле Y"
+                                label={t('editor.fieldY')}
                                 value={bindings.yField || ''}
                                 onChange={(value) => updateBinding('yField', value)}
                                 options={aggregatedValueFieldOptions}
-                                placeholder="Выберите поле Y"
-                                helperText="Значения, отображаемые на графике"
+                                placeholder={t('editor.chooseFieldY')}
+                                helperText={t('editor.chartValuesHelp')}
                             />
 
                             <OptionSelect
-                                label="Агрегация"
+                                label={t('editor.aggregation')}
                                 value={config.aggregation || 'none'}
                                 onChange={(value) => updateConfig('aggregation', value)}
-                                options={aggregationOptions}
-                                helperText="Как объединять несколько значений для одной точки X"
+                                options={localizeOptions(aggregationOptions)}
+                                helperText={t('editor.aggregateHelp')}
                             />
 
                             <OptionSelect
-                                label="Сортировка"
+                                label={t('editor.sort')}
                                 value={config.sort || 'none'}
                                 onChange={(value) => updateConfig('sort', value)}
-                                options={sortOptions}
-                                helperText="Направление сортировки"
+                                options={localizeOptions(sortOptions)}
+                                helperText={t('editor.sortDirection')}
                             />
 
                             {config.sort !== 'none' && (
                                 <OptionSelect
-                                    label="Сортировать"
+                                    label={t('editor.sortBy')}
                                     value={config.sortBy || 'x'}
                                     onChange={(value) => updateConfig('sortBy', value)}
-                                    options={sortByOptions}
-                                    helperText="X — порядок категорий или дат, Y — рейтинг по величине"
+                                    options={localizeOptions(sortByOptions)}
+                                    helperText={t('editor.sortHelp')}
                                 />
                             )}
 
@@ -310,28 +316,28 @@ const PropertiesPanel = ({
                     {type === 'metric' && (
                         <>
                             <FieldSelect
-                                label="Поле значения"
+                                label={t('editor.valueField')}
                                 value={bindings.valueField || ''}
                                 onChange={(value) => updateBinding('valueField', value)}
                                 options={aggregatedValueFieldOptions}
-                                placeholder="Выберите поле"
-                                helperText="Поле, из которого берётся значение метрики"
+                                placeholder={t('editor.chooseField')}
+                                helperText={t('editor.metricFieldHelp')}
                             />
 
                             <TextField
-                                label="Описание (необязательно)"
+                                label={t('editor.descriptionOptional')}
                                 value={config.description || ''}
                                 onChange={(value) => updateConfig('description', value)}
-                                placeholder="Например: Общая выручка"
-                                helperText="Если оставить пустым, под метрикой ничего не появится"
+                                placeholder={t('editor.metricDescriptionExample')}
+                                helperText={t('editor.metricDescriptionHelp')}
                             />
 
                             <OptionSelect
-                                label="Агрегация"
+                                label={t('editor.aggregation')}
                                 value={config.aggregation || 'sum'}
                                 onChange={(value) => updateConfig('aggregation', value)}
-                                options={aggregationOptions.filter((option) => option.value !== 'none')}
-                                helperText="Способ вычисления итогового значения"
+                                options={localizeOptions(aggregationOptions.filter((option) => option.value !== 'none'))}
+                                helperText={t('editor.aggregateMethod')}
                             />
                         </>
                     )}
@@ -344,7 +350,7 @@ const PropertiesPanel = ({
                         className="btn properties-delete-button"
                     >
                         <Trash2 aria-hidden="true" />
-                        Удалить компонент
+                        {t('editor.deleteComponent')}
                     </button>
                 </div>
             </aside>

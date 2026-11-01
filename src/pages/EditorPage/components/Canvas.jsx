@@ -13,6 +13,7 @@ import {
     getGridItemStyle,
     useCanvasGrid,
 } from '../hooks/useCanvasGrid.js';
+import useTranslation from '../../../shared/i18n/useTranslation.js';
 
 const Canvas = ({
                     components,
@@ -26,6 +27,7 @@ const Canvas = ({
                     previewRowsByDataset = {},
                     isDataLoading = false,
                 }) => {
+    const { t } = useTranslation();
     const [filterValues, setFilterValues] = useState({});
     const [dropPreview, setDropPreview] = useState(null);
 
@@ -157,30 +159,36 @@ const Canvas = ({
                 <div>
                     <div className="dashboard-canvas-heading">
                         <h2>
-                            Холст дашборда
+                            {t('editor.canvasTitle')}
                         </h2>
                         <span className="editor-live-badge">
                             Live
                         </span>
                     </div>
                     <p className="dashboard-canvas-description">
-                        Перетаскивайте карточки и тяните за угол — размер каждого элемента независим
+                        {t('editor.canvasDescription')}
                     </p>
                 </div>
 
                 <div className="dashboard-canvas-stats">
                     <span className="dashboard-stat">
-                        {GRID_COLUMNS} колонок
+                        {t('editor.columns', { count: GRID_COLUMNS })}
                     </span>
                     {isDataLoading ? (
                         <span className="dashboard-stat is-loading">
-                            Загрузка данных…
+                            {t('editor.loadingData')}
                         </span>
                     ) : (
                         <span className="dashboard-stat">
                             {datasets.length > 1
-                                ? `${datasets.length} CSV · ${Object.values(filteredRowsByDataset).reduce((acc, rows) => acc + rows.length, 0)} строк`
-                                : `${(filteredRowsByDataset[defaultDatasetId] || []).length} из ${(previewRowsByDataset[defaultDatasetId] || []).length} строк`}
+                                ? t('editor.datasetRows', {
+                                    count: datasets.length,
+                                    rows: Object.values(filteredRowsByDataset).reduce((acc, rows) => acc + rows.length, 0),
+                                })
+                                : t('editor.rowRange', {
+                                    shown: (filteredRowsByDataset[defaultDatasetId] || []).length,
+                                    total: (previewRowsByDataset[defaultDatasetId] || []).length,
+                                })}
                         </span>
                     )}
                 </div>
@@ -190,10 +198,10 @@ const Canvas = ({
                 <div className={`dashboard-canvas-empty${isOver ? ' is-over' : ''}`}>
                     <div>
                         <h3>
-                            Холст пока пуст
+                            {t('editor.canvasEmptyTitle')}
                         </h3>
                         <p>
-                            Перетащите элемент из библиотеки или добавьте его кликом
+                            {t('editor.canvasEmptyDescription')}
                         </p>
                     </div>
                 </div>
@@ -210,7 +218,7 @@ const Canvas = ({
                         >
                             {!visibleDropPreview.insert && (
                                 <div className="dashboard-drop-label">
-                                    Разместить здесь
+                                    {t('editor.dropHere')}
                                 </div>
                             )}
                         </div>
@@ -253,7 +261,7 @@ const Canvas = ({
 
             {isDragging && components.length > 0 && (
                 <div className="dashboard-drop-hint">
-                    Отпустите новый компонент над холстом
+                    {t('editor.dropHint')}
                 </div>
             )}
         </section>

@@ -121,8 +121,9 @@
   flex-direction: column;
 }
 
-.sidebar-content > .theme-toggle {
+.sidebar-content > .sidebar-controls {
   margin-top: auto;
+  padding-bottom: var(--space-4);
 }
 
 .categories-section {

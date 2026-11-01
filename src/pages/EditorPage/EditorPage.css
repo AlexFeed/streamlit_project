@@ -648,7 +648,7 @@
 
   .properties-backdrop {
     position: fixed;
-    inset: 65px 0 0;
+    inset: 65px 0 0 252px;
     z-index: 30;
     display: block;
     border: 0;
@@ -663,6 +663,10 @@
 
   .editor-palette {
     display: none;
+  }
+
+  .properties-backdrop {
+    inset: 65px 0 0;
   }
 
   .editor-header {

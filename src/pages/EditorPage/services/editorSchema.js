@@ -1,9 +1,7 @@
-// Файл с созданием итоговой Json схемы для отправки на сервер
 import { getPaletteColors } from '../data/chartPalettes.js';
 import { paletteItems } from '../data/paletteItems.js';
 
-export const buildDashboardSchema = (snapshot) => {
-    // Извлекаем все нужные данные из единого слепка состояния
+export const buildDashboardSchema = (snapshot, t = (key) => key) => {
     const {
         components = [],
         datasets = [],
@@ -44,7 +42,7 @@ export const buildDashboardSchema = (snapshot) => {
         if (component.type === 'selectbox') {
             filters.push({
                 ...base,
-                title: component.config?.title || 'Фильтр',
+                title: component.config?.title || t(meta.labelKey),
                 field: component.bindings?.field || '',
                 scope: 'global',
             });
@@ -52,7 +50,7 @@ export const buildDashboardSchema = (snapshot) => {
         else if (meta?.isChart) {
             views.push({
                 ...base,
-                title: component.config?.title || 'График',
+                title: component.config?.title || t(meta.labelKey),
                 x: component.bindings?.xField || '',
                 y: component.bindings?.yField || '',
                 aggregation: component.config?.aggregation || 'none',
@@ -71,7 +69,7 @@ export const buildDashboardSchema = (snapshot) => {
         else if (component.type === 'metric') {
             views.push({
                 ...base,
-                title: component.config?.title || 'Метрика',
+                title: component.config?.title || t(meta.labelKey),
                 description: component.config?.description || '',
                 field: component.bindings?.valueField || '',
                 aggregation: component.config?.aggregation || 'sum',
@@ -81,7 +79,9 @@ export const buildDashboardSchema = (snapshot) => {
             views.push({
                 ...base,
                 title: component.config?.title || '',
-                content: component.config?.content || '',
+                content: component.config?.content || (
+                    component.config?.contentKey ? t(component.config.contentKey) : ''
+                ),
                 fontSize: component.config?.fontSize || 16,
                 fontWeight: component.config?.fontWeight || 'normal',
                 fontStyle: component.config?.fontStyle || 'normal',
@@ -113,8 +113,7 @@ export const buildDashboardSchema = (snapshot) => {
     };
 };
 
-// Проверка JSON-схемы на правильность
-export const validateSchema = (snapshot) => {
+export const validateSchema = (snapshot, t = (key) => key) => {
     const { components = [], datasets = [] } = snapshot;
     const errors = [];
     const allowedAggregations = new Set(['none', 'sum', 'mean', 'count', 'min', 'max']);
@@ -122,14 +121,13 @@ export const validateSchema = (snapshot) => {
     const allowedSortFields = new Set(['x', 'y']);
 
     if (!components.length) {
-        errors.push('Холст пуст. Добавьте хотя бы один компонент.');
+        errors.push(t('editor.validation.emptyCanvas'));
     }
 
     if (!datasets.length || datasets.some((ds) => !ds?.datasetId)) {
-        errors.push('Не загружен CSV-файл.');
+        errors.push(t('editor.validation.missingDataset'));
     }
 
-    // Проверка заполненности полей и свойств каждого компонента
     components.forEach((component, index) => {
         const meta = paletteItems[component.type];
         const name = component.config?.title || component.type || `component-${index + 1}`;
@@ -141,29 +139,28 @@ export const validateSchema = (snapshot) => {
             datasets[0] ||
             null;
         const availableFields = targetDataset?.fields || [];
-        // Проверка того, что поле реально есть в выбранном датасете компонента
         const hasField = (field) => availableFields.includes(field);
 
         if (!meta) {
-            errors.push(`Компонент "${name}": тип "${component.type}" не поддерживается.`);
+            errors.push(t('editor.validation.unsupportedType', { name, type: component.type }));
             return;
         }
 
         if (width && (width < 2 || width > 12)) {
-            errors.push(`Компонент "${name}": ширина должна быть 3, 4, 6, 8 или 12 колонок.`);
+            errors.push(t('editor.validation.width', { name }));
         }
 
         const minimumHeight = meta?.minHeight || 120;
         if (height && (height < minimumHeight || height > 720)) {
-            errors.push(`Компонент "${name}": высота должна быть от ${minimumHeight} до 720 пикселей.`);
+            errors.push(t('editor.validation.height', { name, min: minimumHeight }));
         }
 
         if (component.type === 'selectbox') {
             const field = component.bindings?.field;
             if (!field) {
-                errors.push(`Компонент "${name}": не выбрано поле данных для фильтра.`);
+                errors.push(t('editor.validation.filterField', { name }));
             } else if (!hasField(field)) {
-                errors.push(`Компонент "${name}": поле "${field}" отсутствует в выбранном датасете.`);
+                errors.push(t('editor.validation.fieldMissing', { name, field }));
             }
         }
         else if (meta.isChart) {
@@ -175,38 +172,38 @@ export const validateSchema = (snapshot) => {
             const sortBy = component.config?.sortBy || 'x';
 
             if (!allowedAggregations.has(aggregation)) {
-                errors.push(`Компонент "${name}": неизвестная агрегация "${aggregation}".`);
+                errors.push(t('editor.validation.aggregation', { name, value: aggregation }));
             }
 
             if (!/^#[0-9a-fA-F]{6}$/.test(color)) {
-                errors.push(`Компонент "${name}": цвет должен быть в формате #RRGGBB.`);
+                errors.push(t('editor.validation.color', { name }));
             }
 
             if (!allowedColorModes.has(colorMode)) {
-                errors.push(`Компонент "${name}": неизвестный цветовой режим "${colorMode}".`);
+                errors.push(t('editor.validation.colorMode', { name, value: colorMode }));
             }
 
             if (!allowedSortFields.has(sortBy)) {
-                errors.push(`Компонент "${name}": сортировать можно только по X или Y.`);
+                errors.push(t('editor.validation.sortField', { name }));
             }
 
             if (
                 !meta.supportsPaletteModes
                 && colorMode !== 'solid'
             ) {
-                errors.push(`Компонент "${name}": палитры по данным доступны для столбчатого и точечного графиков.`);
+                errors.push(t('editor.validation.paletteMode', { name }));
             }
 
             if (!xField) {
-                errors.push(`Компонент "${name}": не выбрано поле X.`);
+                errors.push(t('editor.validation.missingX', { name }));
             } else if (!hasField(xField)) {
-                errors.push(`Компонент "${name}": поле X "${xField}" отсутствует в выбранном датасете.`);
+                errors.push(t('editor.validation.fieldMissing', { name, field: xField }));
             }
 
             if (!yField) {
-                errors.push(`Компонент "${name}": не выбрано поле Y.`);
+                errors.push(t('editor.validation.missingY', { name }));
             } else if (!hasField(yField)) {
-                errors.push(`Компонент "${name}": поле Y "${yField}" отсутствует в выбранном датасете.`);
+                errors.push(t('editor.validation.fieldMissing', { name, field: yField }));
             }
         }
         else if (component.type === 'metric') {
@@ -214,13 +211,13 @@ export const validateSchema = (snapshot) => {
             const aggregation = component.config?.aggregation || 'sum';
 
             if (!allowedAggregations.has(aggregation) || aggregation === 'none') {
-                errors.push(`Компонент "${name}": выберите агрегацию метрики.`);
+                errors.push(t('editor.validation.metricAggregation', { name }));
             }
 
             if (!valueField) {
-                errors.push(`Компонент "${name}": не выбрано поле значения.`);
+                errors.push(t('editor.validation.metricField', { name }));
             } else if (!hasField(valueField)) {
-                errors.push(`Компонент "${name}": поле "${valueField}" отсутствует в выбранном датасете.`);
+                errors.push(t('editor.validation.fieldMissing', { name, field: valueField }));
             }
         }
         else if (component.type === 'text') {
@@ -230,23 +227,23 @@ export const validateSchema = (snapshot) => {
             const color = component.config?.color || '#d4d4d8';
             const textAlign = component.config?.textAlign || 'left';
 
-            if (!component.config?.content?.trim()) {
-                errors.push(`Компонент "${name}": добавьте текст.`);
+            if (!component.config?.content?.trim() && !component.config?.contentKey) {
+                errors.push(t('editor.validation.textEmpty', { name }));
             }
             if (fontSize < 12 || fontSize > 32) {
-                errors.push(`Компонент "${name}": размер текста должен быть от 12 до 32 пикселей.`);
+                errors.push(t('editor.validation.fontSize', { name }));
             }
             if (!['normal', 'bold'].includes(fontWeight)) {
-                errors.push(`Компонент "${name}": неизвестное начертание текста.`);
+                errors.push(t('editor.validation.fontWeight', { name }));
             }
             if (!['normal', 'italic'].includes(fontStyle)) {
-                errors.push(`Компонент "${name}": неизвестный стиль текста.`);
+                errors.push(t('editor.validation.fontStyle', { name }));
             }
             if (!/^#[0-9a-fA-F]{6}$/.test(color)) {
-                errors.push(`Компонент "${name}": цвет должен быть в формате #RRGGBB.`);
+                errors.push(t('editor.validation.color', { name }));
             }
             if (!['left', 'center', 'right'].includes(textAlign)) {
-                errors.push(`Компонент "${name}": неизвестное выравнивание текста.`);
+                errors.push(t('editor.validation.alignment', { name }));
             }
         }
     });
@@ -254,18 +251,15 @@ export const validateSchema = (snapshot) => {
     return errors;
 };
 
-// Объединяет проверку и создание схемы дашборда
-export const compileDashboardSchema = (snapshot) => {
-    const errors = validateSchema(snapshot);
+export const compileDashboardSchema = (snapshot, t) => {
+    const errors = validateSchema(snapshot, t);
 
-    // Если есть ошибки, возвращаем их и пустую схему
     if (errors.length > 0) {
         return { schema: null, errors };
     }
 
-    // Если ошибок нет, компилируем схему
     return {
-        schema: buildDashboardSchema(snapshot),
+        schema: buildDashboardSchema(snapshot, t),
         errors: [],
     };
 };

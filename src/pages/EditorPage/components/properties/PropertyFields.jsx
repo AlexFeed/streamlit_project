@@ -1,6 +1,6 @@
 import { Info } from 'lucide-react';
+import useTranslation from '../../../../shared/i18n/useTranslation.js';
 
-// Стили
 const inputClassName =
     'w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2.5 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20';
 
@@ -9,8 +9,10 @@ const selectClassName =
 
 const panelSectionClassName = 'rounded-xl border border-zinc-800 bg-zinc-950/50 p-3';
 
-// Заголовок поля с иконкой-подсказкой (i) справа сверху
-const LabelWithTooltip = ({ label, helperText }) => (
+const LabelWithTooltip = ({ label, helperText }) => {
+    const { t } = useTranslation();
+
+    return (
     <div className="mb-1.5 flex items-center justify-between gap-2">
         <label className="block text-sm font-medium text-zinc-200">
             {label}
@@ -20,7 +22,7 @@ const LabelWithTooltip = ({ label, helperText }) => (
             <div className="group relative flex items-center">
                 <button
                     type="button"
-                    aria-label="Подсказка"
+                    aria-label={t('editor.tooltip')}
                     className="rounded-md p-0.5 text-zinc-500 transition hover:bg-zinc-800 hover:text-zinc-200 focus:bg-zinc-800 focus:text-blue-400 focus:outline-none"
                 >
                     <Info className="h-3.5 w-3.5" />
@@ -35,17 +37,18 @@ const LabelWithTooltip = ({ label, helperText }) => (
             </div>
         )}
     </div>
-);
+    );
+};
 
-// Поле выбора значения для компонента
 export const FieldSelect = ({
     label,
     value,
     onChange,
     options = [],
-    placeholder = 'Выберите значение',
+    placeholder,
     helperText,
 }) => {
+    const { t } = useTranslation();
     const isDisabled = !options.length;
     return (
         <div className={panelSectionClassName}>
@@ -58,7 +61,7 @@ export const FieldSelect = ({
                     disabled={isDisabled}
                 >
                     <option value="" disabled className="text-zinc-500">
-                        {isDisabled ? 'Нет доступных полей' : placeholder}
+                        {isDisabled ? t('editor.noAvailableFields') : placeholder || t('editor.chooseValue')}
                     </option>
                     {options.map((field) => {
                         const option = typeof field === 'string'
@@ -90,7 +93,6 @@ export const FieldSelect = ({
     );
 };
 
-// Текстовое поле
 export const TextField = ({
     label,
     value,
@@ -112,7 +114,6 @@ export const TextField = ({
     );
 };
 
-// Многострочное поле для текста, который будет показан на дашборде
 export const TextAreaField = ({
     label,
     value,

@@ -3,7 +3,7 @@
 import { authFetch, API_BASE_URL } from './apiClient.js';
 import {logoutAndClearLocalData} from "./authStorage.js";
 
-// Регистрация нового пользователя + автоматический login
+// Register a user, then authenticate.
 //
 // Request:
 // {
@@ -34,7 +34,7 @@ export const register = async ({ email, password }) => {
     return login({ email, password });
 };
 
-// Login пользователя через OAuth2PasswordRequestForm
+// Authenticate using OAuth2PasswordRequestForm.
 //
 // Request:
 // form-urlencoded:
@@ -69,7 +69,7 @@ export const login = async ({ email, password }) => {
     return response.json();
 };
 
-// Получение текущего авторизованного пользователя
+// Retrieve the currently authenticated user.
 //
 // Headers:
 // Authorization: Bearer <token>
@@ -93,7 +93,7 @@ export const getMe = async () => {
     return response.json();
 };
 
-// Logout только очищает localStorage черновика и данных о токене на frontend
+// Logout clears the local draft and frontend token data.
 export const logout = () => {
     logoutAndClearLocalData()
 };
