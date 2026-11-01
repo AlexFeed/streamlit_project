@@ -99,6 +99,7 @@ export default {
   "editor.deleteDataset": "Удалить датасет",
   "editor.upload": "Загрузить данные",
   "editor.save": "Сохранить",
+  "editor.previewCaptureFailure": "Не удалось создать новое превью проекта.",
   "editor.generating": "Генерация…",
   "editor.download": "Скачать Streamlit",
   "editor.clearCanvas": "Очистить холст",

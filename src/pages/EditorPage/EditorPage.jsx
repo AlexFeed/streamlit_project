@@ -17,12 +17,14 @@ import {
 import { useEditorState } from './hooks/useEditorState';
 import {useDatasetState} from './hooks/useDatasetState';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { useProjectState } from './hooks/useProjectState.js';
 import {useGenerateState} from "./hooks/useGenerateState.jsx";
 import { useEditorDnd } from './hooks/useEditorDnd.js';
 import './EditorPage.css';
 import useTranslation from '../../shared/i18n/useTranslation.js';
+import { captureCanvasPreview } from './services/captureCanvasPreview.js';
 
 
 const EditorPage = () => {
@@ -34,6 +36,8 @@ const EditorPage = () => {
 
     const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
     const [isUploadDatasetModalOpen, setIsUploadDatasetModalOpen] = useState(false);
+    const [pendingPreviewImage, setPendingPreviewImage] = useState(null);
+    const canvasRef = useRef(null);
 
     const {
         datasets,
@@ -136,9 +140,10 @@ const EditorPage = () => {
         });
     };
 
-    const getProjectSnapshot = (overrideTitle, overrideDescription) => ({
+    const getProjectSnapshot = (overrideTitle, overrideDescription, previewImage) => ({
         title: overrideTitle ?? project?.title ?? 'Untitled dashboard',
         description: overrideDescription ?? project?.description ?? '',
+        previewImage,
         components,
         datasets: datasets.map((ds) => {
             const metadata = { ...ds };
@@ -161,16 +166,29 @@ const EditorPage = () => {
     };
 
     const handleSaveClick = async () => {
+        let previewImage = null;
+        try {
+            previewImage = await captureCanvasPreview(canvasRef.current);
+        } catch (error) {
+            console.error('Could not capture project preview:', error);
+            toast.warning(t('editor.previewCaptureFailure'));
+            previewImage = project?.previewImage
+                || project?.preview_image
+                || project?.editorState?.previewImage
+                || null;
+        }
+
         if (isDraftMode) {
+            setPendingPreviewImage(previewImage);
             setIsSaveModalOpen(true);
         } else {
-            const snapshot = getProjectSnapshot();
+            const snapshot = getProjectSnapshot(undefined, undefined, previewImage);
             await saveExistingProject(snapshot);
         }
     };
 
     const handleConfirmSave = async ({ title, description }) => {
-        const snapshot = getProjectSnapshot(title, description);
+        const snapshot = getProjectSnapshot(title, description, pendingPreviewImage);
         const saved = await createProjectFromDraft(snapshot);
 
         if (saved) {
@@ -245,6 +263,7 @@ const EditorPage = () => {
                     <div className={`editor-workspace${selectedComponent ? ' has-properties' : ''}`}>
                         <main className="editor-canvas-area">
                             <Canvas
+                                canvasRef={canvasRef}
                                 components={components}
                                 selectedId={selectedId}
                                 onSelect={selectComponent}

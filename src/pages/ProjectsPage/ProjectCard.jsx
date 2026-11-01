@@ -10,6 +10,9 @@ const CrownIcon = ({ className }) => (
 
 const ProjectCard = ({ project, onDelete, onOpen, viewMode = 'grid', onUpdateTitle, onUpdateDescription }) => {
   const { t } = useTranslation();
+  const previewImage = project.previewImage
+    || project.preview_image
+    || project.editorState?.previewImage;
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editTitle, setEditTitle] = useState(project.title);
   const [isEditingDesc, setIsEditingDesc] = useState(false);
@@ -48,6 +51,13 @@ const ProjectCard = ({ project, onDelete, onOpen, viewMode = 'grid', onUpdateTit
   if (viewMode === 'list') {
     return (
       <div className="sp-project-card-list" onClick={onOpen}>
+        {previewImage && (
+          <img
+            className="sp-list-preview"
+            src={previewImage}
+            alt={project.title}
+          />
+        )}
         <div className="sp-list-accent" />
         <div className="sp-list-content">
           <div className="sp-list-title-row">
@@ -113,12 +123,20 @@ const ProjectCard = ({ project, onDelete, onOpen, viewMode = 'grid', onUpdateTit
 
   return (
     <div className="sp-project-card-grid" onClick={onOpen}>
-      <div className="sp-card-banner">
-        <div className="sp-banner-watermark">
-          <span>STREAMLIT</span>
-        </div>
+      <div className={`sp-card-banner${previewImage ? ' has-preview' : ''}`}>
+        {previewImage ? (
+          <img
+            className="sp-card-preview"
+            src={previewImage}
+            alt={project.title}
+          />
+        ) : (
+          <div className="sp-banner-watermark">
+            <span>STREAMLIT</span>
+          </div>
+        )}
         <div className="sp-banner-gradient" />
-        <CrownIcon className="sp-card-crown" />
+        {!previewImage && <CrownIcon className="sp-card-crown" />}
       </div>
       <div className="sp-card-body">
         <div className="sp-card-title-row">

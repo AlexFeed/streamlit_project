@@ -54,8 +54,12 @@ export const useProjectState = ({
         const payload = {
             title: snapshot.title,
             description: snapshot.description,
+            previewImage: snapshot.previewImage,
             datasets: snapshot.datasets,
-            editorState: { components: snapshot.components },
+            editorState: {
+                components: snapshot.components,
+                previewImage: snapshot.previewImage,
+            },
             schema,
         };
 
@@ -90,8 +94,12 @@ export const useProjectState = ({
         const payload = {
             title: snapshot.title,
             description: snapshot.description,
+            previewImage: snapshot.previewImage,
             datasets: snapshot.datasets,
-            editorState: { components: snapshot.components },
+            editorState: {
+                components: snapshot.components,
+                previewImage: snapshot.previewImage,
+            },
             schema,
         };
 

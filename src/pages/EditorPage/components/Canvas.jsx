@@ -26,6 +26,7 @@ const Canvas = ({
                     datasets = [],
                     previewRowsByDataset = {},
                     isDataLoading = false,
+                    canvasRef,
                 }) => {
     const { t } = useTranslation();
     const [filterValues, setFilterValues] = useState({});
@@ -147,7 +148,12 @@ const Canvas = ({
 
     return (
         <section
-            ref={setNodeRef}
+            ref={(node) => {
+                setNodeRef(node);
+                if (canvasRef) {
+                    canvasRef.current = node;
+                }
+            }}
             onClick={(event) => {
                 if (!event.target.closest('[data-canvas-item]')) {
                     onSelect(null);

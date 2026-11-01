@@ -9,6 +9,8 @@ import { authFetch } from './apiClient.js';
 //     title: string,
 //     description: string,
 //     datasetName: string | null,
+//     previewImage: string | null,
+//     editorState?: { previewImage?: string | null },
 //     createdAt: string,
 //     updatedAt: string
 //   }
@@ -31,7 +33,8 @@ export const listProjects = async () => {
 //   title: string,
 //   description: string,
 //   dataset: object | null,
-//   editorState: { components: object[] },
+//   editorState: { components: object[], previewImage?: string | null },
+//   previewImage: string | null,
 //   schema: object | null
 // }
 //
@@ -42,7 +45,8 @@ export const listProjects = async () => {
 //   title: string,
 //   description: string,
 //   dataset: object | null,
-//   editorState: { components: object[] },
+//   editorState: { components: object[], previewImage?: string | null },
+//   previewImage: string | null,
 //   schema: object | null,
 //   createdAt: string,
 //   updatedAt: string
@@ -73,7 +77,8 @@ export const createProject = async (payload) => {
 //   title: string,
 //   description: string,
 //   dataset: object | null,
-//   editorState: { components: object[] },
+//   editorState: { components: object[], previewImage?: string | null },
+//   previewImage: string | null,
 //   schema: object | null,
 //   createdAt: string,
 //   updatedAt: string
@@ -96,7 +101,8 @@ export const getProject = async (projectId) => {
 //   title?: string,
 //   description?: string,
 //   dataset?: object | null,
-//   editorState?: { components: object[] },
+//   editorState?: { components: object[], previewImage?: string | null },
+//   previewImage?: string | null,
 //   schema?: object | null
 // }
 //
@@ -107,7 +113,8 @@ export const getProject = async (projectId) => {
 //   title: string,
 //   description: string,
 //   dataset: object | null,
-//   editorState: { components: object[] },
+//   editorState: { components: object[], previewImage?: string | null },
+//   previewImage: string | null,
 //   schema: object | null,
 //   createdAt: string,
 //   updatedAt: string

@@ -99,6 +99,7 @@ export default {
   "editor.deleteDataset": "Remove dataset",
   "editor.upload": "Upload data",
   "editor.save": "Save",
+  "editor.previewCaptureFailure": "Could not create a new project preview.",
   "editor.generating": "Generating…",
   "editor.download": "Download Streamlit",
   "editor.clearCanvas": "Clear canvas",
