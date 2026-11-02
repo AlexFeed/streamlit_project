@@ -1,18 +1,19 @@
 import {
     chartPalettes,
+    getChartColor,
     getPaletteColors,
 } from '../../data/chartPalettes.js';
 import { paletteItems } from '../../data/paletteItems.js';
 import useTranslation from '../../../../shared/i18n/useTranslation.js';
 
 const colorPresets = [
-    '#3b82f6',
-    '#8b5cf6',
-    '#ec4899',
-    '#ef4444',
-    '#f59e0b',
-    '#10b981',
-    '#06b6d4',
+    '#3478c8',
+    '#7656c8',
+    '#c94f8a',
+    '#d65f59',
+    '#d99a2b',
+    '#398b67',
+    '#2f91a0',
 ];
 
 const ColorStyleField = ({
@@ -31,6 +32,7 @@ const ColorStyleField = ({
         config.palette,
         config.reversePalette
     );
+    const color = getChartColor(type, config.color) || '#3478c8';
     const modeOptions = [
         { value: 'solid', labelKey: 'editor.oneColor' },
         { value: 'gradient', labelKey: 'editor.byValue' },
@@ -71,13 +73,13 @@ const ColorStyleField = ({
                         <div className="flex items-center gap-2">
                             <input
                                 type="color"
-                                value={config.color || '#3b82f6'}
+                                value={color}
                                 onChange={(event) => onUpdate('color', event.target.value)}
                                 className="h-8 w-10 cursor-pointer rounded-lg border border-zinc-700 bg-transparent p-0.5"
                                 aria-label={t('editor.chooseCustomColor')}
                             />
                             <span className="font-mono text-xs uppercase text-zinc-400">
-                                {config.color || '#3b82f6'}
+                                {color}
                             </span>
                         </div>
                     </div>
@@ -88,7 +90,9 @@ const ColorStyleField = ({
                                 type="button"
                                 onClick={() => onUpdate('color', color)}
                                 className={`aspect-square rounded-lg border-2 transition hover:scale-110 ${
-                                    config.color === color ? 'border-white' : 'border-transparent'
+                                    getChartColor(type, config.color) === color
+                                        ? 'border-white'
+                                        : 'border-transparent'
                                 }`}
                                 style={{ backgroundColor: color }}
                                 aria-label={t('editor.chooseColor', { color })}

@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { paletteItems } from '../../data/paletteItems';
 import useTranslation from '../../../../shared/i18n/useTranslation.js';
+import useTheme from '../../../../shared/useTheme.js';
 
 const LiveComponentPreview = lazy(
     () => import('./LiveComponentPreview')
@@ -25,6 +26,7 @@ const CanvasItem = ({
                         onBeginInteraction,
                     }) => {
     const { t } = useTranslation();
+    const { theme } = useTheme();
     const meta = paletteItems[item.type];
     const Icon = meta?.icon || WalletCards;
     const isCompact = ['text', 'metric', 'selectbox'].includes(item.type);
@@ -32,19 +34,18 @@ const CanvasItem = ({
     return (
         <article
             data-canvas-item
+            data-canvas-theme={theme}
             onClick={() => onSelect(item.id)}
-            className={`group relative flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border transition-colors ${
-                isSelected
-                    ? 'border-blue-500 bg-zinc-900 shadow-[0_0_0_1px_rgba(59,130,246,0.3),0_20px_50px_rgba(0,0,0,0.22)]'
-                    : 'border-zinc-800 bg-zinc-900/95 hover:border-zinc-700'
+            className={`canvas-item-card group relative flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border transition-colors ${
+                isSelected ? 'is-selected' : ''
             }`}
         >
             <header
                 className={isCompact
-                    ? `absolute right-1 top-1 z-30 flex touch-none items-center rounded-xl border border-zinc-700/70 bg-zinc-950/90 p-0.5 shadow-lg backdrop-blur transition-opacity ${
+                    ? `canvas-item-compact-actions absolute right-1 top-1 z-30 flex touch-none items-center rounded-xl border p-0.5 shadow-lg backdrop-blur transition-opacity ${
                         isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
                     }`
-                    : 'canvas-drag-handle flex shrink-0 touch-none cursor-grab items-center justify-between gap-3 border-b border-zinc-800/80 px-4 py-3 active:cursor-grabbing'}
+                    : 'canvas-item-header canvas-drag-handle flex shrink-0 touch-none cursor-grab items-center justify-between gap-3 border-b px-4 py-3 active:cursor-grabbing'}
                 onPointerDown={isCompact
                     ? undefined
                     : (event) => onBeginInteraction(event, item.id, 'drag')}
@@ -52,10 +53,10 @@ const CanvasItem = ({
             >
                 {!isCompact && (
                 <div className="flex min-w-0 items-center gap-3">
-                    <div className="rounded-xl border border-zinc-700/80 bg-zinc-800 p-2">
-                        <Icon className="h-4 w-4 text-blue-300" />
+                    <div className="canvas-item-icon rounded-xl border p-2">
+                        <Icon className="h-4 w-4" />
                     </div>
-                    <h3 className="truncate text-sm font-semibold text-white">
+                    <h3 className="canvas-item-title truncate text-sm font-semibold">
                         {item.config?.title || t(meta?.labelKey || 'editor.componentLabel')}
                     </h3>
                 </div>
@@ -73,7 +74,7 @@ const CanvasItem = ({
                             event.stopPropagation();
                             onDuplicate(item.id);
                         }}
-                        className="rounded-lg p-2 text-zinc-500 transition hover:bg-zinc-800 hover:text-white"
+                        className="canvas-item-action rounded-lg p-2 transition"
                     >
                         <Copy className="h-4 w-4" />
                     </button>
@@ -86,7 +87,7 @@ const CanvasItem = ({
                             event.stopPropagation();
                             onDelete(item.id);
                         }}
-                        className="rounded-lg p-2 text-zinc-500 transition hover:bg-red-500/10 hover:text-red-400"
+                        className="canvas-item-action canvas-item-delete rounded-lg p-2 transition"
                     >
                         <Trash2 className="h-4 w-4" />
                     </button>
@@ -95,7 +96,7 @@ const CanvasItem = ({
                         onPointerDown={isCompact
                             ? (event) => onBeginInteraction(event, item.id, 'drag')
                             : undefined}
-                        className={`rounded-lg p-2 text-zinc-500 ${
+                        className={`canvas-item-action rounded-lg p-2 ${
                             isCompact ? 'canvas-drag-handle cursor-grab active:cursor-grabbing' : ''
                         }`}
                     >
@@ -107,7 +108,7 @@ const CanvasItem = ({
             <div className={`min-h-0 flex-1 ${isCompact ? 'p-2' : 'p-4'}`}>
                 <Suspense
                     fallback={(
-                        <div className="h-full animate-pulse rounded-xl bg-zinc-800/60" />
+                        <div className="canvas-item-loading h-full animate-pulse rounded-xl" />
                     )}
                 >
                     <LiveComponentPreview
