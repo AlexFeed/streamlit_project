@@ -1,5 +1,5 @@
-// Ключ хранения состояния черновика редактора в localStorage
+// Local storage key for the editor draft.
 export const EDITOR_DRAFT_STORAGE_KEY = 'streamlit-editor-draft';
 
-// Ключ хранения состояния датасетов черновика в localStorage
+// Local storage key for dataset draft state.
 export const DATASET_DRAFT_STORAGE_KEY = 'streamlit-editor-dataset-draft';

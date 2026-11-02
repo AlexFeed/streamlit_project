@@ -42,7 +42,7 @@ export const getGridItemStyle = (item, gridWidth) => {
     };
 };
 
-// Хук управления сеткой холста, измерением ширины и императивным перетаскиванием/ресайзом карточек
+// Manages canvas sizing, dragging, and item resizing.
 export const useCanvasGrid = ({
     components,
     onLayoutChange,

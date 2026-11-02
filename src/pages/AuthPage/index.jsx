@@ -4,10 +4,12 @@ import Sidebar from './components/Sidebar';
 import AuthForm from './components/AuthForm';
 import { login, register } from '../../api/authApi.js';
 import { saveAuth, getAuthToken } from '../../api/authStorage.js';
+import useTranslation from '../../shared/i18n/useTranslation.js';
 import './AuthPage.css';
 
 const AuthPage = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -49,18 +51,18 @@ const AuthPage = () => {
 
       saveAuth(authResponse);
       navigate('/', { replace: true });
-    } catch (err) {
-      setError(err.message || 'Ошибка авторизации');
+    } catch {
+      setError(t('auth.error'));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="auth-page">
+    <div className="page-container auth-page">
       <Sidebar isLogin={isLogin} />
 
-      {/* Основная область */}
+      {/* Main area */}
       <div className="main-area">
         <div className="gradient-bg" />
 
@@ -73,6 +75,8 @@ const AuthPage = () => {
             handleInputChange={handleInputChange}
             handleSubmit={handleSubmit}
             setIsLogin={setIsLogin}
+            error={error}
+            loading={loading}
           />
         </main>
       </div>

@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
+import useTranslation from '../../shared/i18n/useTranslation.js';
 
 const AddExtensionModal = ({ onClose, onAdd }) => {
+  const { t } = useTranslation();
   const [newExtension, setNewExtension] = useState({
     name: '',
     description: '',
@@ -21,15 +23,15 @@ const AddExtensionModal = ({ onClose, onAdd }) => {
     <div className="modal-overlay">
       <div className="modal-container">
         <div className="modal-header">
-          <h3 className="modal-title">Добавить расширение</h3>
-          <button onClick={onClose} className="modal-close">
+          <h3 className="modal-title">{t('extensions.addTitle')}</h3>
+          <button onClick={onClose} className="modal-close" aria-label={t('common.close')}>
             <X size={24} />
           </button>
         </div>
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label className="form-label">Название</label>
+            <label className="form-label">{t('extensions.name')}</label>
             <input
               type="text"
               value={newExtension.name}
@@ -41,18 +43,18 @@ const AddExtensionModal = ({ onClose, onAdd }) => {
           </div>
 
           <div className="form-group">
-            <label className="form-label">Описание</label>
+            <label className="form-label">{t('extensions.description')}</label>
             <textarea
               value={newExtension.description}
               onChange={(e) => setNewExtension({...newExtension, description: e.target.value})}
-              placeholder="Описание функционала расширения..."
+              placeholder={t('extensions.descriptionPlaceholder')}
               className="form-textarea"
             />
           </div>
 
           <div className="form-grid">
             <div>
-              <label className="form-label">Версия</label>
+              <label className="form-label">{t('extensions.version')}</label>
               <input
                 type="text"
                 value={newExtension.version}
@@ -62,21 +64,21 @@ const AddExtensionModal = ({ onClose, onAdd }) => {
               />
             </div>
             <div>
-              <label className="form-label">Категория</label>
+              <label className="form-label">{t('extensions.category')}</label>
               <select
                 value={newExtension.category}
                 onChange={(e) => setNewExtension({...newExtension, category: e.target.value})}
                 className="form-select"
               >
-                <option value="chart">Графики</option>
-                <option value="map">Карты</option>
-                <option value="custom">Кастомные</option>
+                <option value="chart">{t('extensions.charts')}</option>
+                <option value="map">{t('extensions.maps')}</option>
+                <option value="custom">{t('extensions.custom')}</option>
               </select>
             </div>
           </div>
 
           <div className="form-group">
-            <label className="form-label">Иконка (emoji)</label>
+            <label className="form-label">{t('extensions.icon')}</label>
             <input
               type="text"
               value={newExtension.icon}
@@ -89,14 +91,14 @@ const AddExtensionModal = ({ onClose, onAdd }) => {
 
           <div className="modal-actions">
             <button type="button" onClick={onClose} className="button-cancel">
-              Отмена
+              {t('extensions.cancel')}
             </button>
             <button
               type="submit"
               disabled={!newExtension.name.trim()}
-              className="button-submit"
+              className="btn btn-primary button-submit"
             >
-              Добавить
+              {t('extensions.addAction')}
             </button>
           </div>
         </form>

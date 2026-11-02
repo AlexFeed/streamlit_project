@@ -13,6 +13,7 @@ import {
     getGridItemStyle,
     useCanvasGrid,
 } from '../hooks/useCanvasGrid.js';
+import useTranslation from '../../../shared/i18n/useTranslation.js';
 
 const Canvas = ({
                     components,
@@ -25,7 +26,9 @@ const Canvas = ({
                     datasets = [],
                     previewRowsByDataset = {},
                     isDataLoading = false,
+                    canvasRef,
                 }) => {
+    const { t } = useTranslation();
     const [filterValues, setFilterValues] = useState({});
     const [dropPreview, setDropPreview] = useState(null);
 
@@ -145,86 +148,83 @@ const Canvas = ({
 
     return (
         <section
-            ref={setNodeRef}
+            ref={(node) => {
+                setNodeRef(node);
+                if (canvasRef) {
+                    canvasRef.current = node;
+                }
+            }}
             onClick={(event) => {
                 if (!event.target.closest('[data-canvas-item]')) {
                     onSelect(null);
                 }
             }}
-            style={{
-                backgroundImage: 'radial-gradient(rgba(113, 113, 122, 0.16) 1px, transparent 1px)',
-                backgroundSize: '24px 24px',
-            }}
-            className={`min-h-[calc(100vh-98px)] w-full rounded-3xl border bg-zinc-950 p-5 shadow-2xl shadow-black/20 transition ${
-                isOver
-                    ? 'border-blue-500 shadow-[inset_0_0_0_1px_rgba(59,130,246,0.35)]'
-                    : 'border-zinc-800'
-            }`}
+            className={`dashboard-canvas${isOver ? ' is-over' : ''}`}
         >
-            <div className="mb-5 flex flex-wrap items-start justify-between gap-4 border-b border-zinc-800/80 pb-5">
+            <div className="dashboard-canvas-header">
                 <div>
-                    <div className="flex items-center gap-3">
-                        <h2 className="text-lg font-semibold text-white">
-                            Холст дашборда
+                    <div className="dashboard-canvas-heading">
+                        <h2>
+                            {t('editor.canvasTitle')}
                         </h2>
-                        <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-emerald-300">
+                        <span className="editor-live-badge">
                             Live
                         </span>
                     </div>
-                    <p className="mt-1 text-sm text-zinc-400">
-                        Перетаскивайте карточки и тяните за угол — размер каждого элемента независим
+                    <p className="dashboard-canvas-description">
+                        {t('editor.canvasDescription')}
                     </p>
                 </div>
 
-                <div className="flex items-center gap-2 text-right text-xs text-zinc-500">
-                    <span className="rounded-lg border border-zinc-800 bg-zinc-900/80 px-2.5 py-1.5">
-                        {GRID_COLUMNS} колонок
+                <div className="dashboard-canvas-stats">
+                    <span className="dashboard-stat">
+                        {t('editor.columns', { count: GRID_COLUMNS })}
                     </span>
                     {isDataLoading ? (
-                        <span className="rounded-lg border border-blue-500/20 bg-blue-500/10 px-2.5 py-1.5 text-blue-300">
-                            Загрузка данных…
+                        <span className="dashboard-stat is-loading">
+                            {t('editor.loadingData')}
                         </span>
                     ) : (
-                        <span className="rounded-lg border border-zinc-800 bg-zinc-900/80 px-2.5 py-1.5">
+                        <span className="dashboard-stat">
                             {datasets.length > 1
-                                ? `${datasets.length} CSV · ${Object.values(filteredRowsByDataset).reduce((acc, rows) => acc + rows.length, 0)} строк`
-                                : `${(filteredRowsByDataset[defaultDatasetId] || []).length} из ${(previewRowsByDataset[defaultDatasetId] || []).length} строк`}
+                                ? t('editor.datasetRows', {
+                                    count: datasets.length,
+                                    rows: Object.values(filteredRowsByDataset).reduce((acc, rows) => acc + rows.length, 0),
+                                })
+                                : t('editor.rowRange', {
+                                    shown: (filteredRowsByDataset[defaultDatasetId] || []).length,
+                                    total: (previewRowsByDataset[defaultDatasetId] || []).length,
+                                })}
                         </span>
                     )}
                 </div>
             </div>
 
             {components.length === 0 ? (
-                <div className={`flex min-h-[560px] items-center justify-center rounded-2xl border border-dashed bg-zinc-900/40 transition ${
-                    isOver ? 'border-blue-500 bg-blue-500/5' : 'border-zinc-800'
-                }`}>
-                    <div className="text-center">
-                        <h3 className="mb-2 text-lg font-medium text-white">
-                            Холст пока пуст
+                <div className={`dashboard-canvas-empty${isOver ? ' is-over' : ''}`}>
+                    <div>
+                        <h3>
+                            {t('editor.canvasEmptyTitle')}
                         </h3>
-                        <p className="text-sm text-zinc-400">
-                            Перетащите элемент из библиотеки или добавьте его кликом
+                        <p>
+                            {t('editor.canvasEmptyDescription')}
                         </p>
                     </div>
                 </div>
             ) : (
                 <div
                     ref={setGridNode}
-                    className="dashboard-layout-grid relative w-full"
+                    className="dashboard-layout-grid dashboard-grid"
                     style={{ height: gridHeight }}
                 >
                     {visibleDropPreview && (
                         <div
-                            className={`pointer-events-none absolute z-20 ${
-                                visibleDropPreview.insert
-                                    ? 'rounded-full bg-blue-400 shadow-[0_0_14px_rgba(96,165,250,0.9)]'
-                                    : 'rounded-2xl border-2 border-dashed border-blue-400 bg-blue-500/15 shadow-[0_0_32px_rgba(59,130,246,0.18)]'
-                            }`}
+                            className={`dashboard-drop-preview${visibleDropPreview.insert ? ' is-insertion' : ''}`}
                             style={dropPreviewStyle}
                         >
                             {!visibleDropPreview.insert && (
-                                <div className="flex h-full items-center justify-center px-3 text-center text-xs font-medium text-blue-200">
-                                    Разместить здесь
+                                <div className="dashboard-drop-label">
+                                    {t('editor.dropHere')}
                                 </div>
                             )}
                         </div>
@@ -243,7 +243,7 @@ const Canvas = ({
                             <div
                                 key={item.id}
                                 data-grid-item={item.id}
-                                className="absolute z-0"
+                                className="dashboard-grid-item"
                                 style={getGridItemStyle(layoutItem, gridWidth)}
                             >
                                 <CanvasItem
@@ -266,8 +266,8 @@ const Canvas = ({
             )}
 
             {isDragging && components.length > 0 && (
-                <div className="mt-4 rounded-xl border border-dashed border-blue-500/30 bg-blue-500/5 px-4 py-3 text-center text-xs text-blue-200">
-                    Отпустите новый компонент над холстом
+                <div className="dashboard-drop-hint">
+                    {t('editor.dropHint')}
                 </div>
             )}
         </section>

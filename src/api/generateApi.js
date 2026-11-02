@@ -1,6 +1,6 @@
 import { authFetch } from './apiClient.js';
 
-// Генерация standalone Streamlit проекта
+// Generate a standalone Streamlit project.
 //
 // Request:
 // {
@@ -10,7 +10,7 @@ import { authFetch } from './apiClient.js';
 //
 // Response:
 // Blob (zip archive)
-export const generateProjectZip = async ({ schema }) => { // Убрали setGenerationError
+export const generateProjectZip = async ({ schema }) => {
     const response = await authFetch('/generate', {
         method: 'POST',
         headers: {
@@ -21,11 +21,11 @@ export const generateProjectZip = async ({ schema }) => { // Убрали setGen
         }),
     });
     if (response.status === 404) {
-        throw new Error('Датасет не найден на backend. Загрузите CSV заново.');
+        throw new Error('Dataset not found on the backend. Upload the CSV again.');
     }
     if (!response.ok) {
         const error = await response.json().catch(() => null);
-        throw new Error(error?.detail || 'Не удалось сгенерировать Streamlit-файл.');
+        throw new Error(error?.detail || 'Could not generate the Streamlit file.');
     }
     return response.blob();
 };

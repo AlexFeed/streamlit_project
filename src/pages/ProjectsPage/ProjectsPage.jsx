@@ -8,15 +8,12 @@ import Header from './Header';
 import ProjectCard from './ProjectCard';
 import Sidebar from './Sidebar';
 import './ProjectsPage.css';
-import {formatProjectDate} from "../../shared/utils/dateUtils.js";
-
-const formatProject = (project) => ({
-  ...project,
-  lastEdited: formatProjectDate(project.updatedAt || project.createdAt),
-});
+import { formatProjectDate } from "../../shared/utils/dateUtils.js";
+import useTranslation from '../../shared/i18n/useTranslation.js';
 
 const ProjectsPage = () => {
   const navigate = useNavigate();
+  const { language, t } = useTranslation();
   const [projects, setProjects] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState('grid');
@@ -25,7 +22,7 @@ const ProjectsPage = () => {
 
   const handleLogout = () => {
     const confirmed = window.confirm(
-        'При выходе все несохраненные данные будут удалены. Продолжить?'
+        t('projects.logoutConfirm')
     );
 
     if (!confirmed) {
@@ -55,10 +52,10 @@ const ProjectsPage = () => {
         setLoadError('');
 
         const serverProjects = await listProjects();
-        setProjects(Array.isArray(serverProjects) ? serverProjects.map(formatProject) : []);
+        setProjects(Array.isArray(serverProjects) ? serverProjects : []);
       } catch (error) {
-        console.error('Ошибка загрузки проектов:', error);
-        setLoadError(error?.message || 'Не удалось загрузить проекты.');
+        console.error('Could not load projects:', error);
+        setLoadError('projects.loadError');
       } finally {
         setIsLoading(false);
       }
@@ -72,7 +69,7 @@ const ProjectsPage = () => {
   };
 
   const handleDeleteProject = async (id) => {
-    if (!window.confirm('Вы уверены, что хотите удалить этот проект?')) {
+    if (!window.confirm(t('projects.deleteConfirm'))) {
       return;
     }
 
@@ -80,8 +77,8 @@ const ProjectsPage = () => {
       await deleteProject(id);
       setProjects((prevProjects) => prevProjects.filter((p) => p.id !== id));
     } catch (error) {
-      console.error('Ошибка удаления проекта:', error);
-      toast.error('Не удалось удалить проект. Попробуйте снова.');
+      console.error('Could not delete project:', error);
+      toast.error(t('projects.deleteError'));
     }
   };
 
@@ -89,11 +86,11 @@ const ProjectsPage = () => {
     try {
       await updateProject(id, { title: newTitle });
       setProjects((prevProjects) => prevProjects.map((p) =>
-        p.id === id ? { ...p, title: newTitle, lastEdited: 'Только что' } : p
+        p.id === id ? { ...p, title: newTitle, updatedAt: new Date().toISOString() } : p
       ));
     } catch (error) {
-      console.error('Ошибка обновления названия проекта:', error);
-      toast.error('Не удалось сохранить название проекта. Попробуйте снова.');
+      console.error('Could not update project title:', error);
+      toast.error(t('projects.saveTitleError'));
     }
   };
 
@@ -101,21 +98,21 @@ const ProjectsPage = () => {
     try {
       await updateProject(id, { description: newDesc });
       setProjects((prevProjects) => prevProjects.map((p) =>
-        p.id === id ? { ...p, description: newDesc, lastEdited: 'Только что' } : p
+        p.id === id ? { ...p, description: newDesc, updatedAt: new Date().toISOString() } : p
       ));
     } catch (error) {
-      console.error('Ошибка обновления описания проекта:', error);
-      toast.error('Не удалось сохранить описание проекта. Попробуйте снова.');
+      console.error('Could not update project description:', error);
+      toast.error(t('projects.saveDescriptionError'));
     }
   };
 
   const renderProjects = () => {
     if (isLoading) {
-      return <div className="sp-loading">Загрузка проектов...</div>;
+      return <div className="sp-loading">{t('projects.loading')}</div>;
     }
 
     if (loadError) {
-      return <div className="sp-error-message">{loadError}</div>;
+      return <div className="sp-error-message">{t(loadError)}</div>;
     }
 
     if (filteredProjects.length === 0) {
@@ -126,15 +123,18 @@ const ProjectsPage = () => {
       <>
         <div className="sp-section-header">
           <div>
-            <h2 className="sp-section-title">Мои проекты</h2>
-            <p className="sp-section-subtitle">Управляйте своими приложениями Streamlit</p>
+            <h2 className="sp-section-title">{t('projects.mine')}</h2>
+            <p className="sp-section-subtitle">{t('projects.subtitle')}</p>
           </div>
         </div>
         <div className={viewMode === 'grid' ? 'sp-projects-grid sp-grid-mode' : 'sp-projects-list'}>
           {filteredProjects.map((project) => (
             <ProjectCard
               key={project.id}
-              project={project}
+              project={{
+                ...project,
+                lastEdited: formatProjectDate(project.updatedAt || project.createdAt, language),
+              }}
               viewMode={viewMode}
               onDelete={handleDeleteProject}
               onUpdateTitle={handleUpdateTitle}
@@ -148,7 +148,7 @@ const ProjectsPage = () => {
   };
 
   return (
-    <div className="sp-projects-page">
+    <div className="page-container sp-projects-page">
       <Sidebar 
         projectsCount={projects.length} 
         onLogout={handleLogout} 

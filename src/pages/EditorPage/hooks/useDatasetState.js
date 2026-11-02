@@ -6,10 +6,8 @@ import {
     uploadDataset,
 } from "../../../api/datasetsApi.js";
 import {DATASET_DRAFT_STORAGE_KEY} from "../../../shared/constants/storageKeys.js";
+import useTranslation from '../../../shared/i18n/useTranslation.js';
 
-// Hook отвечает за управление состоянием с датасетом
-
-// Определение начальных значений состояний датасета из LocalStorage (либо [])
 const loadDatasetInfoFromDraft = () => {
     try {
         const saved = localStorage.getItem(DATASET_DRAFT_STORAGE_KEY);
@@ -22,12 +20,13 @@ const loadDatasetInfoFromDraft = () => {
 
         return Array.isArray(parsed?.datasets) ? parsed.datasets : [];
     } catch (error) {
-        console.error('Ошибка восстановления dataset draft:', error);
+        console.error('Could not restore the dataset draft:', error);
         return [];
     }
 };
 
 export const useDatasetState = ({ useDraftStorage = true }) => {
+    const { t } = useTranslation();
     const [datasets, setDatasets] = useState(() => {
         if (!useDraftStorage) {
             return [];
@@ -49,7 +48,6 @@ export const useDatasetState = ({ useDraftStorage = true }) => {
         return initial;
     });
 
-    // Храним ID датасетов, для которых уже было запрошено полное превью с сервера
     const fetchedPreviewIdsRef = useRef(new Set());
 
     useEffect(() => {
@@ -57,7 +55,6 @@ export const useDatasetState = ({ useDraftStorage = true }) => {
             datasets.map((ds) => ds?.datasetId).filter(Boolean)
         );
 
-        // Очищаем ref от удалённых датасетов
         fetchedPreviewIdsRef.current.forEach((id) => {
             if (!currentIds.has(id)) {
                 fetchedPreviewIdsRef.current.delete(id);
@@ -101,7 +98,8 @@ export const useDatasetState = ({ useDraftStorage = true }) => {
                             )
                         );
                     } catch (error) {
-                        console.error('Ошибка загрузки данных для Canvas:', error);
+                        console.error('Could not load dataset preview:', error);
+                        toast.error(t('editor.datasetPreviewFailure'));
                         setPreviewRowsByDataset((prev) => ({
                             ...prev,
                             [ds.datasetId]: ds.sampleRows || [],
@@ -114,9 +112,8 @@ export const useDatasetState = ({ useDraftStorage = true }) => {
         };
 
         loadPreviewRows();
-    }, [datasets]);
+    }, [datasets, t]);
 
-    // Сохраняем datasetMeta в localStorage только для /editor
     useEffect(() => {
         if (!useDraftStorage) {
             return;
@@ -135,28 +132,26 @@ export const useDatasetState = ({ useDraftStorage = true }) => {
                 })
             );
         } catch (error) {
-            console.error('Ошибка сохранения dataset draft:', error);
+            console.error('Could not save the dataset draft:', error);
         }
     }, [datasets, useDraftStorage]);
 
-    // Обработчик загрузки датасета
     const uploadNewDataset = async (payload) => {
         try {
             setIsDatasetUploading(true);
             const datasetInfo = await uploadDataset(payload);
             setDatasets((prev) => [...prev, datasetInfo]);
-            toast.success(`Датасет «${datasetInfo.name}» успешно добавлен`);
+            toast.success(t('editor.datasetUploadSuccess', { name: datasetInfo.name }));
             return datasetInfo;
         } catch (error) {
-            console.error('Ошибка загрузки датасета:', error);
-            toast.error(error.message || 'Не удалось загрузить датасет');
+            console.error('Could not upload dataset:', error);
+            toast.error(t('editor.datasetUploadFailure'));
             return null;
         } finally {
             setIsDatasetUploading(false);
         }
     };
 
-    // Удаление загруженного датасета
     const removeDataset = async (datasetId) => {
         if (!datasetId) return;
         try {
@@ -169,8 +164,8 @@ export const useDatasetState = ({ useDraftStorage = true }) => {
                 return next;
             });
         } catch (error) {
-            console.error('Ошибка удаления датасета:', error);
-            toast.error('Не удалось удалить датасет на backend.');
+            console.error('Could not delete dataset:', error);
+            toast.error(t('editor.datasetDeleteFailure'));
         } finally {
             setIsDatasetClearing(false);
         }

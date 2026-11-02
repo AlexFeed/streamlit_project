@@ -17,24 +17,28 @@ import {
 import { useEditorState } from './hooks/useEditorState';
 import {useDatasetState} from './hooks/useDatasetState';
 
-import { useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { useProjectState } from './hooks/useProjectState.js';
 import {useGenerateState} from "./hooks/useGenerateState.jsx";
 import { useEditorDnd } from './hooks/useEditorDnd.js';
+import './EditorPage.css';
+import useTranslation from '../../shared/i18n/useTranslation.js';
+import { captureCanvasPreview } from './services/captureCanvasPreview.js';
 
 
 const EditorPage = () => {
-    // Получение из адресной строки параметров конкретного проекта
     const { projectId } = useParams();
     const navigate = useNavigate();
+    const { t } = useTranslation();
 
-    // Черновик это или уже сохранённый проект (Для управления localStorage)
     const isDraftMode = !(projectId);
 
     const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
     const [isUploadDatasetModalOpen, setIsUploadDatasetModalOpen] = useState(false);
+    const [pendingPreviewImage, setPendingPreviewImage] = useState(null);
+    const canvasRef = useRef(null);
 
-    // Получение данных связанных с датасетом
     const {
         datasets,
         setDatasets,
@@ -46,7 +50,6 @@ const EditorPage = () => {
         removeDataset,
     } = useDatasetState({ useDraftStorage: isDraftMode });
 
-    // Получения данных связанных с компонентами
     const {
         components,
         setComponents,
@@ -65,8 +68,10 @@ const EditorPage = () => {
         useDraftStorage: isDraftMode,
         defaultDatasetId: datasets[0]?.datasetId || '',
     });
+    const addLocalizedComponent = useCallback((item, targetIndex, targetLayout) => {
+        addComponent(item, targetIndex, targetLayout);
+    }, [addComponent]);
 
-    // Получение данных, связанных с загрузкой проекта
     const {
         isProjectLoading,
         isProjectSaving,
@@ -79,13 +84,11 @@ const EditorPage = () => {
         setDatasets,
     });
 
-    // Получения данных, связанных с генерацией streamlit кода
     const {
         isGenerating,
         handleGenerate
     } = useGenerateState();
 
-    // Получение данных связанных с drag and drop интерактивностью
     const {
         sensors,
         activeDrag,
@@ -94,16 +97,15 @@ const EditorPage = () => {
         handleDragEnd,
     } = useEditorDnd({
         components,
-        addComponent,
+        addComponent: addLocalizedComponent,
         reorderComponent,
     });
 
-    // Удаление датасета с перепривязкой компонентов на первый оставшийся датасет
     const handleRemoveDataset = async (datasetId) => {
         const targetDataset = datasets.find((ds) => ds.datasetId === datasetId);
-        const datasetName = targetDataset?.name || 'этот датасет';
+        const datasetName = targetDataset?.name || t('editor.datasetFallbackName');
         const confirmed = window.confirm(
-            `Вы уверены, что хотите удалить датасет «${datasetName}»? Файл будет физически удален с сервера, а привязанные компоненты сброшены.`
+            t('editor.deleteDatasetConfirm', { name: datasetName })
         );
         if (!confirmed) {
             return;
@@ -138,10 +140,10 @@ const EditorPage = () => {
         });
     };
 
-    // ЕДИНЫЙ ДИСПЕТЧЕР ДАННЫХ (Snapshot)
-    const getProjectSnapshot = (overrideTitle, overrideDescription) => ({
+    const getProjectSnapshot = (overrideTitle, overrideDescription, previewImage) => ({
         title: overrideTitle ?? project?.title ?? 'Untitled dashboard',
         description: overrideDescription ?? project?.description ?? '',
+        previewImage,
         components,
         datasets: datasets.map((ds) => {
             const metadata = { ...ds };
@@ -151,10 +153,9 @@ const EditorPage = () => {
     });
 
 
-    // Перемещение на главную страницу с проектами
     const handleGoHome = () => {
         const confirmed = window.confirm(
-            'При выходе на главную все несохраненные данные будут удалены. Продолжить?'
+            t('editor.leaveConfirm')
         );
 
         if (!confirmed) {
@@ -164,21 +165,30 @@ const EditorPage = () => {
         navigate('/');
     };
 
-    // Вызывается при клике на кнопку "Save" в хедере редактора
     const handleSaveClick = async () => {
+        let previewImage = null;
+        try {
+            previewImage = await captureCanvasPreview(canvasRef.current);
+        } catch (error) {
+            console.error('Could not capture project preview:', error);
+            toast.warning(t('editor.previewCaptureFailure'));
+            previewImage = project?.previewImage
+                || project?.preview_image
+                || project?.editorState?.previewImage
+                || null;
+        }
+
         if (isDraftMode) {
-            // Если черновик открываем модалку для сохранения
+            setPendingPreviewImage(previewImage);
             setIsSaveModalOpen(true);
         } else {
-            const snapshot = getProjectSnapshot();
+            const snapshot = getProjectSnapshot(undefined, undefined, previewImage);
             await saveExistingProject(snapshot);
         }
     };
 
-    // Вызывается при клике "Сохранить" внутри модального окна
     const handleConfirmSave = async ({ title, description }) => {
-        // Передаем данные модалки в snapshot
-        const snapshot = getProjectSnapshot(title, description);
+        const snapshot = getProjectSnapshot(title, description, pendingPreviewImage);
         const saved = await createProjectFromDraft(snapshot);
 
         if (saved) {
@@ -192,7 +202,6 @@ const EditorPage = () => {
         return Boolean(res);
     };
 
-    // Обработчик для кнопки Генерации (использует Snapshot)
     const onGenerateClick = async () => {
         const snapshot = getProjectSnapshot();
         await handleGenerate(snapshot);
@@ -206,11 +215,11 @@ const EditorPage = () => {
             onDragCancel={handleDragCancel}
             onDragEnd={handleDragEnd}
         >
-        <div className="h-screen overflow-hidden bg-zinc-950 text-white">
-            <div className="grid h-full grid-cols-[252px_minmax(0,1fr)]">
-                <ComponentsPalette onAddComponent={addComponent} onGoHome={handleGoHome}/>
+        <div className="editor-page">
+            <div className="editor-layout">
+                <ComponentsPalette onAddComponent={addLocalizedComponent} onGoHome={handleGoHome}/>
 
-                <div className="flex min-h-0 min-w-0 flex-col overflow-hidden">
+                <div className="editor-main">
                     <EditorHeader
                         onClearCanvas={clearCanvas}
                         onGenerateDashboard={onGenerateClick}
@@ -235,30 +244,26 @@ const EditorPage = () => {
                         onConfirm={handleConfirmSave}
                     />
 
-                    {/* UI загрузки */}
                     {isProjectLoading && (
-                        <div className="px-4 pt-4">
-                            <div className="rounded-2xl border border-blue-500/30 bg-blue-500/10 p-4 text-sm text-blue-200">
-                                Загрузка проекта...
+                        <div className="editor-loading-wrap">
+                            <div className="editor-loading">
+                                {t('editor.loadingProject')}
                             </div>
                         </div>
                     )}
 
                     {isProjectSaving && (
-                        <div className="px-4 pt-4">
-                            <div className="rounded-2xl border border-blue-500/30 bg-blue-500/10 p-4 text-sm text-blue-200">
-                                Сохранение проекта...
+                        <div className="editor-loading-wrap">
+                            <div className="editor-loading">
+                                {t('editor.savingProject')}
                             </div>
                         </div>
                     )}
 
-                    <div className={`grid min-h-0 min-w-0 flex-1 overflow-hidden ${
-                        selectedComponent
-                            ? 'xl:grid-cols-[minmax(0,1fr)_360px]'
-                            : 'grid-cols-1'
-                    }`}>
-                        <main className="min-h-0 min-w-0 overflow-y-auto p-4">
+                    <div className={`editor-workspace${selectedComponent ? ' has-properties' : ''}`}>
+                        <main className="editor-canvas-area">
                             <Canvas
+                                canvasRef={canvasRef}
                                 components={components}
                                 selectedId={selectedId}
                                 onSelect={selectComponent}
@@ -285,12 +290,12 @@ const EditorPage = () => {
         </div>
             <DragOverlay dropAnimation={null}>
                 {activeDrag && (
-                    <div className="w-64 rounded-xl border border-blue-500 bg-zinc-900 p-4 shadow-2xl shadow-black/50">
-                        <p className="text-sm font-medium text-white">
-                            {activeDrag.paletteItem?.label || 'Компонент дашборда'}
+                    <div className="editor-drag-overlay">
+                        <p className="editor-drag-overlay-title">
+                            {t(activeDrag.paletteItem?.labelKey || 'editor.dragOverlayTitle')}
                         </p>
-                        <p className="mt-1 text-xs text-zinc-400">
-                            Переместите в нужную позицию
+                        <p className="editor-drag-overlay-description">
+                            {t('editor.dragOverlayDescription')}
                         </p>
                     </div>
                 )}

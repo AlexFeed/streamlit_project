@@ -1,6 +1,9 @@
 import React from 'react';
+import useTranslation from '../../shared/i18n/useTranslation.js';
 
 const ExtensionHeader = ({ searchQuery, onSearchChange }) => {
+  const { t } = useTranslation();
+
   return (
     <div className="extensions-header">
       <div className="header-container">
@@ -9,7 +12,8 @@ const ExtensionHeader = ({ searchQuery, onSearchChange }) => {
             type="text"
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Поиск расширений..."
+            placeholder={t('extensions.search')}
+            aria-label={t('extensions.search')}
             className="search-input"
           />
         </div>
@@ -17,8 +21,8 @@ const ExtensionHeader = ({ searchQuery, onSearchChange }) => {
         <div className="title-wrapper">
           <div className="title-badge">
             <div>
-              <h2 className="page-title">Управление расширениями</h2>
-              <p className="page-subtitle">Подключите дополнительные библиотеки для визуального конструктора</p>
+              <h2 className="page-title">{t('extensions.manage')}</h2>
+              <p className="page-subtitle">{t('extensions.subtitle')}</p>
             </div>
           </div>
         </div>

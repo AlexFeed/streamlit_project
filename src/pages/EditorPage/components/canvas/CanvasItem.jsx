@@ -7,6 +7,7 @@ import {
     MoveDiagonal2,
 } from 'lucide-react';
 import { paletteItems } from '../../data/paletteItems';
+import useTranslation from '../../../../shared/i18n/useTranslation.js';
 
 const LiveComponentPreview = lazy(
     () => import('./LiveComponentPreview')
@@ -23,6 +24,7 @@ const CanvasItem = ({
                         onFilterChange,
                         onBeginInteraction,
                     }) => {
+    const { t } = useTranslation();
     const meta = paletteItems[item.type];
     const Icon = meta?.icon || WalletCards;
     const isCompact = ['text', 'metric', 'selectbox'].includes(item.type);
@@ -46,7 +48,7 @@ const CanvasItem = ({
                 onPointerDown={isCompact
                     ? undefined
                     : (event) => onBeginInteraction(event, item.id, 'drag')}
-                title={isCompact ? undefined : 'Зажмите и перетащите карточку'}
+                title={isCompact ? undefined : t('editor.dragCard')}
             >
                 {!isCompact && (
                 <div className="flex min-w-0 items-center gap-3">
@@ -54,7 +56,7 @@ const CanvasItem = ({
                         <Icon className="h-4 w-4 text-blue-300" />
                     </div>
                     <h3 className="truncate text-sm font-semibold text-white">
-                        {item.config?.title || meta?.label}
+                        {item.config?.title || t(meta?.labelKey || 'editor.componentLabel')}
                     </h3>
                 </div>
                 )}
@@ -64,7 +66,8 @@ const CanvasItem = ({
                 }`}>
                     <button
                         type="button"
-                        title="Дублировать"
+                        title={t('editor.duplicate')}
+                        aria-label={t('editor.duplicate')}
                         onPointerDown={(event) => event.stopPropagation()}
                         onClick={(event) => {
                             event.stopPropagation();
@@ -76,7 +79,8 @@ const CanvasItem = ({
                     </button>
                     <button
                         type="button"
-                        title="Удалить"
+                        title={t('common.delete')}
+                        aria-label={t('common.delete')}
                         onPointerDown={(event) => event.stopPropagation()}
                         onClick={(event) => {
                             event.stopPropagation();
@@ -87,7 +91,7 @@ const CanvasItem = ({
                         <Trash2 className="h-4 w-4" />
                     </button>
                     <span
-                        title="Перетащить"
+                        title={t('editor.drag')}
                         onPointerDown={isCompact
                             ? (event) => onBeginInteraction(event, item.id, 'drag')
                             : undefined}
@@ -118,8 +122,8 @@ const CanvasItem = ({
 
             <button
                 type="button"
-                aria-label="Изменить размер карточки"
-                title="Тяните, чтобы изменить ширину и высоту"
+                aria-label={t('editor.resize')}
+                title={t('editor.resizeHint')}
                 onClick={(event) => event.stopPropagation()}
                 onPointerDown={(event) => onBeginInteraction(event, item.id, 'resize')}
                 className="canvas-resize-handle absolute bottom-1 right-1 z-20 flex h-9 w-9 touch-none cursor-se-resize items-end justify-end rounded-xl p-2 text-blue-300 transition hover:bg-blue-500/15 hover:text-blue-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"

@@ -1,26 +1,24 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Zap } from 'lucide-react';
-import { logout } from '../../api/authApi.js';
 import Sidebar from './Sidebar';
 import ExtensionHeader from './ExtensionHeader';
 import ExtensionGrid from './ExtensionGrid';
 import AddExtensionModal from './AddExtensionModal';
 import ConfigModal from './ConfigModal';
 import './ExtensionsPage.css';
+import useTranslation from '../../shared/i18n/useTranslation.js';
 
 const ExtensionsPage = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
-  const handleLogout = () => {
-    logout();
-    navigate('/auth', { replace: true });
-  };
+  const handleProjectsNavigation = () => navigate('/', { replace: true });
   const [extensions, setExtensions] = useState([
     {
       id: 1,
       name: 'ECharts',
-      description: 'Мощная библиотека для создания интерактивных графиков и визуализаций данных',
+      descriptionKey: 'extension.echarts.description',
       version: '5.5.0',
       icon: '📊',
       category: 'chart',
@@ -34,7 +32,7 @@ const ExtensionsPage = () => {
     {
       id: 2,
       name: 'Plotly',
-      description: 'Интерактивные графики с возможностью масштабирования и фильтрации',
+      descriptionKey: 'extension.plotly.description',
       version: '2.27.0',
       icon: '📈',
       category: 'chart',
@@ -47,7 +45,7 @@ const ExtensionsPage = () => {
     {
       id: 3,
       name: 'Leaflet',
-      description: 'Интерактивные карты и геовизуализации',
+      descriptionKey: 'extension.leaflet.description',
       version: '1.9.4',
       icon: '🗺️',
       category: 'map',
@@ -66,20 +64,20 @@ const ExtensionsPage = () => {
   const [selectedExtension, setSelectedExtension] = useState(null);
 
   const categories = [
-    { id: 'all', name: 'Все', icon: 'Activity' },
-    { id: 'chart', name: 'Графики', icon: 'BarChart3' },
-    { id: 'map', name: 'Карты', icon: 'Map' },
-    { id: 'custom', name: 'Кастомные', icon: 'Settings' }
+    { id: 'all', name: 'All', icon: 'Activity' },
+    { id: 'chart', name: 'Charts', icon: 'BarChart3' },
+    { id: 'map', name: 'Maps', icon: 'Map' },
+    { id: 'custom', name: 'Custom', icon: 'Settings' }
   ];
 
   const filteredExtensions = useMemo(() => {
     return extensions.filter(ext => {
       const matchesSearch = ext.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           ext.description.toLowerCase().includes(searchQuery.toLowerCase());
+                           (ext.description || (ext.descriptionKey ? t(ext.descriptionKey) : '')).toLowerCase().includes(searchQuery.toLowerCase());
       const matchesCategory = selectedCategory === 'all' || ext.category === selectedCategory;
       return matchesSearch && matchesCategory;
     });
-  }, [extensions, searchQuery, selectedCategory]);
+  }, [extensions, searchQuery, selectedCategory, t]);
 
   const activeCount = extensions.filter(ext => ext.isActive).length;
 
@@ -90,7 +88,7 @@ const ExtensionsPage = () => {
   };
 
   const handleDeleteExtension = (id) => {
-    if (window.confirm('Вы уверены, что хотите удалить это расширение?')) {
+    if (window.confirm(t('extensions.deleteConfirm'))) {
       setExtensions(extensions.filter(ext => ext.id !== id));
     }
   };
@@ -119,7 +117,7 @@ const ExtensionsPage = () => {
   };
 
   return (
-    <div className="extensions-page">
+    <div className="page-container extensions-page">
       <Sidebar 
         categories={categories}
         selectedCategory={selectedCategory}
@@ -127,7 +125,7 @@ const ExtensionsPage = () => {
         activeCount={activeCount}
         totalCount={extensions.length}
         onAddClick={() => setIsAddModalOpen(true)}
-        onLogout={handleLogout}
+        onProjectsClick={handleProjectsNavigation}
       />
 
       <div className="main-content">

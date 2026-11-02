@@ -19,7 +19,7 @@ export const authFetch = async (url, options = {}) => {
         headers,
     });
 
-    // Если истёк срок токена, удаляем все локальные данные и редиректим
+    // Clear local auth and drafts when the session has expired.
     if (response.status === 401) {
         logoutAndClearLocalData();
 

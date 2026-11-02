@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { toast } from 'sonner';
+import useTranslation from '../../../../shared/i18n/useTranslation.js';
 
 const SaveProjectModal = ({
     isOpen,
@@ -7,6 +8,8 @@ const SaveProjectModal = ({
     onClose,
     onConfirm,
 }) => {
+    const { t } = useTranslation();
+
     useEffect(() => {
         if (!isOpen) return undefined;
 
@@ -29,7 +32,7 @@ const SaveProjectModal = ({
         const description = String(formData.get('description') || '').trim();
 
         if (!title) {
-            toast.error('Название проекта не может быть пустым.');
+            toast.error(t('editor.projectTitleRequired'));
             return;
         }
 
@@ -50,9 +53,9 @@ const SaveProjectModal = ({
             >
                 <div className="flex items-center justify-between gap-4">
                     <div>
-                        <h2 className="text-xl font-semibold text-white">Сохранить проект</h2>
+                        <h2 className="text-xl font-semibold text-white">{t('editor.saveProject')}</h2>
                         <p className="mt-1 text-sm text-zinc-400">
-                            Укажите название проекта. Описание можно добавить позже.
+                            {t('editor.saveProjectDescription')}
                         </p>
                     </div>
                     <button
@@ -60,6 +63,7 @@ const SaveProjectModal = ({
                         onClick={onClose}
                         disabled={isSaving}
                         className="text-zinc-400 transition hover:text-white disabled:opacity-50"
+                        aria-label={t('common.close')}
                     >
                         ×
                     </button>
@@ -67,7 +71,7 @@ const SaveProjectModal = ({
                 <div className="mt-6 space-y-4">
                     <div>
                         <label className="mb-2 block text-sm font-medium text-zinc-300">
-                            Название проекта
+                            {t('editor.projectName')}
                         </label>
                         <input
                             type="text"
@@ -80,7 +84,7 @@ const SaveProjectModal = ({
                     </div>
                     <div>
                         <label className="mb-2 block text-sm font-medium text-zinc-300">
-                            Описание (необязательно)
+                            {t('editor.projectDescription')}
                         </label>
                         <textarea
                             name="description"
@@ -98,14 +102,14 @@ const SaveProjectModal = ({
                         disabled={isSaving}
                         className="rounded-2xl border border-zinc-800 bg-zinc-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-zinc-800 disabled:opacity-50"
                     >
-                        Отмена
+                        {t('common.cancel')}
                     </button>
                     <button
                         type="submit"
                         disabled={isSaving}
                         className="rounded-2xl bg-blue-500 px-5 py-3 text-sm font-medium text-white transition hover:bg-blue-400 disabled:opacity-50"
                     >
-                        Сохранить
+                        {t('common.save')}
                     </button>
                 </div>
             </form>

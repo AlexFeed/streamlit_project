@@ -263,9 +263,8 @@ export const normalizeComponentLayouts = (components) => {
                 h: gridHeight,
             }
             : null;
-        // Координаты уже размещённых элементов являются пользовательскими
-        // данными. При повторной загрузке их нельзя уплотнять или переносить:
-        // свободную позицию ищем только для нового элемента без x/y.
+        // Existing item coordinates are user data and must remain stable.
+        // Find an open position only for new items without coordinates.
         const position = requested
             ? requested
             : {

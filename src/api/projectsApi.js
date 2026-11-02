@@ -1,6 +1,6 @@
 import { authFetch } from './apiClient.js';
 
-// Получение списка проектов текущего пользователя (краткие карточки для главной страницы)
+// Retrieve the current user's project cards.
 //
 // Response:
 // [
@@ -9,6 +9,8 @@ import { authFetch } from './apiClient.js';
 //     title: string,
 //     description: string,
 //     datasetName: string | null,
+//     previewImage: string | null,
+//     editorState?: { previewImage?: string | null },
 //     createdAt: string,
 //     updatedAt: string
 //   }
@@ -24,14 +26,15 @@ export const listProjects = async () => {
     return response.json();
 };
 
-// Создание нового проекта
+// Create a project.
 //
 // Request:
 // {
 //   title: string,
 //   description: string,
 //   dataset: object | null,
-//   editorState: { components: object[] },
+//   editorState: { components: object[], previewImage?: string | null },
+//   previewImage: string | null,
 //   schema: object | null
 // }
 //
@@ -42,7 +45,8 @@ export const listProjects = async () => {
 //   title: string,
 //   description: string,
 //   dataset: object | null,
-//   editorState: { components: object[] },
+//   editorState: { components: object[], previewImage?: string | null },
+//   previewImage: string | null,
 //   schema: object | null,
 //   createdAt: string,
 //   updatedAt: string
@@ -64,7 +68,7 @@ export const createProject = async (payload) => {
     return response.json();
 };
 
-// Получение полного проекта по id (для восстановления состояния редактора)
+// Retrieve a full project for restoring the editor state.
 //
 // Response:
 // {
@@ -73,7 +77,8 @@ export const createProject = async (payload) => {
 //   title: string,
 //   description: string,
 //   dataset: object | null,
-//   editorState: { components: object[] },
+//   editorState: { components: object[], previewImage?: string | null },
+//   previewImage: string | null,
 //   schema: object | null,
 //   createdAt: string,
 //   updatedAt: string
@@ -89,14 +94,15 @@ export const getProject = async (projectId) => {
     return response.json();
 };
 
-// Частичное или полное обновление проекта
+// Partially or fully update a project.
 //
-// Request (все поля опциональны):
+// Request body fields are optional.
 // {
 //   title?: string,
 //   description?: string,
 //   dataset?: object | null,
-//   editorState?: { components: object[] },
+//   editorState?: { components: object[], previewImage?: string | null },
+//   previewImage?: string | null,
 //   schema?: object | null
 // }
 //
@@ -107,7 +113,8 @@ export const getProject = async (projectId) => {
 //   title: string,
 //   description: string,
 //   dataset: object | null,
-//   editorState: { components: object[] },
+//   editorState: { components: object[], previewImage?: string | null },
+//   previewImage: string | null,
 //   schema: object | null,
 //   createdAt: string,
 //   updatedAt: string
@@ -129,7 +136,7 @@ export const updateProject = async (projectId, payload) => {
     return response.json();
 };
 
-// Удаление проекта
+// Delete a project.
 //
 // Response:
 // {

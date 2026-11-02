@@ -1,15 +1,18 @@
 import React from 'react';
 import ExtensionCard from './ExtensionCard';
+import useTranslation from '../../shared/i18n/useTranslation.js';
 
 const ExtensionGrid = ({ extensions, categories, onToggle, onDelete, onConfig, onAddClick }) => {
+  const { t } = useTranslation();
+
   if (extensions.length === 0) {
     return (
       <div className="empty-state">
         <div className="empty-icon">🔌</div>
-        <h3 className="empty-title">Нет расширений</h3>
-        <p className="empty-description">Добавьте первое расширение для вашего проекта</p>
-        <button className="empty-button" onClick={onAddClick}>
-          Добавить расширение
+        <h3 className="empty-title">{t('extensions.none')}</h3>
+        <p className="empty-description">{t('extensions.empty')}</p>
+        <button className="btn btn-secondary empty-button" onClick={onAddClick}>
+          {t('extensions.add')}
         </button>
       </div>
     );

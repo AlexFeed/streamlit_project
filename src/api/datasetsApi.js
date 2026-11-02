@@ -1,6 +1,6 @@
 import { authFetch } from './apiClient.js';
 
-// Загрузка CSV датасета на backend
+// Upload a dataset to the backend.
 //
 // Request:
 // multipart/form-data:
@@ -29,7 +29,7 @@ export const uploadDataset = async (payload) => {
         if (delimiter && delimiter !== 'auto') formData.append('delimiter', delimiter);
         if (sheetName) formData.append('sheetName', sheetName);
     } else {
-        throw new Error('Файл для загрузки не указан');
+        throw new Error('No file provided for upload');
     }
 
     const response = await authFetch('/datasets/upload', {
@@ -39,13 +39,13 @@ export const uploadDataset = async (payload) => {
 
     if (!response.ok) {
         const error = await response.json().catch(() => null);
-        throw new Error(error?.detail || 'Не удалось загрузить датасет');
+        throw new Error(error?.detail || 'Dataset upload failed');
     }
 
     return response.json();
 };
 
-// Получение meta-информации датасета
+// Retrieve dataset metadata.
 //
 // Response:
 // {
@@ -64,7 +64,7 @@ export const getDataset = async (datasetId) => {
     return response.json();
 };
 
-// Получение выборки строк и типов колонок датасета для предпросмотра на Canvas через Recharts
+// Retrieve a sample of dataset rows and column types for the canvas preview.
 //
 // Query params:
 // limit: number (default = 500, max = 1000)
@@ -91,7 +91,7 @@ export const getDatasetPreview = async (datasetId, limit = 500) => {
     return response.json();
 };
 
-// Удаление датасета
+// Delete a dataset.
 //
 // Response:
 // {
@@ -111,7 +111,7 @@ export const deleteDataset = async (datasetId) => {
 };
 
 
-// Получение списка названий листов из excel файла
+// Retrieve sheet names from an Excel file.
 //
 // Request:
 // multipart/form-data:
@@ -130,7 +130,7 @@ export const inspectExcelSheets = async (file) => {
     });
     if (!response.ok) {
         const error = await response.json().catch(() => null);
-        throw new Error(error?.detail || 'Не удалось получить список листов Excel');
+        throw new Error(error?.detail || 'Could not retrieve Excel sheet names');
     }
     return response.json();
 };

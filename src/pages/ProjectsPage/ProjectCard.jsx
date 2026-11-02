@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Trash2, Clock, Pencil } from 'lucide-react';
+import useTranslation from '../../shared/i18n/useTranslation.js';
 
 const CrownIcon = ({ className }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -8,18 +9,14 @@ const CrownIcon = ({ className }) => (
 );
 
 const ProjectCard = ({ project, onDelete, onOpen, viewMode = 'grid', onUpdateTitle, onUpdateDescription }) => {
+  const { t } = useTranslation();
+  const previewImage = project.previewImage
+    || project.preview_image
+    || project.editorState?.previewImage;
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editTitle, setEditTitle] = useState(project.title);
   const [isEditingDesc, setIsEditingDesc] = useState(false);
   const [editDesc, setEditDesc] = useState(project.description);
-
-  useEffect(() => {
-    setEditTitle(project.title);
-  }, [project.title]);
-
-  useEffect(() => {
-    setEditDesc(project.description);
-  }, [project.description]);
 
   const handleSaveTitle = () => {
     if (editTitle.trim() && editTitle !== project.title) {
@@ -54,6 +51,13 @@ const ProjectCard = ({ project, onDelete, onOpen, viewMode = 'grid', onUpdateTit
   if (viewMode === 'list') {
     return (
       <div className="sp-project-card-list" onClick={onOpen}>
+        {previewImage && (
+          <img
+            className="sp-list-preview"
+            src={previewImage}
+            alt={project.title}
+          />
+        )}
         <div className="sp-list-accent" />
         <div className="sp-list-content">
           <div className="sp-list-title-row">
@@ -74,7 +78,8 @@ const ProjectCard = ({ project, onDelete, onOpen, viewMode = 'grid', onUpdateTit
             <button
               onClick={(e) => { e.stopPropagation(); setIsEditingTitle(true); }}
               className="sp-edit-title-btn"
-              title="Редактировать название"
+              title={t('projects.editTitle')}
+              aria-label={t('projects.editTitle')}
             >
               <Pencil size={12} />
             </button>
@@ -97,7 +102,8 @@ const ProjectCard = ({ project, onDelete, onOpen, viewMode = 'grid', onUpdateTit
             <button
               onClick={(e) => { e.stopPropagation(); setIsEditingDesc(true); }}
               className="sp-edit-desc-btn"
-              title="Редактировать описание"
+              title={t('projects.editDescription')}
+              aria-label={t('projects.editDescription')}
             >
               <Pencil size={12} />
             </button>
@@ -106,7 +112,8 @@ const ProjectCard = ({ project, onDelete, onOpen, viewMode = 'grid', onUpdateTit
         <button
           onClick={(e) => { e.stopPropagation(); onDelete(project.id); }}
           className="sp-delete-list-btn"
-          title="Удалить проект"
+          title={t('projects.delete')}
+          aria-label={t('projects.delete')}
         >
           <Trash2 size={18} />
         </button>
@@ -116,12 +123,20 @@ const ProjectCard = ({ project, onDelete, onOpen, viewMode = 'grid', onUpdateTit
 
   return (
     <div className="sp-project-card-grid" onClick={onOpen}>
-      <div className="sp-card-banner">
-        <div className="sp-banner-watermark">
-          <span>STREAMLIT</span>
-        </div>
+      <div className={`sp-card-banner${previewImage ? ' has-preview' : ''}`}>
+        {previewImage ? (
+          <img
+            className="sp-card-preview"
+            src={previewImage}
+            alt={project.title}
+          />
+        ) : (
+          <div className="sp-banner-watermark">
+            <span>STREAMLIT</span>
+          </div>
+        )}
         <div className="sp-banner-gradient" />
-        <CrownIcon className="sp-card-crown" />
+        {!previewImage && <CrownIcon className="sp-card-crown" />}
       </div>
       <div className="sp-card-body">
         <div className="sp-card-title-row">
@@ -142,7 +157,8 @@ const ProjectCard = ({ project, onDelete, onOpen, viewMode = 'grid', onUpdateTit
           <button
             onClick={(e) => { e.stopPropagation(); setIsEditingTitle(true); }}
             className="sp-edit-title-btn"
-            title="Редактировать название"
+            title={t('projects.editTitle')}
+            aria-label={t('projects.editTitle')}
           >
             <Pencil size={12} />
           </button>
@@ -166,7 +182,8 @@ const ProjectCard = ({ project, onDelete, onOpen, viewMode = 'grid', onUpdateTit
           <button
             onClick={(e) => { e.stopPropagation(); setIsEditingDesc(true); }}
             className="sp-edit-desc-btn"
-            title="Редактировать описание"
+            title={t('projects.editDescription')}
+            aria-label={t('projects.editDescription')}
           >
             <Pencil size={12} />
           </button>
@@ -179,7 +196,8 @@ const ProjectCard = ({ project, onDelete, onOpen, viewMode = 'grid', onUpdateTit
           <button
             onClick={(e) => { e.stopPropagation(); onDelete(project.id); }}
             className="sp-delete-card-btn"
-            title="Удалить проект"
+            title={t('projects.delete')}
+            aria-label={t('projects.delete')}
           >
             <Trash2 size={14} />
           </button>

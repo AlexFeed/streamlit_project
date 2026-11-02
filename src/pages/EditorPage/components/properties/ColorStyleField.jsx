@@ -3,6 +3,7 @@ import {
     getPaletteColors,
 } from '../../data/chartPalettes.js';
 import { paletteItems } from '../../data/paletteItems.js';
+import useTranslation from '../../../../shared/i18n/useTranslation.js';
 
 const colorPresets = [
     '#3b82f6',
@@ -19,6 +20,7 @@ const ColorStyleField = ({
     config,
     onUpdate,
 }) => {
+    const { t } = useTranslation();
     const supportsPaletteModes = Boolean(
         paletteItems[type]?.supportsPaletteModes
     );
@@ -30,15 +32,15 @@ const ColorStyleField = ({
         config.reversePalette
     );
     const modeOptions = [
-        { value: 'solid', label: 'Один цвет' },
-        { value: 'gradient', label: 'По значению' },
-        { value: 'categorical', label: 'Категории X' },
+        { value: 'solid', labelKey: 'editor.oneColor' },
+        { value: 'gradient', labelKey: 'editor.byValue' },
+        { value: 'categorical', labelKey: 'editor.xCategories' },
     ];
 
     return (
         <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 p-3">
             <div className="mb-3">
-                <label className="text-sm font-medium text-zinc-200">Цветовая схема</label>
+                <label className="text-sm font-medium text-zinc-200">{t('editor.colorScheme')}</label>
             </div>
 
             <div className={`mb-4 grid gap-1 rounded-xl bg-zinc-900 p-1 ${
@@ -57,7 +59,7 @@ const ColorStyleField = ({
                                     : 'text-zinc-500 hover:text-zinc-200'
                             }`}
                         >
-                            {option.label}
+                            {t(option.labelKey)}
                         </button>
                     ))}
             </div>
@@ -65,14 +67,14 @@ const ColorStyleField = ({
             {colorMode === 'solid' ? (
                 <>
                     <div className="mb-3 flex items-center justify-between gap-3">
-                        <span className="text-xs text-zinc-500">Основной цвет</span>
+                        <span className="text-xs text-zinc-500">{t('editor.primaryColor')}</span>
                         <div className="flex items-center gap-2">
                             <input
                                 type="color"
                                 value={config.color || '#3b82f6'}
                                 onChange={(event) => onUpdate('color', event.target.value)}
                                 className="h-8 w-10 cursor-pointer rounded-lg border border-zinc-700 bg-transparent p-0.5"
-                                aria-label="Выбрать произвольный цвет"
+                                aria-label={t('editor.chooseCustomColor')}
                             />
                             <span className="font-mono text-xs uppercase text-zinc-400">
                                 {config.color || '#3b82f6'}
@@ -89,7 +91,7 @@ const ColorStyleField = ({
                                     config.color === color ? 'border-white' : 'border-transparent'
                                 }`}
                                 style={{ backgroundColor: color }}
-                                aria-label={`Выбрать цвет ${color}`}
+                                aria-label={t('editor.chooseColor', { color })}
                                 title={color}
                             />
                         ))}
@@ -132,7 +134,7 @@ const ColorStyleField = ({
                         onClick={() => onUpdate('reversePalette', !config.reversePalette)}
                         className="mt-3 flex w-full items-center justify-between rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-2.5 text-xs text-zinc-300 transition hover:border-zinc-700"
                     >
-                        <span>Развернуть палитру</span>
+                        <span>{t('editor.reversePalette')}</span>
                         <span
                             className="h-3 w-20 rounded-full"
                             style={{

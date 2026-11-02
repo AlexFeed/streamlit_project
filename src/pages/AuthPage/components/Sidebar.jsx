@@ -1,11 +1,16 @@
 import React from 'react';
 import { Zap } from 'lucide-react';
+import ThemeToggle from '../../../shared/ThemeToggle.jsx';
+import LanguageToggle from '../../../shared/LanguageToggle.jsx';
+import useTranslation from '../../../shared/i18n/useTranslation.js';
 
 const Sidebar = ({ isLogin }) => {
+  const { t } = useTranslation();
+
   return (
     <aside className="sidebar">
 
-      {/* Верхняя часть: Логотип */}
+      {/* Brand */}
       <div className="logo-section">
         <div className="logo-icon">
           <Zap size={32} className="text-white" />
@@ -18,15 +23,21 @@ const Sidebar = ({ isLogin }) => {
         </div>
       </div>
 
-      {/* Центральная часть */}
+      {/* Welcome copy */}
       <div className="welcome-section">
         <div className="welcome-content">
           <h2 className="welcome-title">
-            {isLogin ? 'Добро пожаловать' : 'Создайте аккаунт'}
+            {t(isLogin ? 'auth.welcome' : 'auth.createAccount')}
           </h2>
           <p className="welcome-subtitle">
-            {isLogin ? 'Войдите в свой аккаунт для продолжения' : 'Начните создавать no-code приложения'}
+            {t(isLogin ? 'auth.welcomeSubtitle' : 'auth.createSubtitle')}
           </p>
+        </div>
+      </div>
+      <div className="auth-sidebar-footer">
+        <div className="sidebar-controls">
+          <LanguageToggle />
+          <ThemeToggle />
         </div>
       </div>
     </aside>

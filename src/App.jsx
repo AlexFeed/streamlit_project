@@ -5,11 +5,16 @@ import AuthPage from './pages/AuthPage';
 import EditorPage from "./pages/EditorPage/EditorPage.jsx";
 import ExtensionsPage from './pages/ExtensionsPage/ExtensionsPage.jsx';
 import ProtectedRoute from "./pages/AuthPage/components/ProtectedRoute.jsx";
+import { ThemeProvider } from './shared/ThemeContext.jsx';
+import { I18nProvider } from './shared/i18n/I18nContext.jsx';
+import useTheme from './shared/useTheme.js';
 
-function App() {
+function AppContent() {
+    const { theme } = useTheme();
+
     return (
         <BrowserRouter>
-            <Toaster theme="dark" position="bottom-right" richColors closeButton />
+            <Toaster theme={theme} position="bottom-right" richColors closeButton />
             <Routes>
                 <Route path="/auth" element={<AuthPage/>}/>
 
@@ -22,7 +27,7 @@ function App() {
                     }
                 />
 
-                {/*  Новый проект */}
+                {/* New project route */}
                 <Route
                     path="/editor"
                     element={
@@ -31,7 +36,7 @@ function App() {
                         </ProtectedRoute>
                     }
                 />
-                {/* Сохранённый проект из главной страницы */}
+                {/* Saved project opened from the projects page */}
                 <Route
                     path="/editor/:projectId"
                     element={
@@ -51,6 +56,16 @@ function App() {
                 />
             </Routes>
         </BrowserRouter>
+    );
+}
+
+function App() {
+    return (
+        <ThemeProvider>
+            <I18nProvider>
+                <AppContent />
+            </I18nProvider>
+        </ThemeProvider>
     );
 }
 

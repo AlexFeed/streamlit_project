@@ -4,7 +4,7 @@ export const AUTH_TOKEN_KEY = 'streamlit-auth-token';
 export const AUTH_USER_KEY = 'streamlit-auth-user';
 
 export const saveAuth = ({ accessToken, access_token, user }) => {
-    // Поддержка и camelCase, и OAuth2 snake_case
+    // Accept both camelCase and OAuth2 snake_case response fields.
     const token = accessToken || access_token;
 
     if (!token) {
@@ -28,7 +28,7 @@ export const getAuthUser = () => {
 
         return saved ? JSON.parse(saved) : null;
     } catch (error) {
-        console.error('Ошибка чтения auth user:', error);
+        console.error('Could not read the auth user from local storage:', error);
         return null;
     }
 };

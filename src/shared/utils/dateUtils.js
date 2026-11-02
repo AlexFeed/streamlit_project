@@ -1,6 +1,8 @@
-export const formatProjectDate = (isoString) => {
-    if (!isoString) return 'Только что';
-    if (isoString === 'Только что') return isoString;
+export const formatProjectDate = (isoString, language = 'ru') => {
+    const locale = language === 'en' ? 'en-US' : 'ru-RU';
+    const relativeTime = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
+
+    if (!isoString) return relativeTime.format(0, 'minute');
 
     try {
         const hasTimezone = /[Z+-]/.test(isoString.slice(10));
@@ -15,8 +17,8 @@ export const formatProjectDate = (isoString) => {
         const diffMs = now.getTime() - date.getTime();
         const diffMins = Math.floor(diffMs / 60000);
 
-        if (diffMins < 1) return 'Только что';
-        if (diffMins < 60) return `${diffMins} мин назад`;
+        if (diffMins < 1) return relativeTime.format(0, 'minute');
+        if (diffMins < 60) return relativeTime.format(-diffMins, 'minute');
 
         const isToday =
             date.getDate() === now.getDate() &&
@@ -30,16 +32,16 @@ export const formatProjectDate = (isoString) => {
             date.getMonth() === yesterday.getMonth() &&
             date.getFullYear() === yesterday.getFullYear();
 
-        const timeStr = date.toLocaleTimeString('ru-RU', {
+        const timeStr = date.toLocaleTimeString(locale, {
             hour: '2-digit',
             minute: '2-digit',
         });
 
-        if (isToday) return `Сегодня, ${timeStr}`;
-        if (isYesterday) return `Вчера, ${timeStr}`;
+        if (isToday) return `${relativeTime.format(0, 'day')}, ${timeStr}`;
+        if (isYesterday) return `${relativeTime.format(-1, 'day')}, ${timeStr}`;
 
         const isSameYear = date.getFullYear() === now.getFullYear();
-        const dateStr = date.toLocaleDateString('ru-RU', {
+        const dateStr = date.toLocaleDateString(locale, {
             day: 'numeric',
             month: 'short',
             year: isSameYear ? undefined : 'numeric',

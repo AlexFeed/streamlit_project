@@ -1,24 +1,27 @@
 import React from 'react';
 import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
+import useTranslation from '../../../shared/i18n/useTranslation.js';
 
 const AuthForm = ({ isLogin, showPassword, setShowPassword, formData, handleInputChange, handleSubmit, setIsLogin, error, loading }) => {
+  const { t } = useTranslation();
+
   return (
     <div className="form-container">
-      {/* Форма */}
+      {/* Authentication form */}
       <div className="form-wrapper">
         <div className="form-header">
           <h3 className="form-title">
-            {isLogin ? 'Вход в аккаунт' : 'Регистрация'}
+            {t(isLogin ? 'auth.login' : 'auth.register')}
           </h3>
           <p className="form-subtitle">
-            {isLogin ? 'Введите свои данные для входа' : 'Заполните форму для создания аккаунта'}
+            {t(isLogin ? 'auth.loginSubtitle' : 'auth.registerSubtitle')}
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="form">
           {!isLogin && (
             <div className="input-group">
-              <label className="input-label">Имя</label>
+              <label className="input-label">{t('auth.name')}</label>
               <div className="input-wrapper">
                 <User className="input-icon" size={18} />
                 <input
@@ -26,7 +29,7 @@ const AuthForm = ({ isLogin, showPassword, setShowPassword, formData, handleInpu
                   name="name"
                   value={formData.name}
                   onChange={handleInputChange}
-                  placeholder="Ваше имя"
+                  placeholder={t('auth.namePlaceholder')}
                   className="input-field"
                   required={!isLogin}
                 />
@@ -35,7 +38,7 @@ const AuthForm = ({ isLogin, showPassword, setShowPassword, formData, handleInpu
           )}
 
           <div className="input-group">
-            <label className="input-label">Email</label>
+            <label className="input-label">{t('auth.email')}</label>
             <div className="input-wrapper">
               <Mail className="input-icon" size={18} />
               <input
@@ -51,7 +54,7 @@ const AuthForm = ({ isLogin, showPassword, setShowPassword, formData, handleInpu
           </div>
 
           <div className="input-group">
-            <label className="input-label">Пароль</label>
+            <label className="input-label">{t('auth.password')}</label>
             <div className="input-wrapper">
               <Lock className="input-icon" size={18} />
               <input
@@ -67,6 +70,7 @@ const AuthForm = ({ isLogin, showPassword, setShowPassword, formData, handleInpu
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="password-toggle"
+                aria-label={t(showPassword ? 'auth.password.hide' : 'auth.password.show')}
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
@@ -77,10 +81,12 @@ const AuthForm = ({ isLogin, showPassword, setShowPassword, formData, handleInpu
 
           <button
             type="submit"
-            className="submit-button"
+            className="btn btn-primary submit-button"
             disabled={loading}
           >
-            {loading ? (isLogin ? 'Входим...' : 'Создаём...') : isLogin ? 'Войти' : 'Создать аккаунт'}
+            {loading
+              ? t(isLogin ? 'auth.loading.login' : 'auth.loading.register')
+              : t(isLogin ? 'auth.submit.login' : 'auth.submit.register')}
           </button>
         </form>
 
@@ -90,7 +96,7 @@ const AuthForm = ({ isLogin, showPassword, setShowPassword, formData, handleInpu
             onClick={() => setIsLogin(!isLogin)}
             className="switch-button"
           >
-            {isLogin ? 'Нет аккаунта? Зарегистрироваться' : 'Уже есть аккаунт? Войти'}
+            {t(isLogin ? 'auth.switch.toRegister' : 'auth.switch.toLogin')}
           </button>
         </div>
       </div>
