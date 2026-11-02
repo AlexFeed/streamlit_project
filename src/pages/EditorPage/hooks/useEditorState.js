@@ -8,6 +8,7 @@ import {
 } from '../services/gridLayout.js';
 import {EDITOR_DRAFT_STORAGE_KEY} from "../../../shared/constants/storageKeys.js";
 import useTranslation from '../../../shared/i18n/useTranslation.js';
+import { useCanvasHistory } from './useCanvasHistory.js';
 
 const normalizeComponents = normalizeComponentLayouts;
 
@@ -54,7 +55,15 @@ const createComponentFromPaletteItem = (
 
 export const useEditorState = ({ useDraftStorage = true, defaultDatasetId = ''}) => {
     const { t } = useTranslation();
-    const [components, setComponents] = useState(() => {
+    const {
+        state: components,
+        setState: setComponents,
+        reset: resetComponents,
+        undo,
+        redo,
+        canUndo,
+        canRedo,
+    } = useCanvasHistory(() => {
         if (!useDraftStorage) {
             return [];
         }
@@ -65,9 +74,9 @@ export const useEditorState = ({ useDraftStorage = true, defaultDatasetId = ''})
     const [selectedId, setSelectedId] = useState(null);
 
     const replaceComponents = useCallback((nextComponents) => {
-        setComponents(normalizeComponents(nextComponents));
+        resetComponents(normalizeComponents(nextComponents));
         setSelectedId(null);
-    }, []);
+    }, [resetComponents]);
 
     useEffect(() => {
         if (!useDraftStorage) {
@@ -187,7 +196,7 @@ export const useEditorState = ({ useDraftStorage = true, defaultDatasetId = ''})
             ]);
         });
         setSelectedId(duplicate.id);
-    }, [components]);
+    }, [components, setComponents]);
 
     const setDashboardLayout = useCallback((gridLayout) => {
         if (!Array.isArray(gridLayout)) return;
@@ -208,7 +217,7 @@ export const useEditorState = ({ useDraftStorage = true, defaultDatasetId = ''})
                 },
             };
         }));
-    }, []);
+    }, [setComponents]);
 
     const selectComponent = useCallback((id) => {
         setSelectedId(id);
@@ -225,7 +234,7 @@ export const useEditorState = ({ useDraftStorage = true, defaultDatasetId = ''})
     const deleteComponent = useCallback((id) => {
         setComponents((prev) => prev.filter((item) => item.id !== id));
         setSelectedId((prev) => (prev === id ? null : prev));
-    }, []);
+    }, [setComponents]);
 
     const deleteSelectedComponent = () => {
         if (!selectedId) return;
@@ -261,5 +270,9 @@ export const useEditorState = ({ useDraftStorage = true, defaultDatasetId = ''})
         deleteComponent,
         deleteSelectedComponent,
         clearCanvas,
+        undo,
+        redo,
+        canUndo,
+        canRedo,
     };
 };

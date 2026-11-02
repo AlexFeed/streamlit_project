@@ -313,6 +313,18 @@
   padding: var(--space-2) 14px;
 }
 
+.editor-history-button {
+  min-width: 38px;
+  padding-right: var(--space-2);
+  padding-left: var(--space-2);
+}
+
+.editor-history-button:disabled {
+  color: var(--color-text-muted);
+  opacity: 0.4;
+  transform: none;
+}
+
 .editor-header-divider {
   width: 1px;
   height: 24px;

@@ -1,8 +1,10 @@
 import {
     Database,
     Download,
+    Redo2,
     Save,
     Trash2,
+    Undo2,
     Upload,
     X,
     House
@@ -16,6 +18,10 @@ const EditorHeader = ({
                           onRemoveDataset,
                           isDatasetClearing,
                           isGenerating,
+                          onUndo,
+                          onRedo,
+                          canUndo,
+                          canRedo,
                           onSaveProject,
                           onGoHome,
                           onUploadDataset
@@ -61,6 +67,28 @@ const EditorHeader = ({
                 </button>
 
                 <div className="editor-header-divider"/>
+
+                <button
+                    type="button"
+                    onClick={onUndo}
+                    disabled={!canUndo}
+                    className="btn btn-secondary editor-action-button editor-history-button"
+                    title={t('editor.undoShortcut')}
+                    aria-label={t('editor.undo')}
+                >
+                    <Undo2 aria-hidden="true" />
+                </button>
+
+                <button
+                    type="button"
+                    onClick={onRedo}
+                    disabled={!canRedo}
+                    className="btn btn-secondary editor-action-button editor-history-button"
+                    title={t('editor.redoShortcut')}
+                    aria-label={t('editor.redo')}
+                >
+                    <Redo2 aria-hidden="true" />
+                </button>
 
                 <button
                     type="button"

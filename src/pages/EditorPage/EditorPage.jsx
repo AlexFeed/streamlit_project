@@ -17,7 +17,7 @@ import {
 import { useEditorState } from './hooks/useEditorState';
 import {useDatasetState} from './hooks/useDatasetState';
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { useProjectState } from './hooks/useProjectState.js';
 import {useGenerateState} from "./hooks/useGenerateState.jsx";
@@ -64,6 +64,10 @@ const EditorPage = () => {
         deleteComponent,
         deleteSelectedComponent,
         clearCanvas,
+        undo,
+        redo,
+        canUndo,
+        canRedo,
     } = useEditorState({
         useDraftStorage: isDraftMode,
         defaultDatasetId: datasets[0]?.datasetId || '',
@@ -88,6 +92,31 @@ const EditorPage = () => {
         isGenerating,
         handleGenerate
     } = useGenerateState();
+
+    useEffect(() => {
+        const handleHistoryShortcut = (event) => {
+            const target = event.target;
+            const isEditingText = target instanceof HTMLElement
+                && (target.isContentEditable
+                    || ['INPUT', 'TEXTAREA'].includes(target.tagName));
+            if (isEditingText || !(event.ctrlKey || event.metaKey)) return;
+
+            const key = event.key.toLowerCase();
+            if (key === 'z' && event.shiftKey) {
+                event.preventDefault();
+                redo();
+            } else if (key === 'y' && !event.shiftKey) {
+                event.preventDefault();
+                redo();
+            } else if (key === 'z') {
+                event.preventDefault();
+                undo();
+            }
+        };
+
+        window.addEventListener('keydown', handleHistoryShortcut);
+        return () => window.removeEventListener('keydown', handleHistoryShortcut);
+    }, [redo, undo]);
 
     const {
         sensors,
@@ -227,6 +256,10 @@ const EditorPage = () => {
                         onRemoveDataset={handleRemoveDataset}
                         isDatasetClearing={isDatasetClearing}
                         isGenerating={isGenerating}
+                        onUndo={undo}
+                        onRedo={redo}
+                        canUndo={canUndo}
+                        canRedo={canRedo}
                         onSaveProject={handleSaveClick}
                         onGoHome={handleGoHome}
                         onUploadDataset={() => setIsUploadDatasetModalOpen(true)}
