@@ -47,6 +47,7 @@ const AuthPage = () => {
         : await register({
             email: formData.email,
             password: formData.password,
+            name: formData.name,
           });
 
       saveAuth(authResponse);

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { logout } from '../../api/authApi.js';
 import { listProjects, deleteProject, updateProject } from '../../api/projectsApi.js';
+import SettingsModal from './SettingsModal.jsx';
 import EmptyState from './EmptyState';
 import Header from './Header';
 import ProjectCard from './ProjectCard';
@@ -19,6 +20,8 @@ const ProjectsPage = () => {
   const [viewMode, setViewMode] = useState('grid');
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('projects');
 
   const handleLogout = () => {
     const confirmed = window.confirm(
@@ -147,12 +150,37 @@ const ProjectsPage = () => {
     );
   };
 
+  const renderDocumentation = () => (
+    <section className="sp-documentation">
+      <h2 className="sp-section-title">{t('projects.documentation')}</h2>
+      <p className="sp-section-subtitle">{t('projects.documentationIntro')}</p>
+      <div className="sp-documentation-card">
+        <h3>{t('projects.documentation.createTitle')}</h3>
+        <p>{t('projects.documentation.createDescription')}</p>
+      </div>
+      <div className="sp-documentation-card">
+        <h3>{t('projects.documentation.editTitle')}</h3>
+        <p>{t('projects.documentation.editDescription')}</p>
+      </div>
+      <button
+        type="button"
+        className="btn btn-primary"
+        onClick={handleOpenCreateModal}
+      >
+        {t('projects.new')}
+      </button>
+    </section>
+  );
+
   return (
     <div className="page-container sp-projects-page">
       <Sidebar 
         projectsCount={projects.length} 
+        activeTab={activeTab}
+        onSelectTab={setActiveTab}
         onLogout={handleLogout} 
         onExtensionsClick={() => navigate('/extensions')} 
+        onSettingsClick={() => setIsSettingsOpen(true)}
       />
       <div className="sp-projects-main">
         <div className="sp-gradient-overlay" />
@@ -163,10 +191,18 @@ const ProjectsPage = () => {
           setViewMode={setViewMode}
           onCreateProject={handleOpenCreateModal}
         />
-        <main className="sp-projects-content sp-custom-scrollbar">
-          {renderProjects()}
+        <main
+          id="projects-tabpanel"
+          className="sp-projects-content sp-custom-scrollbar"
+          role="tabpanel"
+          aria-labelledby={activeTab === 'projects' ? 'projects-list-tab' : 'projects-documentation-tab'}
+        >
+          {activeTab === 'projects' ? renderProjects() : renderDocumentation()}
         </main>
       </div>
+      {isSettingsOpen && (
+        <SettingsModal onClose={() => setIsSettingsOpen(false)} />
+      )}
     </div>
   );
 };

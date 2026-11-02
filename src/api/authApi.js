@@ -16,13 +16,13 @@ import {logoutAndClearLocalData} from "./authStorage.js";
 //   access_token: string,
 //   token_type: "bearer"
 // }
-export const register = async ({ email, password }) => {
+export const register = async ({ email, password, name }) => {
     const response = await fetch(`${API_BASE_URL}/auth/register`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, name }),
     });
 
     if (!response.ok) {
@@ -88,6 +88,24 @@ export const getMe = async () => {
         const error = await response.json().catch(() => null);
 
         throw new Error(error?.detail || 'Unauthorized');
+    }
+
+    return response.json();
+};
+
+export const changePassword = async ({ currentPassword, newPassword }) => {
+    const response = await authFetch('/auth/password', {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ currentPassword, newPassword }),
+    });
+
+    if (!response.ok) {
+        const error = await response.json().catch(() => null);
+
+        throw new Error(error?.detail || 'Password change failed');
     }
 
     return response.json();

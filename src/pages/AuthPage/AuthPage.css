@@ -109,19 +109,6 @@
   color: white;
 }
 
-.auth-page .logo-text {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: white;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  margin-bottom: 4px;
-}
-
-.auth-page .logo-text span {
-  color: #f97316;
-}
-
 .auth-page .badge {
   margin-top: 16px;
   display: flex;
