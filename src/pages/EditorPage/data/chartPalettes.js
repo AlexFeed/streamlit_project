@@ -2,36 +2,47 @@ export const chartPalettes = [
     {
         id: 'ocean',
         name: 'Ocean',
-        colors: ['#0ea5e9', '#3b82f6', '#6366f1', '#8b5cf6'],
+        colors: ['#3478c8', '#4e78c7', '#7567c9', '#9b62b5'],
     },
     {
         id: 'sunset',
         name: 'Sunset',
-        colors: ['#fbbf24', '#f97316', '#ef4444', '#db2777'],
+        colors: ['#d99a2b', '#e8793b', '#d65f59', '#bc587f'],
     },
     {
         id: 'forest',
         name: 'Forest',
-        colors: ['#a3e635', '#22c55e', '#10b981', '#0f766e'],
+        colors: ['#829c3d', '#398b67', '#2f927a', '#277c70'],
     },
     {
         id: 'berry',
         name: 'Berry',
-        colors: ['#f472b6', '#ec4899', '#a855f7', '#6366f1'],
+        colors: ['#c94f8a', '#b94f9a', '#9859b8', '#7656c8'],
     },
     {
         id: 'ice',
         name: 'Ice',
-        colors: ['#cffafe', '#67e8f9', '#22d3ee', '#0284c7'],
+        colors: ['#49aeb8', '#369bb4', '#3486b8', '#3478c8'],
     },
     {
         id: 'mono',
         name: 'Mono',
-        colors: ['#e4e4e7', '#a1a1aa', '#71717a', '#3f3f46'],
+        colors: ['#b7aaa0', '#978c85', '#786f69', '#5c5550'],
     },
 ];
 
 export const defaultPaletteId = 'ocean';
+
+const legacyDefaultChartColors = {
+    line_chart: { '#60a5fa': '#3478c8', '#66879a': '#3478c8' },
+    bar_chart: { '#3b82f6': '#3478c8', '#66879a': '#3478c8' },
+    area_chart: { '#818cf8': '#c94f8a', '#b77f91': '#c94f8a' },
+    scatter_plot: { '#38bdf8': '#2f91a0', '#718fa1': '#2f91a0' },
+};
+
+export const getChartColor = (type, color) => (
+    legacyDefaultChartColors[type]?.[color] || color
+);
 
 export const getPaletteColors = (
     paletteId = defaultPaletteId,
@@ -67,7 +78,7 @@ export const interpolatePaletteColor = (
     max,
     colors
 ) => {
-    if (!colors?.length) return '#3b82f6';
+    if (!colors?.length) return '#3478c8';
     if (colors.length === 1 || min === max) return colors[0];
 
     const normalized = Math.max(0, Math.min(1, (value - min) / (max - min)));

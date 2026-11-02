@@ -164,17 +164,17 @@ const UploadDatasetModal = ({
                     onClose();
                 }
             }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6 backdrop-blur-sm"
+            className="editor-upload-backdrop fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6 backdrop-blur-sm"
         >
             <form
                 onSubmit={handleSubmit}
                 onClick={(event) => event.stopPropagation()}
-                className="w-full max-w-lg rounded-3xl border border-zinc-800 bg-zinc-950 p-6 shadow-2xl shadow-black/50"
+                className="editor-upload-modal w-full max-w-lg rounded-3xl border border-zinc-800 bg-zinc-950 p-6 shadow-2xl shadow-black/50"
             >
                 {/* Modal header */}
                 <div className="relative text-center">
                     <div className="px-8">
-                        <h2 className="text-xl font-semibold text-white">{t('editor.upload')}</h2>
+                        <h2 className="editor-upload-title text-xl font-semibold text-white">{t('editor.upload')}</h2>
                         <p className="mt-1 text-xs text-zinc-400">
                             {t('editor.uploadFormats')}
                         </p>
@@ -195,9 +195,9 @@ const UploadDatasetModal = ({
                         onDragOver={(e) => e.preventDefault()}
                         onDrop={handleDrop}
                         onClick={() => fileInputRef.current?.click()}
-                        className={`group relative flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-5 text-center transition ${
+                        className={`editor-upload-dropzone group relative flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-5 text-center transition ${
                             selectedFile
-                                ? 'border-emerald-500/40 bg-emerald-500/5'
+                                ? 'is-file-selected border-emerald-500/40 bg-emerald-500/5'
                                 : 'border-zinc-800 bg-zinc-900/50 hover:border-zinc-700 hover:bg-zinc-900'
                         }`}
                     >
@@ -260,7 +260,7 @@ const UploadDatasetModal = ({
                             onChange={(e) => setDatasetName(e.target.value)}
                             disabled={isUploading}
                             placeholder={t('editor.datasetNamePlaceholder')}
-                            className={`w-full rounded-2xl border bg-zinc-900 px-4 py-2.5 text-sm text-white outline-none transition ${
+                            className={`editor-upload-input w-full rounded-2xl border bg-zinc-900 px-4 py-2.5 text-sm text-white outline-none transition ${
                                 hasDotInName
                                     ? 'border-red-500/60 focus:border-red-500'
                                     : 'border-zinc-800 focus:border-blue-500'
@@ -282,7 +282,7 @@ const UploadDatasetModal = ({
                                 value={delimiter}
                                 onChange={(e) => setDelimiter(e.target.value)}
                                 disabled={isUploading || !selectedFile}
-                                className="w-full rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-sm text-white outline-none transition focus:border-blue-500 disabled:opacity-50"
+                                className="editor-upload-input w-full rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-sm text-white outline-none transition focus:border-blue-500 disabled:opacity-50"
                             >
                                 {DELIMITER_OPTIONS.map((opt) => (
                                     <option key={opt.value} value={opt.value} className="bg-zinc-900 text-white">
@@ -311,7 +311,7 @@ const UploadDatasetModal = ({
                                     value={sheetName}
                                     onChange={(e) => setSheetName(e.target.value)}
                                     disabled={isUploading || isInspectingSheets}
-                                    className="w-full rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-sm text-white outline-none transition focus:border-blue-500"
+                                    className="editor-upload-input w-full rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-sm text-white outline-none transition focus:border-blue-500"
                                 >
                                     {availableSheets.map((sheet) => (
                                         <option key={sheet} value={sheet} className="bg-zinc-900 text-white">
@@ -326,7 +326,7 @@ const UploadDatasetModal = ({
                                     onChange={(e) => setSheetName(e.target.value)}
                                     disabled={isUploading || isInspectingSheets}
                                     placeholder={t('editor.defaultSheet')}
-                                    className="w-full rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-sm text-white outline-none transition focus:border-blue-500"
+                                    className="editor-upload-input w-full rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-sm text-white outline-none transition focus:border-blue-500"
                                 />
                             )}
                         </div>
