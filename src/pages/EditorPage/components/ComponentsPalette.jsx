@@ -5,7 +5,7 @@ import {
 import { useDraggable } from '@dnd-kit/core';
 import { PALETTE_GROUPS, paletteItems } from '../data/paletteItems';
 import ThemeToggle from '../../../shared/ThemeToggle.jsx';
-import LanguageToggle from '../../../shared/LanguageToggle.jsx';
+import StreamlitWordmark from '../../../shared/StreamlitWordmark.jsx';
 import useTranslation from '../../../shared/i18n/useTranslation.js';
 
 const PaletteItem = ({ item, onAddComponent }) => {
@@ -61,9 +61,7 @@ const ComponentsPalette = ({ onAddComponent, onGoHome }) => {
                 <div className="editor-brand-icon">
                     <LayoutDashboard aria-hidden="true" />
                 </div>
-                <div>
-                    <h1 className="editor-brand-title">Streamlit Builder</h1>
-                </div>
+                <StreamlitWordmark />
             </button>
         </div>
 
@@ -93,8 +91,7 @@ const ComponentsPalette = ({ onAddComponent, onGoHome }) => {
         </div>
         <div className="editor-palette-footer">
             <div className="sidebar-controls">
-                <LanguageToggle />
-                <ThemeToggle />
+                <ThemeToggle sliderOnly />
             </div>
         </div>
     </aside>

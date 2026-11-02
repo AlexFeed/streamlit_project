@@ -1,7 +1,7 @@
 import React from 'react';
 import { Zap } from 'lucide-react';
 import ThemeToggle from '../../../shared/ThemeToggle.jsx';
-import LanguageToggle from '../../../shared/LanguageToggle.jsx';
+import StreamlitWordmark from '../../../shared/StreamlitWordmark.jsx';
 import useTranslation from '../../../shared/i18n/useTranslation.js';
 
 const Sidebar = ({ isLogin }) => {
@@ -15,9 +15,7 @@ const Sidebar = ({ isLogin }) => {
         <div className="logo-icon">
           <Zap size={32} className="text-white" />
         </div>
-        <h1 className="logo-text">
-          Stream<span>Lit</span>
-        </h1>
+        <StreamlitWordmark />
         <div className="badge">
           <span className="badge-text">no-code builder</span>
         </div>
@@ -36,7 +34,6 @@ const Sidebar = ({ isLogin }) => {
       </div>
       <div className="auth-sidebar-footer">
         <div className="sidebar-controls">
-          <LanguageToggle />
           <ThemeToggle />
         </div>
       </div>

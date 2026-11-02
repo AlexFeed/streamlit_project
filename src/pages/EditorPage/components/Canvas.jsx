@@ -167,9 +167,6 @@ const Canvas = ({
                         <h2>
                             {t('editor.canvasTitle')}
                         </h2>
-                        <span className="editor-live-badge">
-                            Live
-                        </span>
                     </div>
                     <p className="dashboard-canvas-description">
                         {t('editor.canvasDescription')}

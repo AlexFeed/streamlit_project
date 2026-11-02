@@ -2,7 +2,7 @@ import React from 'react';
 import { Plus, Zap, FolderOpen } from 'lucide-react';
 import * as Icons from 'lucide-react';
 import ThemeToggle from '../../shared/ThemeToggle.jsx';
-import LanguageToggle from '../../shared/LanguageToggle.jsx';
+import StreamlitWordmark from '../../shared/StreamlitWordmark.jsx';
 import useTranslation from '../../shared/i18n/useTranslation.js';
 
 const Sidebar = ({ categories, selectedCategory, onSelectCategory, activeCount, totalCount, onAddClick, onProjectsClick }) => {
@@ -20,9 +20,7 @@ const Sidebar = ({ categories, selectedCategory, onSelectCategory, activeCount, 
         <div className="sidebar-icon">
           <Zap size={32} />
         </div>
-        <h1 className="sidebar-title">
-          Stream<span>lit</span>
-        </h1>
+        <StreamlitWordmark />
         <div className="status-badge">
           <span className="status-text">{t('extensions.count', { active: activeCount, total: totalCount })}</span>
         </div>
@@ -55,7 +53,6 @@ const Sidebar = ({ categories, selectedCategory, onSelectCategory, activeCount, 
           <span>{t('extensions.toProjects')}</span>
         </button>
         <div className="sidebar-controls">
-          <LanguageToggle />
           <ThemeToggle />
         </div>
       </div>

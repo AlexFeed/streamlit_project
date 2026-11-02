@@ -27,7 +27,6 @@ const EditorHeader = ({
             <div>
                 <div className="editor-header-title">
                     <h1>{t('editor.title')}</h1>
-                    <span className="editor-live-badge">Live</span>
                 </div>
             </div>
 
