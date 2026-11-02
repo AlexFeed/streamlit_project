@@ -105,6 +105,7 @@ export const buildDashboardSchema = (snapshot, t = (key) => key) => {
             name: ds.name || 'data.csv',
             format: ds.format || 'csv',
             delimiter: ds.delimiter || null,
+            encoding: ds.encoding || null,
             sheetName: ds.sheetName || null,
             fields: ds.fields || [],
         })),

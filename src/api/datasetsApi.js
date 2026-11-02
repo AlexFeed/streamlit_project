@@ -16,14 +16,15 @@ import { authFetch } from './apiClient.js';
 //   sheetName: string | null,
 //   fields: string[],
 //   fieldTypes: Record<string, "number" | "datetime" | "string" | "boolean">,
-//   size: number,
+
+//   size: number,
 //   createdAt: string
 // }
 export const uploadDataset = async (payload) => {
     const formData = new FormData();
 
     if (payload && payload.file) {
-        const { file, name, delimiter, sheetName } = payload;
+        const { file, name, delimiter, encoding, sheetName } = payload;
         formData.append('dataset', file);
         if (name) formData.append('name', name);
         if (delimiter && delimiter !== 'auto') formData.append('delimiter', delimiter);
