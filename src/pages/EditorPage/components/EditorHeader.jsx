@@ -7,17 +7,20 @@ import {
     Undo2,
     Upload,
     X,
-    House
+    House,
+    Eye,
 } from 'lucide-react';
 import useTranslation from '../../../shared/i18n/useTranslation.js';
 
 const EditorHeader = ({
                           onClearCanvas,
                           onGenerateDashboard,
+                          onPreviewDashboard,
                           datasets = [],
                           onRemoveDataset,
                           isDatasetClearing,
                           isGenerating,
+                          isPreviewLoading,
                           onUndo,
                           onRedo,
                           canUndo,
@@ -88,6 +91,16 @@ const EditorHeader = ({
                     aria-label={t('editor.redo')}
                 >
                     <Redo2 aria-hidden="true" />
+                </button>
+
+                <button
+                    type="button"
+                    onClick={onPreviewDashboard}
+                    disabled={isPreviewLoading}
+                    className="btn btn-secondary editor-action-button"
+                >
+                    <Eye aria-hidden="true" />
+                    {isPreviewLoading ? t('editor.previewing') : t('editor.preview')}
                 </button>
 
                 <button

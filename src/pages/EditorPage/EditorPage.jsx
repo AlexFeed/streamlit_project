@@ -25,6 +25,8 @@ import { useEditorDnd } from './hooks/useEditorDnd.js';
 import './EditorPage.css';
 import useTranslation from '../../shared/i18n/useTranslation.js';
 import { captureCanvasPreview } from './services/captureCanvasPreview.js';
+import {usePreviewState} from "./hooks/usePreviewState.js";
+import PreviewModal from "./components/modals/PreviewModal.jsx";
 
 
 const EditorPage = () => {
@@ -93,6 +95,26 @@ const EditorPage = () => {
         handleGenerate
     } = useGenerateState();
 
+    const {
+        isPreviewLoading,
+        previewUrl,
+        isPreviewModalOpen,
+        handleOpenPreview,
+        handleClosePreview,
+    } = usePreviewState();
+
+    const {
+        sensors,
+        activeDrag,
+        handleDragStart,
+        handleDragCancel,
+        handleDragEnd,
+    } = useEditorDnd({
+        components,
+        addComponent: addLocalizedComponent,
+        reorderComponent,
+    });
+
     useEffect(() => {
         const handleHistoryShortcut = (event) => {
             const target = event.target;
@@ -118,17 +140,6 @@ const EditorPage = () => {
         return () => window.removeEventListener('keydown', handleHistoryShortcut);
     }, [redo, undo]);
 
-    const {
-        sensors,
-        activeDrag,
-        handleDragStart,
-        handleDragCancel,
-        handleDragEnd,
-    } = useEditorDnd({
-        components,
-        addComponent: addLocalizedComponent,
-        reorderComponent,
-    });
 
     const handleRemoveDataset = async (datasetId) => {
         const targetDataset = datasets.find((ds) => ds.datasetId === datasetId);
@@ -236,6 +247,11 @@ const EditorPage = () => {
         await handleGenerate(snapshot);
     };
 
+    const onPreviewClick = async () => {
+        const snapshot = getProjectSnapshot();
+        await handleOpenPreview(snapshot);
+    };
+
     return (
         <DndContext
             sensors={sensors}
@@ -252,10 +268,12 @@ const EditorPage = () => {
                     <EditorHeader
                         onClearCanvas={clearCanvas}
                         onGenerateDashboard={onGenerateClick}
+                        onPreviewDashboard={onPreviewClick}
                         datasets={datasets}
                         onRemoveDataset={handleRemoveDataset}
                         isDatasetClearing={isDatasetClearing}
                         isGenerating={isGenerating}
+                        isPreviewLoading={isPreviewLoading}
                         onUndo={undo}
                         onRedo={redo}
                         canUndo={canUndo}
@@ -275,6 +293,12 @@ const EditorPage = () => {
                         isSaving={isProjectSaving}
                         onClose={() => setIsSaveModalOpen(false)}
                         onConfirm={handleConfirmSave}
+                    />
+
+                    <PreviewModal
+                        isOpen={isPreviewModalOpen}
+                        previewUrl={previewUrl}
+                        onClose={handleClosePreview}
                     />
 
                     {isProjectLoading && (
