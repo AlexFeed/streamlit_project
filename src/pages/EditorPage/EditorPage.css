@@ -953,3 +953,41 @@
 [data-theme="light"] .editor-upload-modal button[type="submit"]:hover {
   background: linear-gradient(135deg, #dd6b27, #e99435);
 }
+
+/* Custom dropdowns in light theme */
+[data-theme="light"] .editor-upload-modal button.editor-upload-input,
+[data-theme="light"] .editor-upload-modal button.editor-upload-input[type="button"] {
+  border-color: #dfd4c8;
+  background: rgb(255 253 249 / 94%) !important;
+  color: #342f2b !important;
+}
+
+[data-theme="light"] .editor-upload-modal button.editor-upload-input:hover {
+  background: rgb(255 253 249 / 100%) !important;
+}
+
+[data-theme="light"] .editor-upload-dropdown {
+  border-color: #dfd4c8;
+  background: rgb(255 253 249 / 98%);
+  box-shadow: 0 16px 36px rgb(93 65 54 / 16%);
+}
+
+[data-theme="light"] .editor-upload-modal .editor-upload-dropdown button[type="button"] {
+  border: none;
+  background: transparent;
+  color: #342f2b;
+}
+
+[data-theme="light"] .editor-upload-modal .editor-upload-dropdown button[type="button"]:hover {
+  background: #f5eee5;
+  color: #342f2b;
+}
+
+[data-theme="light"] .editor-upload-modal .editor-upload-dropdown button[type="button"].is-selected {
+  background: linear-gradient(135deg, #ed792f, #f3a342) !important;
+  color: #ffffff !important;
+}
+
+[data-theme="light"] .editor-upload-modal .editor-upload-dropdown button[type="button"].is-selected:hover {
+  background: linear-gradient(135deg, #e46d23, #eb9736) !important;
+}

@@ -4,13 +4,43 @@ import {useEffect, useRef, useState} from "react";
 import {toast} from "sonner";
 import useTranslation from "../../../../shared/i18n/useTranslation.js";
 
-
 const DELIMITER_OPTIONS = [
-    {value: 'auto', labelKey: 'editor.delimiter.auto'},
-    {value: ',', labelKey: 'editor.delimiter.comma'},
-    {value: ';', labelKey: 'editor.delimiter.semicolon'},
-    {value: '\t', labelKey: 'editor.delimiter.tab'},
-    {value: '|', labelKey: 'editor.delimiter.pipe'},
+    { value: 'auto', labelKey: 'editor.delimiter.auto' },
+    { value: ',', labelKey: 'editor.delimiter.comma' },
+    { value: ';', labelKey: 'editor.delimiter.semicolon' },
+    { value: '\t', labelKey: 'editor.delimiter.tab' },
+    { value: '|', labelKey: 'editor.delimiter.pipe' },
+];
+
+const ENCODING_OPTIONS = [
+    { value: 'auto', labelKey: 'editor.encoding.auto' },
+    // Unicode
+    { value: 'utf-8', labelKey: 'editor.encoding.utf8' },
+    { value: 'utf-8-sig', labelKey: 'editor.encoding.utf8sig' },
+    { value: 'utf-16', labelKey: 'editor.encoding.utf16' },
+    { value: 'utf-16-le', labelKey: 'editor.encoding.utf16le' },
+    { value: 'utf-16-be', labelKey: 'editor.encoding.utf16be' },
+    // Cyrillic
+    { value: 'windows-1251', labelKey: 'editor.encoding.cp1251' },
+    { value: 'cp866', labelKey: 'editor.encoding.cp866' },
+    { value: 'koi8-r', labelKey: 'editor.encoding.koi8r' },
+    { value: 'koi8-u', labelKey: 'editor.encoding.koi8u' },
+    { value: 'iso-8859-5', labelKey: 'editor.encoding.iso8859_5' },
+    { value: 'mac_cyrillic', labelKey: 'editor.encoding.mac_cyrillic' },
+    // Western & Central Europe
+    { value: 'windows-1252', labelKey: 'editor.encoding.cp1252' },
+    { value: 'iso-8859-1', labelKey: 'editor.encoding.iso8859_1' },
+    { value: 'iso-8859-15', labelKey: 'editor.encoding.iso8859_15' },
+    { value: 'windows-1250', labelKey: 'editor.encoding.windows1250' },
+    { value: 'iso-8859-2', labelKey: 'editor.encoding.iso8859_2' },
+    // Asia & other regions
+    { value: 'shift_jis', labelKey: 'editor.encoding.shift_jis' },
+    { value: 'euc-jp', labelKey: 'editor.encoding.euc_jp' },
+    { value: 'gb18030', labelKey: 'editor.encoding.gb18030' },
+    { value: 'big5', labelKey: 'editor.encoding.big5' },
+    { value: 'euc-kr', labelKey: 'editor.encoding.euc_kr' },
+    { value: 'windows-1254', labelKey: 'editor.encoding.windows1254' },
+    { value: 'windows-1256', labelKey: 'editor.encoding.windows1256' },
 ];
 
 const UploadDatasetModal = ({
@@ -26,9 +56,13 @@ const UploadDatasetModal = ({
     const [selectedFile, setSelectedFile] = useState(null);
     const [datasetName, setDatasetName] = useState('');
     const [delimiter, setDelimiter] = useState('auto');
+    const [encoding, setEncoding] = useState('auto');
     const [sheetName, setSheetName] = useState('');
     const [availableSheets, setAvailableSheets] = useState([]);
     const [isInspectingSheets, setIsInspectingSheets] = useState(false);
+    const [isDelimiterOpen, setIsDelimiterOpen] = useState(false);
+    const [isEncodingOpen, setIsEncodingOpen] = useState(false);
+    const [isSheetOpen, setIsSheetOpen] = useState(false);
 
     // Reset form state when the modal closes.
     useEffect(() => {
@@ -36,9 +70,13 @@ const UploadDatasetModal = ({
             setSelectedFile(null);
             setDatasetName('');
             setDelimiter('auto');
+            setEncoding('auto');
             setSheetName('');
             setAvailableSheets([]);
             setIsInspectingSheets(false);
+            setIsDelimiterOpen(false);
+            setIsEncodingOpen(false);
+            setIsSheetOpen(false);
             if (fileInputRef.current) fileInputRef.current.value = '';
         }
     }, [isOpen]);
@@ -124,6 +162,7 @@ const UploadDatasetModal = ({
             file: selectedFile,
             name: trimmedName,
             delimiter: isExcel ? null : delimiter,
+            encoding: isExcel ? null : encoding,
             sheetName: isExcel ? sheetName : null,
         });
 
@@ -132,14 +171,12 @@ const UploadDatasetModal = ({
     };
 
     const isExcel = selectedFile && isExcelFile(selectedFile.name);
-
-
     const hasDotInName = datasetName.includes('.');
     const isNameEmpty = !datasetName.trim();
     // Disable submission when required input is invalid or upload is in progress.
     const isSubmitDisabled = isUploading || !selectedFile || hasDotInName || isNameEmpty;
 
-    // Delimiter selection is available for delimited text files.
+    // Delimiter and encoding selection is available for delimited text files.
     const isDelimitedFile = Boolean(
         selectedFile && (
             selectedFile.name.toLowerCase().endsWith('.csv') ||
@@ -147,7 +184,14 @@ const UploadDatasetModal = ({
         )
     );
 
+    // Support label lookup with translation keys and 'cp1251' alias
+    const currentDelimiterOpt = DELIMITER_OPTIONS.find((o) => o.value === delimiter);
+    const currentDelimiterLabel = currentDelimiterOpt ? t(currentDelimiterOpt.labelKey) : delimiter;
 
+    const currentEncodingOpt = ENCODING_OPTIONS.find(
+        (o) => o.value === encoding || (encoding === 'cp1251' && o.value === 'windows-1251')
+    );
+    const currentEncodingLabel = currentEncodingOpt ? t(currentEncodingOpt.labelKey) : encoding;
 
     return (
         <div
@@ -249,6 +293,7 @@ const UploadDatasetModal = ({
                             </div>
                         )}
                     </div>
+
                     {/* Dataset name */}
                     <div>
                         <label className="mb-1.5 block text-xs font-medium text-zinc-300">
@@ -272,26 +317,118 @@ const UploadDatasetModal = ({
                             </p>
                         )}
                     </div>
-                    {/* Delimiter selection for CSV and TSV */}
+
+                    {/* Delimiter and encoding selection for CSV and TSV */}
                     {isDelimitedFile && (
-                        <div>
-                            <label className="mb-1.5 block text-xs font-medium text-zinc-300">
-                                {t('editor.delimiter')}
-                            </label>
-                            <select
-                                value={delimiter}
-                                onChange={(e) => setDelimiter(e.target.value)}
-                                disabled={isUploading || !selectedFile}
-                                className="editor-upload-input w-full rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-sm text-white outline-none transition focus:border-blue-500 disabled:opacity-50"
-                            >
-                                {DELIMITER_OPTIONS.map((opt) => (
-                                    <option key={opt.value} value={opt.value} className="bg-zinc-900 text-white">
-                                        {t(opt.labelKey)}
-                                    </option>
-                                ))}
-                            </select>
+                        <div className="space-y-4">
+                            {/* Delimiter dropdown */}
+                            <div className="relative">
+                                <label className="mb-1.5 block text-xs font-medium text-zinc-300">
+                                    {t('editor.delimiter')}
+                                </label>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        if (isUploading) return;
+                                        setIsDelimiterOpen((prev) => !prev);
+                                        setIsEncodingOpen(false);
+                                        setIsSheetOpen(false);
+                                    }}
+                                    disabled={isUploading || !selectedFile}
+                                    className="editor-upload-input flex w-full items-center justify-between rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-left text-sm text-white outline-none transition focus:border-blue-500 disabled:opacity-50"
+                                >
+                                    <span className="truncate">
+                                        {currentDelimiterLabel}
+                                    </span>
+                                    <span className={`ml-2 text-xs text-zinc-400 transition-transform duration-200 ${isDelimiterOpen ? 'rotate-180' : ''}`}>
+                                        ▼
+                                    </span>
+                                </button>
+
+                                {isDelimiterOpen && (
+                                    <>
+                                        <div
+                                            className="fixed inset-0 z-40"
+                                            onClick={() => setIsDelimiterOpen(false)}
+                                        />
+                                        <div className="editor-upload-dropdown absolute left-0 right-0 top-full z-50 mt-1.5 max-h-48 overflow-y-auto rounded-2xl border border-zinc-700 bg-zinc-900 p-1.5 shadow-2xl shadow-black">
+                                            {DELIMITER_OPTIONS.map((opt) => (
+                                                <button
+                                                    key={opt.value}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setDelimiter(opt.value);
+                                                        setIsDelimiterOpen(false);
+                                                    }}
+                                                    className={`w-full rounded-xl px-3 py-1.5 text-left text-xs transition ${
+                                                        delimiter === opt.value
+                                                            ? 'is-selected bg-blue-600 font-medium text-white'
+                                                            : 'text-zinc-200 hover:bg-zinc-800'
+                                                    }`}
+                                                >
+                                                    {t(opt.labelKey)}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+
+                            {/* File encoding dropdown (24 options, scrollable) */}
+                            <div className="relative">
+                                <label className="mb-1.5 block text-xs font-medium text-zinc-300">
+                                    {t('editor.encoding')}
+                                </label>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        if (isUploading || !selectedFile) return;
+                                        setIsEncodingOpen((prev) => !prev);
+                                        setIsDelimiterOpen(false);
+                                        setIsSheetOpen(false);
+                                    }}
+                                    disabled={isUploading || !selectedFile}
+                                    className="editor-upload-input flex w-full items-center justify-between rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-left text-sm text-white outline-none transition focus:border-blue-500 disabled:opacity-50"
+                                >
+                                    <span className="truncate">
+                                        {currentEncodingLabel}
+                                    </span>
+                                    <span className={`ml-2 text-xs text-zinc-400 transition-transform duration-200 ${isEncodingOpen ? 'rotate-180' : ''}`}>
+                                        ▼
+                                    </span>
+                                </button>
+
+                                {isEncodingOpen && (
+                                    <>
+                                        <div
+                                            className="fixed inset-0 z-40"
+                                            onClick={() => setIsEncodingOpen(false)}
+                                        />
+                                        <div className="editor-upload-dropdown absolute left-0 right-0 top-full z-50 mt-1.5 max-h-48 overflow-y-auto rounded-2xl border border-zinc-700 bg-zinc-900 p-1.5 shadow-2xl shadow-black">
+                                            {ENCODING_OPTIONS.map((opt) => (
+                                                <button
+                                                    key={opt.value}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setEncoding(opt.value);
+                                                        setIsEncodingOpen(false);
+                                                    }}
+                                                    className={`w-full rounded-xl px-3 py-1.5 text-left text-xs transition ${
+                                                        (encoding === opt.value || (encoding === 'cp1251' && opt.value === 'windows-1251'))
+                                                            ? 'is-selected bg-blue-600 font-medium text-white'
+                                                            : 'text-zinc-200 hover:bg-zinc-800'
+                                                    }`}
+                                                >
+                                                    {t(opt.labelKey)}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
+                            </div>
                         </div>
                     )}
+
                     {/* Sheet selection for Excel */}
                     {isExcel && (
                         <div>
@@ -307,18 +444,54 @@ const UploadDatasetModal = ({
                                 )}
                             </div>
                             {availableSheets.length > 0 ? (
-                                <select
-                                    value={sheetName}
-                                    onChange={(e) => setSheetName(e.target.value)}
-                                    disabled={isUploading || isInspectingSheets}
-                                    className="editor-upload-input w-full rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-sm text-white outline-none transition focus:border-blue-500"
-                                >
-                                    {availableSheets.map((sheet) => (
-                                        <option key={sheet} value={sheet} className="bg-zinc-900 text-white">
-                                            {sheet}
-                                        </option>
-                                    ))}
-                                </select>
+                                <div className="relative">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            if (isUploading || isInspectingSheets) return;
+                                            setIsSheetOpen((prev) => !prev);
+                                            setIsDelimiterOpen(false);
+                                            setIsEncodingOpen(false);
+                                        }}
+                                        disabled={isUploading || isInspectingSheets}
+                                        className="editor-upload-input flex w-full items-center justify-between rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-left text-sm text-white outline-none transition focus:border-blue-500 disabled:opacity-50"
+                                    >
+                                        <span className="truncate">
+                                            {sheetName || t('editor.defaultSheet')}
+                                        </span>
+                                        <span className={`ml-2 text-xs text-zinc-400 transition-transform duration-200 ${isSheetOpen ? 'rotate-180' : ''}`}>
+                                            ▼
+                                        </span>
+                                    </button>
+
+                                    {isSheetOpen && (
+                                        <>
+                                            <div
+                                                className="fixed inset-0 z-40"
+                                                onClick={() => setIsSheetOpen(false)}
+                                            />
+                                            <div className="editor-upload-dropdown absolute left-0 right-0 top-full z-50 mt-1.5 max-h-48 overflow-y-auto rounded-2xl border border-zinc-700 bg-zinc-900 p-1.5 shadow-2xl shadow-black">
+                                                {availableSheets.map((sheet) => (
+                                                    <button
+                                                        key={sheet}
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setSheetName(sheet);
+                                                            setIsSheetOpen(false);
+                                                        }}
+                                                        className={`w-full rounded-xl px-3 py-1.5 text-left text-xs transition ${
+                                                            sheetName === sheet
+                                                                ? 'is-selected bg-blue-600 font-medium text-white'
+                                                                : 'text-zinc-200 hover:bg-zinc-800'
+                                                        }`}
+                                                    >
+                                                        {sheet}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
                             ) : (
                                 <input
                                     type="text"
@@ -332,6 +505,7 @@ const UploadDatasetModal = ({
                         </div>
                     )}
                 </div>
+
                 {/* Actions */}
                 <div className="mt-6 flex flex-col gap-2.5 sm:flex-row sm:justify-end">
                     <button
@@ -355,4 +529,5 @@ const UploadDatasetModal = ({
         </div>
     );
 };
+
 export default UploadDatasetModal;
