@@ -1,6 +1,6 @@
 import { Moon, Sun } from 'lucide-react';
-import useTheme from './useTheme.js';
-import useTranslation from './translation/useTranslation.js';
+import useTheme from '../useTheme.js';
+import useTranslation from '../translation/useTranslation.js';
 
 const ThemeToggle = ({ sliderOnly = false }) => {
   const { theme, toggleTheme } = useTheme();

@@ -50,6 +50,7 @@ const EditorPage = () => {
         isDatasetPreviewLoading,
         uploadNewDataset,
         removeDataset,
+        inspectSheets,
     } = useDatasetState({ useDraftStorage: isDraftMode });
 
     const {
@@ -286,7 +287,8 @@ const EditorPage = () => {
                     <UploadDatasetModal isOpen={isUploadDatasetModalOpen}
                                         isUploading={isDatasetUploading}
                                         onClose={() => setIsUploadDatasetModalOpen(false)}
-                                        onConfirm={handleModalDatasetConfirmUpload}/>
+                                        onConfirm={handleModalDatasetConfirmUpload}
+                                        onInspectSheets={inspectSheets}/>
 
                     <SaveProjectModal
                         isOpen={isSaveModalOpen}

@@ -1,10 +1,10 @@
 import { Navigate } from 'react-router-dom';
-import { getAuthToken } from '../../../api/authStorage';
+import useAuth from '../../../shared/hooks/useAuth.js';
 
 const ProtectedRoute = ({ children }) => {
-    const token = getAuthToken();
+    const { isAuthenticated } = useAuth();
 
-    if (!token) {
+    if (!isAuthenticated()) {
         return <Navigate to="/auth" replace />;
     }
 

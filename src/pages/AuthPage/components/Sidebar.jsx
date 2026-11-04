@@ -1,7 +1,7 @@
 import React from 'react';
 import { Zap } from 'lucide-react';
-import ThemeToggle from '../../../shared/ThemeToggle.jsx';
-import StreamlitWordmark from '../../../shared/StreamlitWordmark.jsx';
+import ThemeToggle from '../../../shared/theme/ThemeToggle.jsx';
+import StreamlitWordmark from '../../../shared/components/StreamlitWordmark.jsx';
 import useTranslation from '../../../shared/translation/useTranslation.js';
 
 const Sidebar = ({ isLogin }) => {
