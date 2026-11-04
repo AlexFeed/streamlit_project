@@ -2,17 +2,32 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
     gridUnitsToContentHeight,
     resolveGridCollisions,
-    normalizeComponentLayouts,
     normalizeGridWidth,
     toReactGridLayout,
 } from '../services/gridLayout.js';
-import {EDITOR_DRAFT_STORAGE_KEY} from "../../../shared/constants/storageKeys.js";
+import {
+    EDITOR_DRAFT_STORAGE_KEY,
+    EDITOR_PAGES_DRAFT_STORAGE_KEY,
+} from '../../../shared/constants/storageKeys.js';
 import useTranslation from '../../../shared/i18n/useTranslation.js';
 import { useCanvasHistory } from './useCanvasHistory.js';
+import {
+    createDefaultPages,
+    normalizeComponentsByPage,
+    normalizePages,
+} from '../services/pageState.js';
 
-const normalizeComponents = normalizeComponentLayouts;
+const loadDraftPages = () => {
+    try {
+        const saved = localStorage.getItem(EDITOR_PAGES_DRAFT_STORAGE_KEY);
+        return normalizePages(saved ? JSON.parse(saved) : null);
+    } catch (error) {
+        console.error('Could not read editor pages from local storage:', error);
+        return createDefaultPages();
+    }
+};
 
-const loadDraftComponents = () => {
+const loadDraftComponents = (pages) => {
     try {
         const saved = localStorage.getItem(EDITOR_DRAFT_STORAGE_KEY);
 
@@ -26,7 +41,7 @@ const loadDraftComponents = () => {
             return [];
         }
 
-        return normalizeComponents(parsed);
+        return normalizeComponentsByPage(parsed, pages);
     } catch (error) {
         console.error('Could not read the editor draft from local storage:', error);
         return [];
@@ -37,12 +52,15 @@ const createComponentFromPaletteItem = (
     paletteItem,
     index,
     defaultDatasetId = '',
+    pageId,
     targetLayout = null
 ) => {
     return {
         id: `${paletteItem.type}-${globalThis.crypto?.randomUUID?.() || `${Date.now()}-${index}`}`,
         type: paletteItem.type,
         datasetId: defaultDatasetId,
+        pageId,
+        parentId: null,
         config: { ...paletteItem.defaultConfig },
         bindings: { ...paletteItem.defaultBindings },
         layout: {
@@ -55,6 +73,12 @@ const createComponentFromPaletteItem = (
 
 export const useEditorState = ({ useDraftStorage = true, defaultDatasetId = ''}) => {
     const { t } = useTranslation();
+    const [pages, setPages] = useState(() => (
+        useDraftStorage ? loadDraftPages() : createDefaultPages()
+    ));
+    const [activePageId, setActivePageId] = useState(() => (
+        (useDraftStorage ? loadDraftPages() : createDefaultPages())[0].id
+    ));
     const {
         state: components,
         setState: setComponents,
@@ -68,13 +92,17 @@ export const useEditorState = ({ useDraftStorage = true, defaultDatasetId = ''})
             return [];
         }
 
-        return loadDraftComponents();
+        const draftPages = loadDraftPages();
+        return loadDraftComponents(draftPages);
     });
 
     const [selectedId, setSelectedId] = useState(null);
 
-    const replaceComponents = useCallback((nextComponents) => {
-        resetComponents(normalizeComponents(nextComponents));
+    const replaceEditorState = useCallback((nextComponents, nextPages) => {
+        const normalizedPages = normalizePages(nextPages);
+        setPages(normalizedPages);
+        setActivePageId(normalizedPages[0].id);
+        resetComponents(normalizeComponentsByPage(nextComponents, normalizedPages));
         setSelectedId(null);
     }, [resetComponents]);
 
@@ -93,13 +121,35 @@ export const useEditorState = ({ useDraftStorage = true, defaultDatasetId = ''})
         }
     }, [components, useDraftStorage]);
 
+    useEffect(() => {
+        if (!useDraftStorage) return;
+        try {
+            localStorage.setItem(
+                EDITOR_PAGES_DRAFT_STORAGE_KEY,
+                JSON.stringify(pages)
+            );
+        } catch (error) {
+            console.error('Could not save editor pages to local storage:', error);
+        }
+    }, [pages, useDraftStorage]);
+
 
     const selectedComponent = useMemo(() => {
         return components.find((item) => item.id === selectedId) || null;
     }, [components, selectedId]);
 
+    const pageComponents = useMemo(
+        () => components.filter((item) => item.pageId === activePageId),
+        [activePageId, components]
+    );
 
-    const addComponent = (paletteItem, targetIndex, targetLayout = null) => {
+
+    const addComponent = (
+        paletteItem,
+        targetIndex,
+        targetLayout = null,
+        parentId = null
+    ) => {
         const shouldInsert = Boolean(targetLayout?.insert);
         const componentLayout = targetLayout
             ? Object.fromEntries(
@@ -110,8 +160,18 @@ export const useEditorState = ({ useDraftStorage = true, defaultDatasetId = ''})
             paletteItem,
             components.length + 1,
             defaultDatasetId,
+            activePageId,
             componentLayout
         );
+        if (newComponent.type === 'page_link') {
+            newComponent.config.targetPageId = (
+                pages.find((page) => page.id !== activePageId)?.id
+                || activePageId
+            );
+        }
+        if (newComponent.type !== 'layout_group') {
+            newComponent.parentId = parentId;
+        }
         setComponents((prev) => {
             const insertIndex = Number.isInteger(targetIndex)
                 ? Math.max(0, Math.min(targetIndex, prev.length))
@@ -122,12 +182,14 @@ export const useEditorState = ({ useDraftStorage = true, defaultDatasetId = ''})
                 ...prev.slice(insertIndex),
             ];
             if (!shouldInsert) {
-                return normalizeComponents(nextComponents);
+                return normalizeComponentsByPage(nextComponents, pages);
             }
 
-            const layout = toReactGridLayout(nextComponents);
+            const layout = toReactGridLayout(nextComponents.filter(
+                (component) => component.pageId === activePageId && !component.parentId
+            ));
             const activeItem = layout.find((item) => item.i === newComponent.id);
-            if (!activeItem) return normalizeComponents(nextComponents);
+            if (!activeItem) return normalizeComponentsByPage(nextComponents, pages);
             const resolved = resolveGridCollisions(
                 layout,
                 newComponent.id,
@@ -154,6 +216,29 @@ export const useEditorState = ({ useDraftStorage = true, defaultDatasetId = ''})
         });
         setSelectedId(newComponent.id);
     };
+
+    const moveComponent = useCallback((id, parentId = null, targetLayout = null) => {
+        setComponents((current) => {
+            const next = current.map((component) => {
+                if (component.id !== id) return component;
+                const cleanTargetLayout = targetLayout
+                    ? Object.fromEntries(
+                        Object.entries(targetLayout).filter(([key]) => key !== 'insert')
+                    )
+                    : null;
+                return {
+                    ...component,
+                    parentId: component.type === 'layout_group' ? null : parentId,
+                    layout: {
+                        ...component.layout,
+                        ...(cleanTargetLayout || {}),
+                    },
+                };
+            });
+            return normalizeComponentsByPage(next, pages);
+        });
+        setSelectedId(id);
+    }, [pages, setComponents]);
 
     const reorderComponent = (activeId, overId) => {
         if (!activeId || !overId || activeId === overId) return;
@@ -189,14 +274,14 @@ export const useEditorState = ({ useDraftStorage = true, defaultDatasetId = ''})
             const sourceIndex = prev.findIndex((item) => item.id === id);
             if (sourceIndex < 0) return prev;
 
-            return normalizeComponents([
+            return normalizeComponentsByPage([
                 ...prev.slice(0, sourceIndex + 1),
                 duplicate,
                 ...prev.slice(sourceIndex + 1),
-            ]);
+            ], pages);
         });
         setSelectedId(duplicate.id);
-    }, [components, setComponents]);
+    }, [components, pages, setComponents]);
 
     const setDashboardLayout = useCallback((gridLayout) => {
         if (!Array.isArray(gridLayout)) return;
@@ -214,7 +299,12 @@ export const useEditorState = ({ useDraftStorage = true, defaultDatasetId = ''})
                     y: Math.max(0, Math.round(item.y)),
                     width: normalizeGridWidth(item.w, component.type),
                     height: gridUnitsToContentHeight(item.h, component.type),
+                    manualWidth: Boolean(item.manualWidth || component.layout?.manualWidth),
+                    manualHeight: Boolean(item.manualHeight || component.layout?.manualHeight),
                 },
+                config: item.manualHeight
+                    ? { ...component.config, heightMode: 'fixed' }
+                    : component.config,
             };
         }));
     }, [setComponents]);
@@ -232,7 +322,12 @@ export const useEditorState = ({ useDraftStorage = true, defaultDatasetId = ''})
     };
 
     const deleteComponent = useCallback((id) => {
-        setComponents((prev) => prev.filter((item) => item.id !== id));
+        setComponents((prev) => prev
+            .filter((item) => item.id !== id)
+            .map((item) => (
+                item.parentId === id ? { ...item, parentId: null } : item
+            ))
+        );
         setSelectedId((prev) => (prev === id ? null : prev));
     }, [setComponents]);
 
@@ -241,34 +336,89 @@ export const useEditorState = ({ useDraftStorage = true, defaultDatasetId = ''})
         deleteComponent(selectedId);
     };
 
+    const selectPage = useCallback((pageId) => {
+        if (!pages.some((page) => page.id === pageId)) return;
+        setActivePageId(pageId);
+        setSelectedId(null);
+    }, [pages]);
+
+    const addPage = useCallback(() => {
+        const page = {
+            id: `page-${globalThis.crypto?.randomUUID?.() || Date.now()}`,
+            title: t('editor.pageDefaultTitle', { number: pages.length + 1 }),
+        };
+        setPages((current) => [...current, page]);
+        setActivePageId(page.id);
+        setSelectedId(null);
+    }, [pages.length, t]);
+
+    const renamePage = useCallback((pageId, title) => {
+        const normalizedTitle = String(title || '').trim();
+        if (!normalizedTitle) return;
+        setPages((current) => current.map((page) => (
+            page.id === pageId ? { ...page, title: normalizedTitle } : page
+        )));
+    }, []);
+
+    const deletePage = useCallback((pageId) => {
+        if (pages.length <= 1) return;
+        const nextPages = pages.filter((page) => page.id !== pageId);
+        setPages(nextPages);
+        setComponents((current) => current
+            .filter((component) => component.pageId !== pageId)
+            .map((component) => (
+                component.type === 'page_link' && component.config?.targetPageId === pageId
+                    ? {
+                        ...component,
+                        config: {
+                            ...component.config,
+                            targetPageId: nextPages[0].id,
+                        },
+                    }
+                    : component
+            ))
+        );
+        setActivePageId((current) => (
+            current === pageId ? nextPages[0].id : current
+        ));
+        setSelectedId(null);
+    }, [pages, setComponents]);
+
     const clearCanvas = () => {
-        if (components.length === 0) return;
+        if (pageComponents.length === 0) return;
         const confirmed = window.confirm(
-            t('editor.clearConfirm')
+            t('editor.clearPageConfirm')
         );
         if (!confirmed) {
             return;
         }
-        setComponents([]);
+        setComponents((current) => current.filter(
+            (component) => component.pageId !== activePageId
+        ));
         setSelectedId(null);
-        if (useDraftStorage) {
-            localStorage.removeItem(EDITOR_DRAFT_STORAGE_KEY);
-        }
     };
 
     return {
         components,
-        setComponents: replaceComponents,
+        pageComponents,
+        pages,
+        activePageId,
+        setEditorState: replaceEditorState,
         selectedId,
         selectedComponent,
         addComponent,
         reorderComponent,
+        moveComponent,
         duplicateComponent,
         setDashboardLayout,
         selectComponent,
         updateComponent,
         deleteComponent,
         deleteSelectedComponent,
+        selectPage,
+        addPage,
+        renamePage,
+        deletePage,
         clearCanvas,
         undo,
         redo,

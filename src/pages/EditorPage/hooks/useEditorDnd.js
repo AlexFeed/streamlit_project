@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
     KeyboardSensor,
     PointerSensor,
@@ -25,6 +25,18 @@ export const useEditorDnd = ({
 
     const [activeDrag, setActiveDrag] = useState(null);
 
+    useEffect(() => {
+        const clearDragOverlay = () => setActiveDrag(null);
+        window.addEventListener('pointerup', clearDragOverlay);
+        window.addEventListener('pointercancel', clearDragOverlay);
+        window.addEventListener('blur', clearDragOverlay);
+        return () => {
+            window.removeEventListener('pointerup', clearDragOverlay);
+            window.removeEventListener('pointercancel', clearDragOverlay);
+            window.removeEventListener('blur', clearDragOverlay);
+        };
+    }, []);
+
     const handleDragStart = ({ active }) => {
         setActiveDrag(active.data.current || null);
     };
@@ -40,13 +52,21 @@ export const useEditorDnd = ({
         const dragData = active.data.current;
 
         if (dragData?.source === 'palette') {
+            const targetContainerId = over.data.current?.source === 'layout-group'
+                ? over.data.current.containerId
+                : null;
             const overIndex = components.findIndex((item) => item.id === over.id);
             const targetIndex = overIndex >= 0 ? overIndex : components.length;
             const targetLayout = over.data.current?.getPaletteDropLayout?.(
                 active.rect.current.translated,
                 dragData.paletteItem
             ) || null;
-            addComponent(dragData.paletteItem, targetIndex, targetLayout);
+            addComponent(
+                dragData.paletteItem,
+                targetIndex,
+                targetLayout,
+                targetContainerId
+            );
             return;
         }
 

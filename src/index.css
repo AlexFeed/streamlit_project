@@ -29,6 +29,40 @@
     0 28px 70px rgb(0 0 0 / 48%);
 }
 
+.dashboard-container-child-ghost {
+  z-index: 9999 !important;
+  pointer-events: none;
+  overflow: hidden;
+  opacity: 0.94;
+  transition: none !important;
+  filter: saturate(0.9);
+  box-shadow:
+    0 0 0 2px rgb(96 165 250 / 82%),
+    0 24px 64px rgb(0 0 0 / 52%);
+}
+
+.dashboard-container-insert-target::before {
+  content: "";
+  position: absolute;
+  z-index: 40;
+  left: 0;
+  right: 0;
+  top: -5px;
+  height: 3px;
+  border-radius: 999px;
+  background: rgb(96 165 250);
+  box-shadow: 0 0 12px rgb(96 165 250 / 85%);
+}
+
+[data-layout-group-direction="horizontal"] .dashboard-container-insert-target::before {
+  left: -5px;
+  right: auto;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  height: auto;
+}
+
 .canvas-resize-handle::after {
   content: "";
   position: absolute;

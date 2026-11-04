@@ -6,9 +6,11 @@ import {
     TextAreaField,
     ColorField,
     OptionSelect,
+    MultiFieldSelect,
 } from './properties/PropertyFields.jsx';
 import ColorStyleField from './properties/ColorStyleField.jsx';
 import useTranslation from '../../../shared/i18n/useTranslation.js';
+import { getAppearanceDefaults } from '../services/componentAppearance.js';
 
 const aggregationOptions = [
     { value: 'none', labelKey: 'editor.noAggregation' },
@@ -57,6 +59,7 @@ const PropertiesPanel = ({
                              onDeleteSelected,
                              onClose,
                              datasets = [],
+                             pages = [],
                          }) => {
     const { t } = useTranslation();
 
@@ -65,6 +68,7 @@ const PropertiesPanel = ({
     }
 
     const { type, config, bindings } = selectedComponent;
+    const appearance = getAppearanceDefaults(type, config);
     const componentLabel = t(paletteItems[type]?.labelKey || 'editor.componentLabel');
     const localizeOptions = (options) => options.map(({ labelKey, ...option }) => ({
         ...option,
@@ -129,7 +133,9 @@ const PropertiesPanel = ({
             const cleanedBindings = { ...component.bindings };
 
             Object.keys(cleanedBindings).forEach((key) => {
-                if (cleanedBindings[key] && !nextFields.has(cleanedBindings[key])) {
+                if (Array.isArray(cleanedBindings[key])) {
+                    cleanedBindings[key] = cleanedBindings[key].filter((field) => nextFields.has(field));
+                } else if (cleanedBindings[key] && !nextFields.has(cleanedBindings[key])) {
                     cleanedBindings[key] = '';
                 }
             });
@@ -181,7 +187,7 @@ const PropertiesPanel = ({
                             : t('editor.titleAbove')}
                     />
 
-                    {type !== 'text' && (
+                    {!['text', 'page_link', 'layout_group'].includes(type) && (
                         <FieldSelect
                             label={t('editor.dataSource')}
                             value={activeDataset?.datasetId || ''}
@@ -256,6 +262,73 @@ const PropertiesPanel = ({
                                 placeholder={t('editor.filterExample')}
                                 helperText={t('editor.shownBeforeSelect')}
                             />
+
+                            <OptionSelect
+                                label={t('editor.filterAppearance')}
+                                value={config.widget || 'selectbox'}
+                                onChange={(value) => updateConfig('widget', value)}
+                                options={[
+                                    { value: 'selectbox', label: t('editor.filterSelectbox') },
+                                    { value: 'multiselect', label: t('editor.filterMultiselect') },
+                                    { value: 'radio', label: t('editor.filterRadio') },
+                                    { value: 'segmented', label: t('editor.filterSegmented') },
+                                    { value: 'pills', label: t('editor.filterPills') },
+                                ]}
+                            />
+                        </>
+                    )}
+
+                    {type === 'table' && (
+                        <>
+                            <MultiFieldSelect
+                                label={t('editor.tableColumns')}
+                                value={bindings.columns || []}
+                                onChange={(value) => updateBinding('columns', value)}
+                                options={fieldOptions}
+                                helperText={t('editor.tableColumnsHelp')}
+                            />
+                            <TextField
+                                label={t('editor.tableRowLimit')}
+                                value={String(config.rowLimit || 50)}
+                                onChange={(value) => updateConfig('rowLimit', Math.max(1, Math.min(500, Number(value) || 1)))}
+                                helperText={t('editor.tableRowLimitHelp')}
+                            />
+                        </>
+                    )}
+
+                    {type === 'page_link' && (
+                        <>
+                            <OptionSelect
+                                label={t('editor.targetPage')}
+                                value={config.targetPageId || ''}
+                                onChange={(value) => updateConfig('targetPageId', value)}
+                                options={pages.filter((page) => page.id !== selectedComponent.pageId).map((page) => ({ value: page.id, label: page.title }))}
+                            />
+                            <OptionSelect
+                                label={t('editor.linkAppearance')}
+                                value={config.displayStyle || 'button'}
+                                onChange={(value) => updateConfig('displayStyle', value)}
+                                options={[
+                                    { value: 'button', label: t('editor.asButton') },
+                                    { value: 'link', label: t('editor.asTextLink') },
+                                ]}
+                            />
+                        </>
+                    )}
+
+                    {type === 'layout_group' && (
+                        <>
+                            <OptionSelect
+                                label={t('editor.containerDirection')}
+                                value={config.direction || 'vertical'}
+                                onChange={(value) => updateConfig('direction', value)}
+                                options={[
+                                    { value: 'vertical', label: t('editor.vertical') },
+                                    { value: 'horizontal', label: t('editor.horizontal') },
+                                ]}
+                            />
+                            <TextField label={t('editor.containerGap')} value={String(config.gap ?? 8)} onChange={(value) => updateConfig('gap', Math.max(0, Math.min(64, Number(value) || 0)))} />
+                            <TextField label={t('editor.padding')} value={String(config.padding ?? 8)} onChange={(value) => updateConfig('padding', Math.max(0, Math.min(64, Number(value) || 0)))} />
                         </>
                     )}
 
@@ -310,6 +383,11 @@ const PropertiesPanel = ({
                                 config={config}
                                 onUpdate={updateConfig}
                             />
+
+                            <ColorField label={t('editor.axisLabelColor')} value={config.axisLabelColor || '#766d66'} onChange={(value) => updateConfig('axisLabelColor', value)} />
+                            <OptionSelect label={t('editor.axisLabelSize')} value={String(config.axisLabelFontSize || 11)} onChange={(value) => updateConfig('axisLabelFontSize', Number(value))} options={[10, 11, 12, 13, 14, 16].map((size) => ({ value: String(size), label: `${size} px` }))} />
+                            <ColorField label={t('editor.axisTitleColor')} value={config.axisTitleColor || '#766d66'} onChange={(value) => updateConfig('axisTitleColor', value)} />
+                            <OptionSelect label={t('editor.axisTitleSize')} value={String(config.axisTitleFontSize || 12)} onChange={(value) => updateConfig('axisTitleFontSize', Number(value))} options={[10, 11, 12, 13, 14, 16, 18].map((size) => ({ value: String(size), label: `${size} px` }))} />
                         </>
                     )}
 
@@ -339,6 +417,97 @@ const PropertiesPanel = ({
                                 options={localizeOptions(aggregationOptions.filter((option) => option.value !== 'none'))}
                                 helperText={t('editor.aggregateMethod')}
                             />
+                        </>
+                    )}
+
+                    {!paletteItems[type]?.isChart && type !== 'table' && (
+                        <>
+                            <OptionSelect
+                                label={t('editor.contentWidth')}
+                                value={config.contentWidth || 'content'}
+                                onChange={(value) => updateConfig('contentWidth', value)}
+                                options={[
+                                    { value: 'content', label: t('editor.fitContent') },
+                                    { value: 'stretch', label: t('editor.stretch') },
+                                ]}
+                            />
+                            {type !== 'layout_group' && (
+                                <OptionSelect
+                                    label={t('editor.heightMode')}
+                                    value={config.heightMode || 'auto'}
+                                    onChange={(value) => updateConfig('heightMode', value)}
+                                    options={[
+                                        { value: 'auto', label: t('editor.fitContent') },
+                                        { value: 'fixed', label: t('editor.fixedSize') },
+                                    ]}
+                                />
+                            )}
+                        </>
+                    )}
+
+                    <OptionSelect
+                        label={t('editor.showBorder')}
+                        value={appearance.showBorder ? 'show' : 'hide'}
+                        onChange={(value) => updateConfig('showBorder', value === 'show')}
+                        options={[
+                            { value: 'show', label: t('editor.show') },
+                            { value: 'hide', label: t('editor.hide') },
+                        ]}
+                    />
+
+                    <OptionSelect
+                        label={t('editor.showBackground')}
+                        value={appearance.showBackground ? 'show' : 'hide'}
+                        onChange={(value) => updateConfig('showBackground', value === 'show')}
+                        options={[
+                            { value: 'show', label: t('editor.show') },
+                            { value: 'hide', label: t('editor.hide') },
+                        ]}
+                    />
+
+                    {!paletteItems[type]?.isChart && type !== 'table' && type !== 'layout_group' && (
+                        <>
+                            <OptionSelect
+                                label={t('editor.contentAlignment')}
+                                value={appearance.contentAlignment}
+                                onChange={(value) => updateConfig('contentAlignment', value)}
+                                options={localizeOptions(textAlignOptions)}
+                            />
+                            {appearance.heightMode === 'fixed' && (
+                                <OptionSelect
+                                    label={t('editor.verticalAlignment')}
+                                    value={appearance.verticalAlignment}
+                                    onChange={(value) => updateConfig('verticalAlignment', value)}
+                                    options={[
+                                        { value: 'top', label: t('editor.alignTop') },
+                                        { value: 'center', label: t('editor.alignMiddle') },
+                                        { value: 'bottom', label: t('editor.alignBottom') },
+                                    ]}
+                                />
+                            )}
+                            <OptionSelect
+                                label={t('editor.padding')}
+                                value={String(appearance.padding)}
+                                onChange={(value) => updateConfig('padding', Number(value))}
+                                options={[0, 4, 8, 12, 16, 24, 32].map((size) => ({ value: String(size), label: `${size} px` }))}
+                            />
+                        </>
+                    )}
+
+                    {['metric', 'selectbox', 'page_link'].includes(type) && (
+                        <>
+                            <OptionSelect
+                                label={t('editor.fontSize')}
+                                value={String(appearance.elementFontSize)}
+                                onChange={(value) => updateConfig('elementFontSize', value === 'auto' ? 'auto' : Number(value))}
+                                options={[
+                                    { value: 'auto', label: t('editor.automatic') },
+                                    ...fontSizeOptions,
+                                ]}
+                            />
+                            <OptionSelect label={t('editor.fontWeight')} value={appearance.elementFontWeight} onChange={(value) => updateConfig('elementFontWeight', value)} options={localizeOptions(fontWeightOptions)} />
+                            <OptionSelect label={t('editor.fontStyle')} value={appearance.elementFontStyle} onChange={(value) => updateConfig('elementFontStyle', value)} options={localizeOptions(fontStyleOptions)} />
+                            <ColorField label={t('editor.textColor')} value={appearance.elementTextColor} onChange={(value) => updateConfig('elementTextColor', value)} />
                         </>
                     )}
                 </div>
