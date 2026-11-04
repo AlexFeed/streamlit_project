@@ -7,7 +7,7 @@ import ExtensionGrid from './ExtensionGrid';
 import AddExtensionModal from './AddExtensionModal';
 import ConfigModal from './ConfigModal';
 import './ExtensionsPage.css';
-import useTranslation from '../../shared/i18n/useTranslation.js';
+import useTranslation from '../../shared/translation/useTranslation.js';
 
 const ExtensionsPage = () => {
   const navigate = useNavigate();

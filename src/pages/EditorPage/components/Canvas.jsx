@@ -13,7 +13,7 @@ import {
     getGridItemStyle,
     useCanvasGrid,
 } from '../hooks/useCanvasGrid.js';
-import useTranslation from '../../../shared/i18n/useTranslation.js';
+import useTranslation from '../../../shared/translation/useTranslation.js';
 
 const Canvas = ({
                     components,

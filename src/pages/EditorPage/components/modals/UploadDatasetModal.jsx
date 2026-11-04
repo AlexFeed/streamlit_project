@@ -1,8 +1,7 @@
 import {Loader2, X, Upload, FileText, FileSpreadsheet} from "lucide-react";
-import { inspectExcelSheets } from "../../../../api/datasetsApi.js";
 import {useEffect, useRef, useState} from "react";
 import {toast} from "sonner";
-import useTranslation from "../../../../shared/i18n/useTranslation.js";
+import useTranslation from "../../../../shared/translation/useTranslation.js";
 
 const DELIMITER_OPTIONS = [
     { value: 'auto', labelKey: 'editor.delimiter.auto' },
@@ -48,6 +47,7 @@ const UploadDatasetModal = ({
                                 isUploading = false,
                                 onClose,
                                 onConfirm,
+                                onInspectSheets,
                             }) => {
     const { t } = useTranslation();
 
@@ -119,7 +119,7 @@ const UploadDatasetModal = ({
             // Read available sheets from Excel files.
             try {
                 setIsInspectingSheets(true);
-                const result = await inspectExcelSheets(file);
+                const result = await onInspectSheets?.(file);
                 const sheets = result?.sheets || [];
                 setAvailableSheets(sheets);
                 if (sheets.length > 0) setSheetName(sheets[0]);
@@ -130,7 +130,7 @@ const UploadDatasetModal = ({
             } finally {
                 setIsInspectingSheets(false);
             }
-        } else {
+        }  else {
             setAvailableSheets([]);
             setSheetName('');
         }

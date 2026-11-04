@@ -5,28 +5,28 @@ import PropertiesPanel from './components/PropertiesPanel';
 import EditorHeader from './components/EditorHeader';
 import SaveProjectModal from './components/modals/SaveProjectModal';
 import UploadDatasetModal from "./components/modals/UploadDatasetModal.jsx";
+import PreviewModal from "./components/modals/PreviewModal.jsx";
 import { useParams, useNavigate } from 'react-router-dom';
 import {
     closestCenter,
     DndContext,
     DragOverlay,
 } from '@dnd-kit/core';
-
+import './EditorPage.css';
+import { toast } from 'sonner';
 
 // State hooks
 import { useEditorState } from './hooks/useEditorState';
 import {useDatasetState} from './hooks/useDatasetState';
-
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { toast } from 'sonner';
-import { useProjectState } from './hooks/useProjectState.js';
 import {useGenerateState} from "./hooks/useGenerateState.jsx";
-import { useEditorDnd } from './hooks/useEditorDnd.js';
-import './EditorPage.css';
-import useTranslation from '../../shared/i18n/useTranslation.js';
-import { captureCanvasPreview } from './services/captureCanvasPreview.js';
+import { useProjectState } from './hooks/useProjectState.js';
 import {usePreviewState} from "./hooks/usePreviewState.js";
-import PreviewModal from "./components/modals/PreviewModal.jsx";
+import { useEditorDnd } from './hooks/useEditorDnd.js';
+
+import useTranslation from '../../shared/translation/useTranslation.js';
+import { useCallback, useEffect, useRef, useState } from 'react';
+
+import { captureCanvasPreview } from './services/captureCanvasPreview.js';
 
 
 const EditorPage = () => {
@@ -50,6 +50,7 @@ const EditorPage = () => {
         isDatasetPreviewLoading,
         uploadNewDataset,
         removeDataset,
+        inspectSheets,
     } = useDatasetState({ useDraftStorage: isDraftMode });
 
     const {
@@ -286,7 +287,8 @@ const EditorPage = () => {
                     <UploadDatasetModal isOpen={isUploadDatasetModalOpen}
                                         isUploading={isDatasetUploading}
                                         onClose={() => setIsUploadDatasetModalOpen(false)}
-                                        onConfirm={handleModalDatasetConfirmUpload}/>
+                                        onConfirm={handleModalDatasetConfirmUpload}
+                                        onInspectSheets={inspectSheets}/>
 
                     <SaveProjectModal
                         isOpen={isSaveModalOpen}

@@ -3,10 +3,11 @@ import { toast } from 'sonner';
 import {
     deleteDataset,
     getDatasetPreview,
+    inspectExcelSheets,
     uploadDataset,
 } from "../../../api/datasetsApi.js";
 import {DATASET_DRAFT_STORAGE_KEY} from "../../../shared/constants/storageKeys.js";
-import useTranslation from '../../../shared/i18n/useTranslation.js';
+import useTranslation from '../../../shared/translation/useTranslation.js';
 
 const loadDatasetInfoFromDraft = () => {
     try {
@@ -171,6 +172,10 @@ export const useDatasetState = ({ useDraftStorage = true }) => {
         }
     };
 
+    const inspectSheets = async (file) => {
+        return inspectExcelSheets(file);
+    };
+
     return {
         datasets,
         setDatasets,
@@ -182,5 +187,6 @@ export const useDatasetState = ({ useDraftStorage = true }) => {
 
         uploadNewDataset,
         removeDataset,
+        inspectSheets,
     };
 };

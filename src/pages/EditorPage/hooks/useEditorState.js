@@ -7,7 +7,7 @@ import {
     toReactGridLayout,
 } from '../services/gridLayout.js';
 import {EDITOR_DRAFT_STORAGE_KEY} from "../../../shared/constants/storageKeys.js";
-import useTranslation from '../../../shared/i18n/useTranslation.js';
+import useTranslation from '../../../shared/translation/useTranslation.js';
 import { useCanvasHistory } from './useCanvasHistory.js';
 
 const normalizeComponents = normalizeComponentLayouts;
@@ -83,14 +83,18 @@ export const useEditorState = ({ useDraftStorage = true, defaultDatasetId = ''})
             return;
         }
 
-        try {
-            localStorage.setItem(
-                EDITOR_DRAFT_STORAGE_KEY,
-                JSON.stringify(components)
-            );
-        } catch (error) {
-            console.error('Could not save the editor draft to local storage:', error);
-        }
+        const timeoutId = window.setTimeout(() => {
+            try {
+                localStorage.setItem(
+                    EDITOR_DRAFT_STORAGE_KEY,
+                    JSON.stringify(components)
+                );
+            } catch (error) {
+                console.error('Could not save the editor draft to local storage:', error);
+            }
+        }, 400);
+
+        return () => window.clearTimeout(timeoutId);
     }, [components, useDraftStorage]);
 
 
@@ -99,20 +103,21 @@ export const useEditorState = ({ useDraftStorage = true, defaultDatasetId = ''})
     }, [components, selectedId]);
 
 
-    const addComponent = (paletteItem, targetIndex, targetLayout = null) => {
+    const addComponent = useCallback((paletteItem, targetIndex, targetLayout = null) => {
         const shouldInsert = Boolean(targetLayout?.insert);
         const componentLayout = targetLayout
             ? Object.fromEntries(
                 Object.entries(targetLayout).filter(([key]) => key !== 'insert')
             )
             : null;
-        const newComponent = createComponentFromPaletteItem(
-            paletteItem,
-            components.length + 1,
-            defaultDatasetId,
-            componentLayout
-        );
+
         setComponents((prev) => {
+            const newComponent = createComponentFromPaletteItem(
+                paletteItem,
+                prev.length + 1,
+                defaultDatasetId,
+                componentLayout
+            );
             const insertIndex = Number.isInteger(targetIndex)
                 ? Math.max(0, Math.min(targetIndex, prev.length))
                 : prev.length;
@@ -121,6 +126,9 @@ export const useEditorState = ({ useDraftStorage = true, defaultDatasetId = ''})
                 newComponent,
                 ...prev.slice(insertIndex),
             ];
+
+            setSelectedId(newComponent.id);
+
             if (!shouldInsert) {
                 return normalizeComponents(nextComponents);
             }
@@ -152,10 +160,9 @@ export const useEditorState = ({ useDraftStorage = true, defaultDatasetId = ''})
                 };
             });
         });
-        setSelectedId(newComponent.id);
-    };
+    }, [defaultDatasetId, setComponents]);
 
-    const reorderComponent = (activeId, overId) => {
+    const reorderComponent = useCallback((activeId, overId) => {
         if (!activeId || !overId || activeId === overId) return;
 
         setComponents((prev) => {
@@ -169,25 +176,27 @@ export const useEditorState = ({ useDraftStorage = true, defaultDatasetId = ''})
             next.splice(toIndex, 0, moved);
             return next;
         });
-    };
+    }, [setComponents]);
 
     const duplicateComponent = useCallback((id) => {
-        const source = components.find((item) => item.id === id);
-        if (!source) return;
-
-        const duplicate = {
-            ...source,
-            id: `${source.type}-${globalThis.crypto?.randomUUID?.() || Date.now()}`,
-            config: { ...source.config },
-            bindings: { ...source.bindings },
-            layout: { ...source.layout },
-        };
-        delete duplicate.layout.x;
-        delete duplicate.layout.y;
-
         setComponents((prev) => {
+            const source = prev.find((item) => item.id === id);
+            if (!source) return prev;
+
+            const duplicate = {
+                ...source,
+                id: `${source.type}-${globalThis.crypto?.randomUUID?.() || Date.now()}`,
+                config: { ...source.config },
+                bindings: { ...source.bindings },
+                layout: { ...source.layout },
+            };
+            delete duplicate.layout.x;
+            delete duplicate.layout.y;
+
             const sourceIndex = prev.findIndex((item) => item.id === id);
             if (sourceIndex < 0) return prev;
+
+            setSelectedId(duplicate.id);
 
             return normalizeComponents([
                 ...prev.slice(0, sourceIndex + 1),
@@ -195,8 +204,7 @@ export const useEditorState = ({ useDraftStorage = true, defaultDatasetId = ''})
                 ...prev.slice(sourceIndex + 1),
             ]);
         });
-        setSelectedId(duplicate.id);
-    }, [components, setComponents]);
+    }, [setComponents]);
 
     const setDashboardLayout = useCallback((gridLayout) => {
         if (!Array.isArray(gridLayout)) return;
@@ -223,26 +231,25 @@ export const useEditorState = ({ useDraftStorage = true, defaultDatasetId = ''})
         setSelectedId(id);
     }, []);
 
-    const updateComponent = (id, updater) => {
+    const updateComponent = useCallback((id, updater) => {
         setComponents((prev) =>
             prev.map((item) =>
                 item.id === id ? updater(item) : item
             )
         );
-    };
+    }, [setComponents]);
 
     const deleteComponent = useCallback((id) => {
         setComponents((prev) => prev.filter((item) => item.id !== id));
         setSelectedId((prev) => (prev === id ? null : prev));
     }, [setComponents]);
 
-    const deleteSelectedComponent = () => {
+    const deleteSelectedComponent = useCallback(() => {
         if (!selectedId) return;
         deleteComponent(selectedId);
-    };
+    }, [deleteComponent, selectedId]);
 
-    const clearCanvas = () => {
-        if (components.length === 0) return;
+    const clearCanvas = useCallback(() => {
         const confirmed = window.confirm(
             t('editor.clearConfirm')
         );
@@ -254,7 +261,7 @@ export const useEditorState = ({ useDraftStorage = true, defaultDatasetId = ''})
         if (useDraftStorage) {
             localStorage.removeItem(EDITOR_DRAFT_STORAGE_KEY);
         }
-    };
+    }, [setComponents, t, useDraftStorage]);
 
     return {
         components,

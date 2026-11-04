@@ -1,9 +1,9 @@
 import React from 'react';
 import { Plus, Zap, FolderOpen } from 'lucide-react';
 import * as Icons from 'lucide-react';
-import ThemeToggle from '../../shared/ThemeToggle.jsx';
-import StreamlitWordmark from '../../shared/StreamlitWordmark.jsx';
-import useTranslation from '../../shared/i18n/useTranslation.js';
+import ThemeToggle from '../../shared/theme/ThemeToggle.jsx';
+import StreamlitWordmark from '../../shared/components/StreamlitWordmark.jsx';
+import useTranslation from '../../shared/translation/useTranslation.js';
 
 const Sidebar = ({ categories, selectedCategory, onSelectCategory, activeCount, totalCount, onAddClick, onProjectsClick }) => {
   const { t } = useTranslation();

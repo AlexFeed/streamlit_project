@@ -26,7 +26,7 @@ import {
     prepareChartData,
 } from '../../services/chartData';
 import { paletteItems } from '../../data/paletteItems.js';
-import useTranslation from '../../../../shared/i18n/useTranslation.js';
+import useTranslation from '../../../../shared/translation/useTranslation.js';
 import useTheme from '../../../../shared/useTheme.js';
 
 const previewThemes = {

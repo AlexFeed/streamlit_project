@@ -1,6 +1,6 @@
 import React from 'react';
 import ExtensionCard from './ExtensionCard';
-import useTranslation from '../../shared/i18n/useTranslation.js';
+import useTranslation from '../../shared/translation/useTranslation.js';
 
 const ExtensionGrid = ({ extensions, categories, onToggle, onDelete, onConfig, onAddClick }) => {
   const { t } = useTranslation();

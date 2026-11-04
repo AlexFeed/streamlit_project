@@ -8,7 +8,7 @@ import {
     OptionSelect,
 } from './properties/PropertyFields.jsx';
 import ColorStyleField from './properties/ColorStyleField.jsx';
-import useTranslation from '../../../shared/i18n/useTranslation.js';
+import useTranslation from '../../../shared/translation/useTranslation.js';
 
 const aggregationOptions = [
     { value: 'none', labelKey: 'editor.noAggregation' },

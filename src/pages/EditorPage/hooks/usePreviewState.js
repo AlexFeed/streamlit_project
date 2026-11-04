@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { compileDashboardSchema } from '../services/editorSchema.js';
 import { createPreviewSession, updatePreviewSession } from '../../../api/previewApi.js';
-import useTranslation from '../../../shared/i18n/useTranslation.js';
+import useTranslation from '../../../shared/translation/useTranslation.js';
 
 export const usePreviewState = () => {
     const { t } = useTranslation();
@@ -70,7 +70,6 @@ export const usePreviewState = () => {
     return {
         isPreviewLoading,
         previewUrl,
-        previewSessionId,
         isPreviewModalOpen,
         handleOpenPreview,
         handleClosePreview,

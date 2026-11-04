@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
-import useTranslation from '../../shared/i18n/useTranslation.js';
+import useTranslation from '../../shared/translation/useTranslation.js';
 
 const ConfigModal = ({ extension, onClose, onSave }) => {
   const { t } = useTranslation();
