@@ -2,7 +2,7 @@ import React from 'react';
 import { BookOpen, Folder, Settings, Zap, Cpu, LogOut, Puzzle } from 'lucide-react';
 import ThemeToggle from '../../shared/ThemeToggle.jsx';
 import StreamlitWordmark from '../../shared/StreamlitWordmark.jsx';
-import useTranslation from '../../shared/i18n/useTranslation.js';
+import useTranslation from '../../shared/translation/useTranslation.js';
 
 const Sidebar = ({
   projectsCount = 0,

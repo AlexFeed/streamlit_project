@@ -60,6 +60,15 @@ export const useCanvasGrid = ({
         [components]
     );
 
+    const gridLayoutRef = useRef(gridLayout);
+    gridLayoutRef.current = gridLayout;
+
+    const gridWidthRef = useRef(gridWidth);
+    gridWidthRef.current = gridWidth;
+
+    const onLayoutChangeRef = useRef(onLayoutChange);
+    onLayoutChangeRef.current = onLayoutChange;
+
     const setGridNode = useCallback((node) => {
         gridResizeObserverRef.current?.disconnect();
         gridResizeObserverRef.current = null;
@@ -77,7 +86,8 @@ export const useCanvasGrid = ({
     }, []);
 
     const beginInteraction = useCallback((event, id, mode) => {
-        if (event.button !== 0 || !gridWidth || interactionRef.current) {
+        const currentGridWidth = gridWidthRef.current;
+        if (event.button !== 0 || !currentGridWidth || interactionRef.current) {
             return;
         }
 
@@ -104,6 +114,7 @@ export const useCanvasGrid = ({
             ? 'grabbing'
             : 'se-resize';
 
+        const currentStartLayout = gridLayoutRef.current;
         const nextInteraction = {
             id,
             mode,
@@ -112,8 +123,8 @@ export const useCanvasGrid = ({
             startY: event.clientY,
             lastRoundedCols: 0,
             lastRoundedRows: 0,
-            startLayout: gridLayout.map((item) => ({ ...item })),
-            currentLayout: gridLayout.map((item) => ({ ...item })),
+            startLayout: currentStartLayout.map((item) => ({ ...item })),
+            currentLayout: currentStartLayout.map((item) => ({ ...item })),
             didMove: false,
             sourceNode,
             ghostNode,
@@ -130,7 +141,7 @@ export const useCanvasGrid = ({
                 nextInteraction.didMove = true;
             }
             const columnWidth = (
-                gridWidth - GRID_GAP * (GRID_COLUMNS - 1)
+                currentGridWidth - GRID_GAP * (GRID_COLUMNS - 1)
             ) / GRID_COLUMNS;
             const deltaColumns = (
                 moveEvent.clientX - nextInteraction.startX
@@ -225,7 +236,7 @@ export const useCanvasGrid = ({
             const activeItem = nextLayout.find((item) => item.i === id);
             if (!activeItem) return;
 
-            const style = getGridItemStyle(activeItem, gridWidth);
+            const style = getGridItemStyle(activeItem, currentGridWidth);
             Object.assign(ghostNode.style, {
                 left: `${style.left}px`,
                 top: `${style.top}px`,
@@ -247,7 +258,7 @@ export const useCanvasGrid = ({
             document.body.style.cursor = previousCursor;
 
             if (nextInteraction.didMove) {
-                onLayoutChange(nextInteraction.currentLayout);
+                onLayoutChangeRef.current?.(nextInteraction.currentLayout);
                 suppressSelectionRef.current = nextInteraction.id;
                 window.setTimeout(() => {
                     if (suppressSelectionRef.current === nextInteraction.id) {
@@ -277,7 +288,7 @@ export const useCanvasGrid = ({
             },
         };
         event.currentTarget.setPointerCapture?.(event.pointerId);
-    }, [gridLayout, gridWidth, onLayoutChange]);
+    }, []);
 
     useEffect(() => () => {
         gridResizeObserverRef.current?.disconnect();

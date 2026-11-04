@@ -6,7 +6,7 @@ import EditorPage from "./pages/EditorPage/EditorPage.jsx";
 import ExtensionsPage from './pages/ExtensionsPage/ExtensionsPage.jsx';
 import ProtectedRoute from "./pages/AuthPage/components/ProtectedRoute.jsx";
 import { ThemeProvider } from './shared/ThemeContext.jsx';
-import { I18nProvider } from './shared/i18n/I18nContext.jsx';
+import { I18nProvider } from './shared/translation/I18nContext.jsx';
 import useTheme from './shared/useTheme.js';
 
 function AppContent() {

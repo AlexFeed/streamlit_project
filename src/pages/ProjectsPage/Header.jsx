@@ -1,6 +1,6 @@
 import React from 'react';
 import { Search, LayoutGrid, List, Plus } from 'lucide-react';
-import useTranslation from '../../shared/i18n/useTranslation.js';
+import useTranslation from '../../shared/translation/useTranslation.js';
 
 const Header = ({ searchQuery, setSearchQuery, viewMode, setViewMode, onCreateProject }) => {
   const { t } = useTranslation();

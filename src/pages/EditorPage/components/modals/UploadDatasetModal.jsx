@@ -2,7 +2,7 @@ import {Loader2, X, Upload, FileText, FileSpreadsheet} from "lucide-react";
 import { inspectExcelSheets } from "../../../../api/datasetsApi.js";
 import {useEffect, useRef, useState} from "react";
 import {toast} from "sonner";
-import useTranslation from "../../../../shared/i18n/useTranslation.js";
+import useTranslation from "../../../../shared/translation/useTranslation.js";
 
 const DELIMITER_OPTIONS = [
     { value: 'auto', labelKey: 'editor.delimiter.auto' },

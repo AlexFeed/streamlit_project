@@ -4,7 +4,7 @@ import {
     getPaletteColors,
 } from '../../data/chartPalettes.js';
 import { paletteItems } from '../../data/paletteItems.js';
-import useTranslation from '../../../../shared/i18n/useTranslation.js';
+import useTranslation from '../../../../shared/translation/useTranslation.js';
 
 const colorPresets = [
     '#3478c8',

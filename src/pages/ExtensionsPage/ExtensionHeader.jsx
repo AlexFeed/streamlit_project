@@ -1,5 +1,5 @@
 import React from 'react';
-import useTranslation from '../../shared/i18n/useTranslation.js';
+import useTranslation from '../../shared/translation/useTranslation.js';
 
 const ExtensionHeader = ({ searchQuery, onSearchChange }) => {
   const { t } = useTranslation();

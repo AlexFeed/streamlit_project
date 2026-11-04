@@ -4,7 +4,7 @@ import Sidebar from './components/Sidebar';
 import AuthForm from './components/AuthForm';
 import { login, register } from '../../api/authApi.js';
 import { saveAuth, getAuthToken } from '../../api/authStorage.js';
-import useTranslation from '../../shared/i18n/useTranslation.js';
+import useTranslation from '../../shared/translation/useTranslation.js';
 import './AuthPage.css';
 
 const AuthPage = () => {

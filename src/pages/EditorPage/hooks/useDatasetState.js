@@ -6,7 +6,7 @@ import {
     uploadDataset,
 } from "../../../api/datasetsApi.js";
 import {DATASET_DRAFT_STORAGE_KEY} from "../../../shared/constants/storageKeys.js";
-import useTranslation from '../../../shared/i18n/useTranslation.js';
+import useTranslation from '../../../shared/translation/useTranslation.js';
 
 const loadDatasetInfoFromDraft = () => {
     try {

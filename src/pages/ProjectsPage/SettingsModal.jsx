@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import { toast } from 'sonner';
 import { changePassword, getMe } from '../../api/authApi.js';
-import useTranslation from '../../shared/i18n/useTranslation.js';
+import useTranslation from '../../shared/translation/useTranslation.js';
 
 const SettingsModal = ({ onClose }) => {
   const { language, setLanguage, t } = useTranslation();

@@ -6,7 +6,7 @@ import { useDraggable } from '@dnd-kit/core';
 import { PALETTE_GROUPS, paletteItems } from '../data/paletteItems';
 import ThemeToggle from '../../../shared/ThemeToggle.jsx';
 import StreamlitWordmark from '../../../shared/StreamlitWordmark.jsx';
-import useTranslation from '../../../shared/i18n/useTranslation.js';
+import useTranslation from '../../../shared/translation/useTranslation.js';
 
 const PaletteItem = ({ item, onAddComponent }) => {
     const { t } = useTranslation();

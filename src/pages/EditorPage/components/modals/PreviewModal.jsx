@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { X, ExternalLink, Loader2 } from 'lucide-react';
-import useTranslation from '../../../../shared/i18n/useTranslation.js';
+import useTranslation from '../../../../shared/translation/useTranslation.js';
 
 const PreviewModal = ({
                           isOpen,

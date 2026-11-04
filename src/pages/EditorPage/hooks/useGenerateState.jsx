@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import {compileDashboardSchema} from '../services/editorSchema.js';
 import { generateProjectZip } from '../../../api/generateApi.js';
-import useTranslation from '../../../shared/i18n/useTranslation.js';
+import useTranslation from '../../../shared/translation/useTranslation.js';
 
 export const useGenerateState = () => {
     const { t } = useTranslation();

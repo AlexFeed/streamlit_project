@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { getProject, createProject, updateProject } from '../../../api/projectsApi.js';
 import {compileDashboardSchema} from '../services/editorSchema.js';
 import {DATASET_DRAFT_STORAGE_KEY, EDITOR_DRAFT_STORAGE_KEY} from "../../../shared/constants/storageKeys.js";
-import useTranslation from '../../../shared/i18n/useTranslation.js';
+import useTranslation from '../../../shared/translation/useTranslation.js';
 
 export const useProjectState = ({
                                     projectId,

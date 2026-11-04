@@ -1,4 +1,4 @@
-import { lazy, memo, Suspense } from 'react';
+import { memo, useCallback } from 'react';
 import {
     Copy,
     GripVertical,
@@ -7,12 +7,9 @@ import {
     MoveDiagonal2,
 } from 'lucide-react';
 import { paletteItems } from '../../data/paletteItems';
-import useTranslation from '../../../../shared/i18n/useTranslation.js';
+import useTranslation from '../../../../shared/translation/useTranslation.js';
 import useTheme from '../../../../shared/useTheme.js';
-
-const LiveComponentPreview = lazy(
-    () => import('./LiveComponentPreview')
-);
+import LiveComponentPreview from './LiveComponentPreview';
 
 const CanvasItem = ({
                         item,
@@ -30,6 +27,10 @@ const CanvasItem = ({
     const meta = paletteItems[item.type];
     const Icon = meta?.icon || WalletCards;
     const isCompact = ['text', 'metric', 'selectbox'].includes(item.type);
+
+    const handleFilterChange = useCallback((value) => {
+        onFilterChange(item.id, value);
+    }, [item.id, onFilterChange]);
 
     return (
         <article
@@ -106,19 +107,13 @@ const CanvasItem = ({
             </header>
 
             <div className={`min-h-0 flex-1 ${isCompact ? 'p-2' : 'p-4'}`}>
-                <Suspense
-                    fallback={(
-                        <div className="canvas-item-loading h-full animate-pulse rounded-xl" />
-                    )}
-                >
-                    <LiveComponentPreview
-                        item={item}
-                        height="100%"
-                        rows={rows}
-                        value={filterValue}
-                        onChange={(value) => onFilterChange(item.id, value)}
-                    />
-                </Suspense>
+                <LiveComponentPreview
+                    item={item}
+                    height="100%"
+                    rows={rows}
+                    value={filterValue}
+                    onChange={handleFilterChange}
+                />
             </div>
 
             <button
