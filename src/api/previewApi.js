@@ -33,6 +33,25 @@ export const createPreviewSession = async ({ schema }) => {
     return response.json();
 };
 
+// Update an existing preview session schema.
+export const updatePreviewSession = async (sessionId, { schema }) => {
+    const response = await authFetch(`/preview/${sessionId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            schema,
+        }),
+    });
+
+    if (!response.ok) {
+        const error = await response.json().catch(() => null);
+        throw new Error(error?.detail || 'Could not update the preview session.');
+    }
+
+    return response.json();
+};
 
 // Delete/close a preview session on the backend.
 export const deletePreviewSession = async (sessionId) => {

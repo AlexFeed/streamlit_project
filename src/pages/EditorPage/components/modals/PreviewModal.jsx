@@ -9,15 +9,29 @@ const PreviewModal = ({
                       }) => {
     const { t } = useTranslation();
     const [isLoading, setIsLoading] = useState(true);
-    const [iframeKey, setIframeKey] = useState(0);
     const mouseDownTargetRef = useRef(null);
 
-    // Reset iframe loading state when URL changes or modal opens.
+
+    // Listen for the 'streamlit:ready' message from the iframe
     useEffect(() => {
-        if (isOpen) {
+        if (!isOpen) {
+            // Reset loading state whenever the modal closes so it's armed for the next open
             setIsLoading(true);
+            return undefined;
         }
-    }, [isOpen, previewUrl]);
+        const handleMessage = (event) => {
+            if (event.data?.type === 'streamlit:ready') {
+                setIsLoading(false);
+            }
+        };
+        window.addEventListener('message', handleMessage);
+        return () => window.removeEventListener('message', handleMessage);
+    }, [isOpen]);
+
+    // Re-arm loading state if previewUrl changes while modal is active
+    useEffect(() => {
+        setIsLoading(true);
+    }, [previewUrl]);
 
     // Close on Escape.
     useEffect(() => {
@@ -30,6 +44,7 @@ const PreviewModal = ({
     }, [isOpen, onClose]);
 
     if (!isOpen || !previewUrl) return null;
+
 
     return (
         <div
@@ -90,11 +105,9 @@ const PreviewModal = ({
                     )}
 
                     <iframe
-                        key={iframeKey}
                         src={previewUrl}
                         title="Streamlit Preview"
                         className="editor-preview-iframe"
-                        onLoad={() => setIsLoading(false)}
                     />
                 </div>
             </div>
