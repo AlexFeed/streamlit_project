@@ -1,8 +1,7 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
 import { logout } from '../../api/authApi.js';
-import { listProjects, deleteProject, updateProject } from '../../api/projectsApi.js';
+import { useProjects } from './hooks/useProjects.js';
 import SettingsModal from './SettingsModal.jsx';
 import EmptyState from './EmptyState';
 import Header from './Header';
@@ -15,13 +14,19 @@ import useTranslation from '../../shared/translation/useTranslation.js';
 const ProjectsPage = () => {
   const navigate = useNavigate();
   const { language, t } = useTranslation();
-  const [projects, setProjects] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState('grid');
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState('');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('projects');
+
+  const {
+    projects,
+    isLoading,
+    loadError,
+    removeProject,
+    updateProjectTitle,
+    updateProjectDescription,
+  } = useProjects();
 
   const handleLogout = () => {
     const confirmed = window.confirm(
@@ -33,7 +38,6 @@ const ProjectsPage = () => {
     }
 
     logout();
-
     navigate('/auth', { replace: true });
   };
 
@@ -42,30 +46,11 @@ const ProjectsPage = () => {
   };
 
   const filteredProjects = useMemo(() => {
-    return projects.filter(project => 
-      project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      project.description.toLowerCase().includes(searchQuery.toLowerCase())
+    return projects.filter(project =>
+        project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        project.description.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [projects, searchQuery]);
-
-  useEffect(() => {
-    const loadProjects = async () => {
-      try {
-        setIsLoading(true);
-        setLoadError('');
-
-        const serverProjects = await listProjects();
-        setProjects(Array.isArray(serverProjects) ? serverProjects : []);
-      } catch (error) {
-        console.error('Could not load projects:', error);
-        setLoadError('projects.loadError');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadProjects();
-  }, []);
 
   const handleOpenCreateModal = () => {
     navigate('/editor');
@@ -76,37 +61,15 @@ const ProjectsPage = () => {
       return;
     }
 
-    try {
-      await deleteProject(id);
-      setProjects((prevProjects) => prevProjects.filter((p) => p.id !== id));
-    } catch (error) {
-      console.error('Could not delete project:', error);
-      toast.error(t('projects.deleteError'));
-    }
+    await removeProject(id);
   };
 
   const handleUpdateTitle = async (id, newTitle) => {
-    try {
-      await updateProject(id, { title: newTitle });
-      setProjects((prevProjects) => prevProjects.map((p) =>
-        p.id === id ? { ...p, title: newTitle, updatedAt: new Date().toISOString() } : p
-      ));
-    } catch (error) {
-      console.error('Could not update project title:', error);
-      toast.error(t('projects.saveTitleError'));
-    }
+    await updateProjectTitle(id, newTitle);
   };
 
   const handleUpdateDescription = async (id, newDesc) => {
-    try {
-      await updateProject(id, { description: newDesc });
-      setProjects((prevProjects) => prevProjects.map((p) =>
-        p.id === id ? { ...p, description: newDesc, updatedAt: new Date().toISOString() } : p
-      ));
-    } catch (error) {
-      console.error('Could not update project description:', error);
-      toast.error(t('projects.saveDescriptionError'));
-    }
+    await updateProjectDescription(id, newDesc);
   };
 
   const renderProjects = () => {
@@ -123,87 +86,87 @@ const ProjectsPage = () => {
     }
 
     return (
-      <>
-        <div className="sp-section-header">
-          <div>
-            <h2 className="sp-section-title">{t('projects.mine')}</h2>
-            <p className="sp-section-subtitle">{t('projects.subtitle')}</p>
+        <>
+          <div className="sp-section-header">
+            <div>
+              <h2 className="sp-section-title">{t('projects.mine')}</h2>
+              <p className="sp-section-subtitle">{t('projects.subtitle')}</p>
+            </div>
           </div>
-        </div>
-        <div className={viewMode === 'grid' ? 'sp-projects-grid sp-grid-mode' : 'sp-projects-list'}>
-          {filteredProjects.map((project) => (
-            <ProjectCard
-              key={project.id}
-              project={{
-                ...project,
-                lastEdited: formatProjectDate(project.updatedAt || project.createdAt, language),
-              }}
-              viewMode={viewMode}
-              onDelete={handleDeleteProject}
-              onUpdateTitle={handleUpdateTitle}
-              onUpdateDescription={handleUpdateDescription}
-              onOpen={() => handleOpenProject(project.id)}
-            />
-          ))}
-        </div>
-      </>
+          <div className={viewMode === 'grid' ? 'sp-projects-grid sp-grid-mode' : 'sp-projects-list'}>
+            {filteredProjects.map((project) => (
+                <ProjectCard
+                    key={project.id}
+                    project={{
+                      ...project,
+                      lastEdited: formatProjectDate(project.updatedAt || project.createdAt, language),
+                    }}
+                    viewMode={viewMode}
+                    onDelete={handleDeleteProject}
+                    onUpdateTitle={handleUpdateTitle}
+                    onUpdateDescription={handleUpdateDescription}
+                    onOpen={() => handleOpenProject(project.id)}
+                />
+            ))}
+          </div>
+        </>
     );
   };
 
   const renderDocumentation = () => (
-    <section className="sp-documentation">
-      <h2 className="sp-section-title">{t('projects.documentation')}</h2>
-      <p className="sp-section-subtitle">{t('projects.documentationIntro')}</p>
-      <div className="sp-documentation-card">
-        <h3>{t('projects.documentation.createTitle')}</h3>
-        <p>{t('projects.documentation.createDescription')}</p>
-      </div>
-      <div className="sp-documentation-card">
-        <h3>{t('projects.documentation.editTitle')}</h3>
-        <p>{t('projects.documentation.editDescription')}</p>
-      </div>
-      <button
-        type="button"
-        className="btn btn-primary"
-        onClick={handleOpenCreateModal}
-      >
-        {t('projects.new')}
-      </button>
-    </section>
+      <section className="sp-documentation">
+        <h2 className="sp-section-title">{t('projects.documentation')}</h2>
+        <p className="sp-section-subtitle">{t('projects.documentationIntro')}</p>
+        <div className="sp-documentation-card">
+          <h3>{t('projects.documentation.createTitle')}</h3>
+          <p>{t('projects.documentation.createDescription')}</p>
+        </div>
+        <div className="sp-documentation-card">
+          <h3>{t('projects.documentation.editTitle')}</h3>
+          <p>{t('projects.documentation.editDescription')}</p>
+        </div>
+        <button
+            type="button"
+            className="btn btn-primary"
+            onClick={handleOpenCreateModal}
+        >
+          {t('projects.new')}
+        </button>
+      </section>
   );
 
   return (
-    <div className="page-container sp-projects-page">
-      <Sidebar 
-        projectsCount={projects.length} 
-        activeTab={activeTab}
-        onSelectTab={setActiveTab}
-        onLogout={handleLogout} 
-        onExtensionsClick={() => navigate('/extensions')} 
-        onSettingsClick={() => setIsSettingsOpen(true)}
-      />
-      <div className="sp-projects-main">
-        <div className="sp-gradient-overlay" />
-        <Header
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          viewMode={viewMode}
-          setViewMode={setViewMode}
-          onCreateProject={handleOpenCreateModal}
+      <div className="page-container sp-projects-page">
+        <Sidebar
+            projectsCount={projects.length}
+            activeTab={activeTab}
+            onSelectTab={setActiveTab}
+            onLogout={handleLogout}
+            onExtensionsClick={() => navigate('/extensions')}
+            onSettingsClick={() => setIsSettingsOpen(true)}
         />
-        <main
-          id="projects-tabpanel"
-          className="sp-projects-content sp-custom-scrollbar"
-          role="tabpanel"
-          aria-labelledby={activeTab === 'projects' ? 'projects-list-tab' : 'projects-documentation-tab'}
-        >
-          {activeTab === 'projects' ? renderProjects() : renderDocumentation()}
-        </main>
+        <div className="sp-projects-main">
+          <div className="sp-gradient-overlay" />
+          <Header
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              viewMode={viewMode}
+              setViewMode={setViewMode}
+              onCreateProject={handleOpenCreateModal}
+          />
+          <main
+              id="projects-tabpanel"
+              className="sp-projects-content sp-custom-scrollbar"
+              role="tabpanel"
+              aria-labelledby={activeTab === 'projects' ? 'projects-list-tab' : 'projects-documentation-tab'}
+          >
+            {activeTab === 'projects' ? renderProjects() : renderDocumentation()}
+          </main>
+        </div>
+        {isSettingsOpen && (
+            <SettingsModal onClose={() => setIsSettingsOpen(false)} />
+        )}
       </div>
-      {isSettingsOpen && (
-        <SettingsModal onClose={() => setIsSettingsOpen(false)} />
-      )}
-    </div>
   );
 };
 
