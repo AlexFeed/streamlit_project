@@ -5,28 +5,43 @@ import PropertiesPanel from './components/PropertiesPanel';
 import EditorHeader from './components/EditorHeader';
 import SaveProjectModal from './components/modals/SaveProjectModal';
 import UploadDatasetModal from "./components/modals/UploadDatasetModal.jsx";
-import PreviewModal from "./components/modals/PreviewModal.jsx";
 import { useParams, useNavigate } from 'react-router-dom';
 import {
     closestCenter,
     DndContext,
     DragOverlay,
 } from '@dnd-kit/core';
-import './EditorPage.css';
-import { toast } from 'sonner';
+
 
 // State hooks
 import { useEditorState } from './hooks/useEditorState';
 import {useDatasetState} from './hooks/useDatasetState';
-import {useGenerateState} from "./hooks/useGenerateState.jsx";
-import { useProjectState } from './hooks/useProjectState.js';
-import {usePreviewState} from "./hooks/usePreviewState.js";
-import { useEditorDnd } from './hooks/useEditorDnd.js';
 
-import useTranslation from '../../shared/translation/useTranslation.js';
 import { useCallback, useEffect, useRef, useState } from 'react';
-
+import { toast } from 'sonner';
+import { useProjectState } from './hooks/useProjectState.js';
+import {useGenerateState} from "./hooks/useGenerateState.jsx";
+import { useEditorDnd } from './hooks/useEditorDnd.js';
+import './EditorPage.css';
+import useTranslation from '../../shared/translation/useTranslation.js';
 import { captureCanvasPreview } from './services/captureCanvasPreview.js';
+import {usePreviewState} from "./hooks/usePreviewState.js";
+import PreviewModal from "./components/modals/PreviewModal.jsx";
+import PageTabs from './components/PageTabs.jsx';
+import { normalizeComponentsByPage } from './services/pageState.js';
+import { pointerWithin } from '@dnd-kit/core';
+
+const editorCollisionDetection = (args) => {
+    const pointerHits = pointerWithin(args);
+    if (pointerHits.length > 0) {
+        return [...pointerHits].sort((left, right) => {
+            const leftIsGroup = String(left.id).startsWith('layout-group-');
+            const rightIsGroup = String(right.id).startsWith('layout-group-');
+            return Number(rightIsGroup) - Number(leftIsGroup);
+        });
+    }
+    return closestCenter(args);
+};
 
 
 const EditorPage = () => {
@@ -50,22 +65,29 @@ const EditorPage = () => {
         isDatasetPreviewLoading,
         uploadNewDataset,
         removeDataset,
-        inspectSheets,
     } = useDatasetState({ useDraftStorage: isDraftMode });
 
     const {
         components,
-        setComponents,
+        pageComponents,
+        pages,
+        activePageId,
+        setEditorState,
         selectedId,
         selectedComponent,
         addComponent,
         reorderComponent,
+        moveComponent,
         duplicateComponent,
         setDashboardLayout,
         selectComponent,
         updateComponent,
         deleteComponent,
         deleteSelectedComponent,
+        selectPage,
+        addPage,
+        renamePage,
+        deletePage,
         clearCanvas,
         undo,
         redo,
@@ -75,8 +97,8 @@ const EditorPage = () => {
         useDraftStorage: isDraftMode,
         defaultDatasetId: datasets[0]?.datasetId || '',
     });
-    const addLocalizedComponent = useCallback((item, targetIndex, targetLayout) => {
-        addComponent(item, targetIndex, targetLayout);
+    const addLocalizedComponent = useCallback((item, targetIndex, targetLayout, parentId) => {
+        addComponent(item, targetIndex, targetLayout, parentId);
     }, [addComponent]);
 
     const {
@@ -87,7 +109,7 @@ const EditorPage = () => {
         saveExistingProject,
     } = useProjectState({
         projectId,
-        setComponents,
+        setEditorState,
         setDatasets,
     });
 
@@ -111,7 +133,7 @@ const EditorPage = () => {
         handleDragCancel,
         handleDragEnd,
     } = useEditorDnd({
-        components,
+        components: pageComponents,
         addComponent: addLocalizedComponent,
         reorderComponent,
     });
@@ -167,7 +189,11 @@ const EditorPage = () => {
             updateComponent(component.id, (current) => {
                 const cleanedBindings = { ...current.bindings };
                 Object.keys(cleanedBindings).forEach((key) => {
-                    if (cleanedBindings[key] && !fallbackFields.has(cleanedBindings[key])) {
+                    if (Array.isArray(cleanedBindings[key])) {
+                        cleanedBindings[key] = cleanedBindings[key].filter(
+                            (field) => fallbackFields.has(field)
+                        );
+                    } else if (cleanedBindings[key] && !fallbackFields.has(cleanedBindings[key])) {
                         cleanedBindings[key] = '';
                     }
                 });
@@ -185,7 +211,8 @@ const EditorPage = () => {
         title: overrideTitle ?? project?.title ?? 'Untitled dashboard',
         description: overrideDescription ?? project?.description ?? '',
         previewImage,
-        components,
+        components: normalizeComponentsByPage(components, pages),
+        pages,
         datasets: datasets.map((ds) => {
             const metadata = { ...ds };
             delete metadata.sampleRows;
@@ -256,7 +283,7 @@ const EditorPage = () => {
     return (
         <DndContext
             sensors={sensors}
-            collisionDetection={closestCenter}
+            collisionDetection={editorCollisionDetection}
             onDragStart={handleDragStart}
             onDragCancel={handleDragCancel}
             onDragEnd={handleDragEnd}
@@ -287,8 +314,7 @@ const EditorPage = () => {
                     <UploadDatasetModal isOpen={isUploadDatasetModalOpen}
                                         isUploading={isDatasetUploading}
                                         onClose={() => setIsUploadDatasetModalOpen(false)}
-                                        onConfirm={handleModalDatasetConfirmUpload}
-                                        onInspectSheets={inspectSheets}/>
+                                        onConfirm={handleModalDatasetConfirmUpload}/>
 
                     <SaveProjectModal
                         isOpen={isSaveModalOpen}
@@ -321,18 +347,29 @@ const EditorPage = () => {
 
                     <div className={`editor-workspace${selectedComponent ? ' has-properties' : ''}`}>
                         <main className="editor-canvas-area">
+                            <PageTabs
+                                pages={pages}
+                                activePageId={activePageId}
+                                onSelect={selectPage}
+                                onAdd={addPage}
+                                onRename={renamePage}
+                                onDelete={deletePage}
+                            />
                             <Canvas
                                 canvasRef={canvasRef}
-                                components={components}
+                                components={pageComponents}
                                 selectedId={selectedId}
                                 onSelect={selectComponent}
                                 onDelete={deleteComponent}
                                 onDuplicate={duplicateComponent}
                                 onLayoutChange={setDashboardLayout}
+                                onMoveToContainer={moveComponent}
+                                onReorderComponent={reorderComponent}
                                 isDragging={Boolean(activeDrag)}
                                 datasets={datasets}
                                 previewRowsByDataset={previewRowsByDataset}
                                 isDataLoading={isDatasetPreviewLoading}
+                                pages={pages}
                             />
                         </main>
 
@@ -342,6 +379,8 @@ const EditorPage = () => {
                             onDeleteSelected={deleteSelectedComponent}
                             onClose={() => selectComponent(null)}
                             datasets={datasets}
+                            pages={pages}
+                            components={pageComponents}
                         />
                     </div>
                 </div>
