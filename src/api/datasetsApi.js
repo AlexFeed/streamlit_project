@@ -28,6 +28,7 @@ export const uploadDataset = async (payload) => {
         formData.append('dataset', file);
         if (name) formData.append('name', name);
         if (delimiter && delimiter !== 'auto') formData.append('delimiter', delimiter);
+        if (encoding && encoding !== 'auto') formData.append('encoding', encoding);
         if (sheetName) formData.append('sheetName', sheetName);
     } else {
         throw new Error('No file provided for upload');

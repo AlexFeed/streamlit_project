@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useCallback, useState, useRef, useEffect } from 'react';
 import { X, ExternalLink, Loader2 } from 'lucide-react';
 import useTranslation from '../../../../shared/translation/useTranslation.js';
 
@@ -8,40 +8,41 @@ const PreviewModal = ({
                           onClose,
                       }) => {
     const { t } = useTranslation();
-    const [isLoading, setIsLoading] = useState(true);
+    const [readyUrl, setReadyUrl] = useState(null);
     const mouseDownTargetRef = useRef(null);
+    const isLoading = readyUrl !== previewUrl;
 
 
     // Listen for the 'streamlit:ready' message from the iframe
     useEffect(() => {
-        if (!isOpen) {
-            // Reset loading state whenever the modal closes so it's armed for the next open
-            setIsLoading(true);
-            return undefined;
-        }
+        if (!isOpen || !previewUrl) return undefined;
+        const expectedOrigin = new URL(previewUrl, window.location.href).origin;
         const handleMessage = (event) => {
-            if (event.data?.type === 'streamlit:ready') {
-                setIsLoading(false);
+            if (
+                event.origin === expectedOrigin
+                && event.data?.type === 'streamlit:ready'
+            ) {
+                setReadyUrl(previewUrl);
             }
         };
         window.addEventListener('message', handleMessage);
         return () => window.removeEventListener('message', handleMessage);
-    }, [isOpen]);
+    }, [isOpen, previewUrl]);
 
-    // Re-arm loading state if previewUrl changes while modal is active
-    useEffect(() => {
-        setIsLoading(true);
-    }, [previewUrl]);
+    const closeModal = useCallback(() => {
+        setReadyUrl(null);
+        onClose();
+    }, [onClose]);
 
     // Close on Escape.
     useEffect(() => {
         if (!isOpen) return undefined;
         const handleKeyDown = (e) => {
-            if (e.key === 'Escape') onClose();
+            if (e.key === 'Escape') closeModal();
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [isOpen, onClose]);
+    }, [closeModal, isOpen]);
 
     if (!isOpen || !previewUrl) return null;
 
@@ -53,7 +54,7 @@ const PreviewModal = ({
             }}
             onClick={(e) => {
                 if (e.target === e.currentTarget && mouseDownTargetRef.current === e.currentTarget) {
-                    onClose();
+                    closeModal();
                 }
             }}
             className="editor-preview-backdrop"
@@ -84,7 +85,7 @@ const PreviewModal = ({
 
                         <button
                             type="button"
-                            onClick={onClose}
+                            onClick={closeModal}
                             className="editor-preview-close"
                             aria-label={t('common.close')}
                         >
