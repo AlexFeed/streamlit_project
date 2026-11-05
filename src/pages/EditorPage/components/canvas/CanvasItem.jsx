@@ -1,4 +1,4 @@
-import { lazy, memo, Suspense, useRef } from 'react';
+import { lazy, memo, Suspense, useEffect, useRef, useState } from 'react';
 import { Copy, MoveDiagonal2, Trash2, WalletCards } from 'lucide-react';
 import { useDroppable } from '@dnd-kit/core';
 import { paletteItems } from '../../data/paletteItems';
@@ -126,19 +126,36 @@ const CanvasItem = ({
 }) => {
     const { t } = useTranslation();
     const { theme } = useTheme();
+    const [actionsVisible, setActionsVisible] = useState(false);
+    const actionsHideTimerRef = useRef(null);
     const meta = paletteItems[item.type];
     const Icon = meta?.icon || WalletCards;
     const isCompact = ['text', 'metric', 'selectbox', 'page_link'].includes(item.type);
     const usesFloatingChrome = isCompact || item.type === 'layout_group';
     const appearance = getAppearanceDefaults(item.type, item.config);
-    const isAutoHeight = isCompact && appearance.heightMode === 'auto';
-    const isAutoWidth = ((isCompact && appearance.contentWidth === 'content') || item.type === 'layout_group') && !item.layout?.manualWidth;
+    const isAutoHeight = isCompact && !item.layout?.manualHeight;
+    const usesContentHeight = isAutoHeight && ['text', 'page_link'].includes(item.type);
     const groupAlignment = { left: 'flex-start', center: 'center', right: 'flex-end', distribute: 'space-between' }[item.config?.horizontalAlignment || 'left'];
     const { setNodeRef, isOver } = useDroppable({
         id: `layout-group-${item.id}`,
         disabled: item.type !== 'layout_group',
         data: { source: 'layout-group', containerId: item.id },
     });
+
+    const showActions = () => {
+        window.clearTimeout(actionsHideTimerRef.current);
+        setActionsVisible(true);
+    };
+    const hideActionsLater = () => {
+        window.clearTimeout(actionsHideTimerRef.current);
+        actionsHideTimerRef.current = window.setTimeout(
+            () => setActionsVisible(false),
+            700
+        );
+    };
+    useEffect(() => () => {
+        window.clearTimeout(actionsHideTimerRef.current);
+    }, []);
 
     const beginCardDrag = (event) => {
         const explicitSurface = event.target.closest('[data-canvas-drag-surface]');
@@ -152,6 +169,8 @@ const CanvasItem = ({
             data-canvas-item
             data-canvas-theme={theme}
             data-layout-group-id={item.type === 'layout_group' ? item.id : undefined}
+            onPointerEnter={showActions}
+            onPointerLeave={hideActionsLater}
             onPointerDown={beginCardDrag}
             onClick={() => onSelect(item.id)}
             style={!isSelected && !isOver && !isContainerDropTarget ? {
@@ -159,11 +178,11 @@ const CanvasItem = ({
                 background: appearance.showBackground ? undefined : 'transparent',
                 boxShadow: appearance.showBorder || appearance.showBackground ? undefined : 'none',
             } : undefined}
-            className={`canvas-item-card group relative flex min-h-0 flex-col rounded-2xl border transition-colors ${usesFloatingChrome ? 'overflow-visible' : 'overflow-hidden'} ${isAutoHeight ? 'h-auto' : 'h-full'} ${isAutoWidth ? 'w-fit max-w-full' : 'w-full'} ${isSelected ? 'is-selected' : ''} ${isOver || isContainerDropTarget ? 'is-drop-target' : ''}`}
+            className={`canvas-item-card group relative flex min-h-0 w-full flex-col rounded-2xl border transition-colors ${usesFloatingChrome ? 'overflow-visible' : 'overflow-hidden'} ${usesContentHeight ? 'h-auto' : 'h-full'} ${isSelected ? 'is-selected' : ''} ${isOver || isContainerDropTarget ? 'is-drop-target' : ''}`}
         >
             <header
                 className={usesFloatingChrome
-                    ? `canvas-item-compact-actions absolute bottom-full right-0 z-30 mb-1 flex touch-none items-center rounded-xl border p-0.5 shadow-lg backdrop-blur transition-opacity ${isSelected ? 'opacity-100' : 'pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100'}`
+                    ? `canvas-item-compact-actions absolute -top-10 right-0 z-30 flex touch-none items-center rounded-xl border p-0.5 shadow-lg backdrop-blur transition-opacity ${isSelected || actionsVisible ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'}`
                     : 'canvas-item-header canvas-drag-handle flex shrink-0 touch-none cursor-grab items-center justify-between gap-3 border-b px-4 py-3 active:cursor-grabbing'}
                 onPointerDown={usesFloatingChrome ? undefined : (event) => onBeginInteraction(event, item.id, 'drag')}
                 title={usesFloatingChrome ? undefined : t('editor.dragCard')}
@@ -185,7 +204,7 @@ const CanvasItem = ({
                 style={{
                     padding: item.type === 'layout_group' ? 0 : appearance.padding,
                     justifyContent: { left: 'flex-start', center: 'center', right: 'flex-end' }[appearance.contentAlignment],
-                    alignItems: { top: 'flex-start', center: 'center', bottom: 'flex-end' }[isAutoHeight ? 'top' : appearance.verticalAlignment],
+                    alignItems: { top: 'flex-start', center: 'center', bottom: 'flex-end' }[usesContentHeight ? 'top' : appearance.verticalAlignment],
                     color: appearance.elementTextColor,
                     fontSize: appearance.elementFontSize === 'auto' ? undefined : `${appearance.elementFontSize}px`,
                     fontWeight: appearance.elementFontWeight,
@@ -216,14 +235,14 @@ const CanvasItem = ({
                             ))}
                         </div>
                     ) : (
-                        <div className="min-w-0" style={{ width: appearance.contentWidth === 'stretch' ? '100%' : 'fit-content', height: isAutoHeight ? 'auto' : '100%', maxWidth: '100%' }}>
-                            <LiveComponentPreview item={item} height={isAutoHeight ? 'auto' : '100%'} rows={rows} value={filterValue} onChange={(value) => onFilterChange(item.id, value)} pages={pages} />
+                        <div className="min-w-0" style={{ width: item.type === 'text' || appearance.contentWidth === 'stretch' ? '100%' : 'fit-content', height: usesContentHeight ? 'auto' : '100%', maxWidth: '100%' }}>
+                            <LiveComponentPreview item={item} height={usesContentHeight ? 'auto' : '100%'} rows={rows} value={filterValue} onChange={(value) => onFilterChange(item.id, value)} pages={pages} />
                         </div>
                     )}
                 </Suspense>
             </div>
 
-            <button type="button" aria-label={t('editor.resize')} title={t('editor.resizeHint')} onClick={(event) => event.stopPropagation()} onPointerDown={(event) => onBeginInteraction(event, item.id, 'resize')} className={`canvas-resize-handle absolute z-20 flex touch-none cursor-se-resize items-end justify-end rounded-xl p-2 text-blue-300 transition hover:bg-blue-500/15 hover:text-blue-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 ${isCompact ? '-bottom-2 -right-2 h-8 w-8' : 'bottom-1 right-1 h-9 w-9'}`}>
+            <button type="button" aria-label={t('editor.resize')} title={t('editor.resizeHint')} onClick={(event) => event.stopPropagation()} onPointerDown={(event) => onBeginInteraction(event, item.id, 'resize')} className={`canvas-resize-handle absolute bottom-1 right-1 z-20 flex touch-none cursor-se-resize items-end justify-end rounded-xl p-2 text-blue-300 transition hover:bg-blue-500/15 hover:text-blue-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 ${isCompact ? `h-8 w-8 ${isSelected ? 'opacity-100' : 'pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100'}` : 'h-9 w-9'}`}>
                 <MoveDiagonal2 className="h-4 w-4" />
             </button>
         </article>

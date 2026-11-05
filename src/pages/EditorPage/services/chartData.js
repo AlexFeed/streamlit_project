@@ -14,6 +14,51 @@ const compareValues = (left, right) => {
     });
 };
 
+const evenlySample = (data, limit) => {
+    if (data.length <= limit) return data;
+    if (limit <= 2) return [data[0], data[data.length - 1]];
+    const lastIndex = data.length - 1;
+    return Array.from({ length: limit }, (_, index) => (
+        data[Math.round(index * lastIndex / (limit - 1))]
+    ));
+};
+
+const minMaxSample = (data, limit) => {
+    if (data.length <= limit) return data;
+    const interior = data.slice(1, -1);
+    const bucketCount = Math.max(1, Math.floor((limit - 2) / 2));
+    const bucketSize = interior.length / bucketCount;
+    const sampled = [data[0]];
+
+    for (let bucketIndex = 0; bucketIndex < bucketCount; bucketIndex += 1) {
+        const start = Math.floor(bucketIndex * bucketSize);
+        const end = Math.min(
+            interior.length,
+            Math.ceil((bucketIndex + 1) * bucketSize)
+        );
+        if (start >= end) continue;
+
+        let minimumIndex = start;
+        let maximumIndex = start;
+        for (let index = start + 1; index < end; index += 1) {
+            if (interior[index].y < interior[minimumIndex].y) minimumIndex = index;
+            if (interior[index].y > interior[maximumIndex].y) maximumIndex = index;
+        }
+        [...new Set([minimumIndex, maximumIndex])]
+            .sort((left, right) => left - right)
+            .forEach((index) => sampled.push(interior[index]));
+    }
+
+    sampled.push(data[data.length - 1]);
+    return sampled;
+};
+
+export const limitChartDataForPreview = (data, chartType) => {
+    if (chartType === 'bar_chart') return evenlySample(data, 120);
+    if (chartType === 'scatter_plot') return evenlySample(data, 800);
+    return minMaxSample(data, 600);
+};
+
 export const prepareChartData = (rows, item) => {
     const xField = item.bindings?.xField;
     const yField = item.bindings?.yField;
@@ -84,7 +129,7 @@ export const prepareChartData = (rows, item) => {
         });
     }
 
-    return chartData;
+    return limitChartDataForPreview(chartData, item.type);
 };
 
 export const calculateMetric = (rows, item) => {

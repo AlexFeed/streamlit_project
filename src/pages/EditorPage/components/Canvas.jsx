@@ -1,5 +1,6 @@
 import {
     useCallback,
+    useEffect,
     useMemo,
     useState,
 } from 'react';
@@ -14,6 +15,33 @@ import {
     useCanvasGrid,
 } from '../hooks/useCanvasGrid.js';
 import useTranslation from '../../../shared/translation/useTranslation.js';
+import { calculateMetric, formatMetricValue } from '../services/chartData.js';
+
+const clampAutoWidth = (value) => Math.max(2, Math.min(4, value));
+
+const getDataDrivenWidth = (component, rows) => {
+    if (component.layout?.manualWidth) return null;
+
+    if (component.type === 'metric') {
+        if (!component.bindings?.valueField) return 2;
+        const value = formatMetricValue(calculateMetric(rows, component));
+        const estimatedPixels = Math.max(120, value.length * 16 + 32);
+        return clampAutoWidth(Math.ceil(estimatedPixels / 80));
+    }
+
+    if (component.type === 'selectbox') {
+        const field = component.bindings?.field;
+        if (!field) return 2;
+        const longestValue = rows.reduce((longest, row) => (
+            Math.max(longest, String(row[field] ?? '').length)
+        ), 0);
+        const titleLength = String(component.config?.title || '').length;
+        const estimatedPixels = Math.max(120, Math.max(longestValue, titleLength) * 7 + 64);
+        return clampAutoWidth(Math.ceil(estimatedPixels / 80));
+    }
+
+    return null;
+};
 
 const Canvas = ({
                     components,
@@ -38,6 +66,31 @@ const Canvas = ({
         () => components.filter((component) => !component.parentId),
         [components]
     );
+    const defaultDatasetId = datasets[0]?.datasetId || '';
+    const resolveDatasetId = useCallback(
+        (component) => {
+            if (
+                component?.datasetId
+                && datasets.some((ds) => ds.datasetId === component.datasetId)
+            ) {
+                return component.datasetId;
+            }
+            return defaultDatasetId;
+        },
+        [datasets, defaultDatasetId]
+    );
+    const autoSizedLayoutComponents = useMemo(
+        () => layoutComponents.map((component) => {
+            const rows = previewRowsByDataset[resolveDatasetId(component)] || [];
+            const autoWidth = getDataDrivenWidth(component, rows);
+            if (autoWidth == null) return component;
+            return {
+                ...component,
+                layout: { ...component.layout, autoWidth },
+            };
+        }),
+        [layoutComponents, previewRowsByDataset, resolveDatasetId]
+    );
 
     const {
         gridWidth,
@@ -50,11 +103,25 @@ const Canvas = ({
         insertionPreview,
         containerDropTargetId,
     } = useCanvasGrid({
-        components: layoutComponents,
+        components: autoSizedLayoutComponents,
         onLayoutChange,
         onSelect,
         onMoveToContainer,
     });
+    useEffect(() => {
+        const layoutById = new Map(
+            layoutComponents.map((component) => [component.id, component])
+        );
+        const needsSynchronization = gridLayout.some((item) => {
+            const component = layoutById.get(item.i) || {};
+            const current = component.layout || {};
+            return current.x !== item.x
+                || current.y !== item.y
+                || current.width !== item.w
+                || contentHeightToGridUnits(current.height, component.type) !== item.h;
+        });
+        if (needsSynchronization) onLayoutChange(gridLayout);
+    }, [gridLayout, layoutComponents, onLayoutChange]);
     const { setNodeRef, isOver } = useDroppable({
         id: 'dashboard-canvas',
         data: {
@@ -81,21 +148,6 @@ const Canvas = ({
         onDragCancel: () => setDropPreview(null),
         onDragEnd: () => setDropPreview(null),
     });
-
-    const defaultDatasetId = datasets[0]?.datasetId || '';
-
-    const resolveDatasetId = useCallback(
-        (component) => {
-            if (
-                component?.datasetId &&
-                datasets.some((ds) => ds.datasetId === component.datasetId)
-            ) {
-                return component.datasetId;
-            }
-            return defaultDatasetId;
-        },
-        [datasets, defaultDatasetId]
-    );
 
     const activeFilters = useMemo(
         () => components.filter((component) => component.type === 'selectbox'),
@@ -148,20 +200,28 @@ const Canvas = ({
             y: visibleDropPreview.y,
             w: visibleDropPreview.width ?? visibleDropPreview.w,
             h: visibleDropPreview.insert
-                ? 1
+                ? (visibleDropPreview.axis === 'x'
+                    ? (visibleDropPreview.h || visibleDropPreview.gridHeight || 1)
+                    : 1)
                 : visibleDropPreview.gridHeight ?? contentHeightToGridUnits(
                     visibleDropPreview.height,
                     visibleDropPreview.type
                 ),
         }, gridWidth);
         return visibleDropPreview.insert
-            ? {
+            ? visibleDropPreview.axis === 'x'
+                ? {
+                    ...style,
+                    left: style.left - 2,
+                    width: 4,
+                }
+                : {
                 ...style,
                 left: style.left + (visibleDropPreview.displayLeftOffset ?? 0),
                 top: style.top - 2,
                 width: visibleDropPreview.displayWidth ?? style.width,
                 height: 4,
-            }
+                }
             : style;
     }, [visibleDropPreview, gridWidth]);
 
@@ -261,7 +321,11 @@ const Canvas = ({
                                 key={item.id}
                                 data-grid-item={item.id}
                                 className="dashboard-grid-item"
-                                style={getGridItemStyle(layoutItem, gridWidth)}
+                                style={{
+                                    ...getGridItemStyle(layoutItem, gridWidth),
+                                    boxSizing: 'border-box',
+                                    padding: Number(item.config?.spacing || 0),
+                                }}
                             >
                                 <CanvasItem
                                     item={item}

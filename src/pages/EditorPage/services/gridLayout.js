@@ -3,7 +3,10 @@ import { withAppearanceDefaults } from './componentAppearance.js';
 
 export const GRID_COLUMNS = 12;
 export const GRID_ROW_HEIGHT = 20;
-export const GRID_COLUMN_GAP = 16;
+// Use one visual rhythm on both axes. A larger column gap made compact
+// components (metrics, filters and links) look as if they occupied an
+// invisible extra column and prevented users from placing them close together.
+export const GRID_COLUMN_GAP = 8;
 export const GRID_ROW_GAP = 8;
 export const CARD_CHROME_HEIGHT = 96;
 
@@ -42,10 +45,9 @@ const getRequiredContainerGridWidth = (container, components) => {
         ? childWidths.reduce((total, width) => total + width, 0)
         : Math.max(...childWidths);
     const hasHorizontalSpacing = (
-        Number(container.config?.padding ?? 8) > 0
-        || (direction === 'horizontal'
-            && Number(container.config?.gap ?? 8) > 0
-            && children.length > 1)
+        direction === 'horizontal'
+        && Number(container.config?.gap ?? 8) > 0
+        && children.length > 1
     );
 
     return Math.max(
@@ -65,6 +67,13 @@ export const getComponentGridWidth = (component, components = []) => {
     );
 
     if (
+        !component.layout?.manualWidth
+        && Number.isFinite(Number(component.layout?.autoWidth))
+    ) {
+        return normalizeGridWidth(component.layout.autoWidth, component.type);
+    }
+
+    if (
         component.type === 'layout_group'
         && !component.layout?.manualWidth
     ) {
@@ -77,7 +86,15 @@ export const getComponentGridWidth = (component, components = []) => {
         compactWidthTypes.has(component.type)
         && config.contentWidth === 'content'
     ) {
+        if (
+            component.type === 'metric'
+            && !component.bindings?.valueField
+        ) {
+            return 2;
+        }
         if (component.type === 'text') {
+            const usesDefaultContent = !String(config.content || '').trim()
+                && Boolean(config.contentKey);
             const longestLine = String(config.content || (config.contentKey ? 'Placeholder text content' : ''))
                 .split('\n')
                 .reduce((longest, line) => Math.max(longest, line.length), 0);
@@ -85,7 +102,10 @@ export const getComponentGridWidth = (component, components = []) => {
                 longestLine * Number(config.fontSize || 16) * 0.56
                 + Number(config.padding || 0) * 2
             );
-            return Math.max(1, Math.min(6, Math.ceil(estimatedPixels / 96)));
+            return Math.max(
+                usesDefaultContent ? 4 : 1,
+                Math.min(6, Math.ceil(estimatedPixels / 96))
+            );
         }
         if (component.type === 'page_link') {
             const labelLength = String(config.title || '').length || 16;
@@ -128,25 +148,41 @@ const getAutomaticContentHeight = (component) => {
             ...component,
             config,
         });
-        const charactersPerLine = Math.max(18, width * 10);
-        const contentLines = String(config.content || '')
+        const availableWidth = Math.max(
+            64,
+            width * 96 - Number(config.padding || 0) * 2
+        );
+        const measuredContent = String(
+            config.content
+            || (config.contentKey ? 'Добавьте описание или пояснение' : '')
+        );
+        const contentLines = measuredContent
             .split('\n')
             .reduce((total, line) => (
-                total + Math.max(1, Math.ceil(line.length / charactersPerLine))
+                total + Math.max(
+                    1,
+                    Math.ceil(
+                        line.length * fontSize * 0.58 / availableWidth
+                    )
+                )
             ), 0);
         const titleLines = config.title ? 1 : 0;
+        const lineHeight = Math.max(24, fontSize * 1.5);
         return Math.ceil(
-            contentLines * fontSize * 1.5
+            contentLines * lineHeight
             + titleLines * 20
             + padding
         );
     }
     if (component.type === 'page_link') return 40 + padding;
     if (component.type === 'metric') {
+        // Label + value need four grid rows in the native Streamlit render.
+        // The former 58px estimate described only the text and ignored the
+        // widget's own vertical spacing, so consecutive metrics overlapped.
         return 58 + (config.description ? 18 : 0) + padding;
     }
     if (component.type === 'selectbox') {
-        return (config.widget === 'radio' ? 72 : 56) + padding;
+        return 56 + padding;
     }
     return normalizeContentHeight(component.layout?.height, component.type);
 };
@@ -182,19 +218,26 @@ const getRequiredContainerHeight = (container, components) => {
 
 export const getComponentGridHeight = (component) => {
     const config = withAppearanceDefaults(component.type, component.config || {});
-    if (
-        ['text', 'metric', 'selectbox', 'page_link'].includes(component.type)
-        && config.heightMode === 'auto'
-        && !component.layout?.manualHeight
-    ) {
+    if (['text', 'metric', 'selectbox', 'page_link'].includes(component.type)) {
         const height = getAutomaticContentHeight({ ...component, config });
-        return Math.max(
+        const automaticGridHeight = Math.max(
             1,
             Math.ceil(
                 (height + GRID_ROW_GAP)
                 / (GRID_ROW_HEIGHT + GRID_ROW_GAP)
             )
         );
+        // Text height always follows wrapped lines. Extra space is controlled
+        // by padding, while horizontal resizing remains available.
+        if (component.type === 'text') return automaticGridHeight;
+        if (!component.layout?.manualHeight) return automaticGridHeight;
+        const manualGridHeight = contentHeightToGridUnits(
+            component.layout?.height,
+            component.type
+        );
+        // Only free-form text must grow with its lines. Metrics and filters
+        // have compact native widgets and remain freely resizable by users.
+        return manualGridHeight;
     }
     return contentHeightToGridUnits(component.layout?.height, component.type);
 };
@@ -287,16 +330,7 @@ export const moveGridItem = (layout, id, deltaX, deltaY) => {
         return layout.map((entry) => entry.i === id ? requested : { ...entry });
     }
 
-    const compact = clampGridItem({
-        ...requested,
-        w: item.minW || 2,
-        h: item.minH || 1,
-    });
-    if (fitsWithoutMovingOthers(compact)) {
-        return layout.map((entry) => entry.i === id ? compact : { ...entry });
-    }
-
-    return resolveGridCollisions(layout, id, compact);
+    return resolveGridCollisions(layout, id, requested);
 };
 
 export const findNearestGridPosition = (
@@ -357,21 +391,52 @@ export const findGridInsertionPosition = (
     const horizontalMatches = layout.filter((item) => (
         x < item.x + item.w && x + safeWidth > item.x
     ));
-    const boundaries = Array.from(new Set(
+    const verticalBoundaries = Array.from(new Set(
         horizontalMatches.flatMap((item) => [item.y, item.y + item.h])
     ));
-    if (boundaries.length === 0) return null;
-
-    const boundary = boundaries.reduce((nearest, current) => (
-        Math.abs(current - y) < Math.abs(nearest - y) ? current : nearest
+    const verticalMatches = layout.filter((item) => (
+        y < item.y + item.h && y + safeHeight > item.y
     ));
-    if (Math.abs(boundary - y) > 3) return null;
+    const horizontalBoundaries = Array.from(new Set(
+        verticalMatches.flatMap((item) => [
+            item.x - safeWidth,
+            item.x + item.w,
+        ])
+    )).filter((boundary) => boundary >= 0 && boundary + safeWidth <= GRID_COLUMNS);
+    const candidates = [
+        ...verticalBoundaries.map((boundary) => ({
+            x,
+            y: boundary,
+            axis: 'y',
+            distance: Math.abs(boundary - y),
+        })),
+        ...horizontalBoundaries.map((boundary) => ({
+            x: boundary,
+            y,
+            axis: 'x',
+            distance: Math.abs(boundary - x),
+        })),
+    ]
+        .filter((candidate) => candidate.distance <= 3)
+        .sort((left, right) => left.distance - right.distance);
+
+    const candidate = candidates.find((position) => {
+        const rectangle = {
+            x: position.x,
+            y: position.y,
+            w: safeWidth,
+            h: safeHeight,
+        };
+        return !layout.some((item) => rectanglesOverlap(rectangle, item));
+    });
+    if (!candidate) return null;
 
     return {
-        x,
-        y: boundary,
+        x: candidate.x,
+        y: candidate.y,
         w: safeWidth,
         h: safeHeight,
+        axis: candidate.axis,
         insert: true,
     };
 };
@@ -521,10 +586,8 @@ export const toReactGridLayout = (components) => {
 
     return components.map((component) => {
     const height = getComponentGridHeight(component);
-    const config = withAppearanceDefaults(component.type, component.config || {});
     const usesAutomaticHeight = (
         ['text', 'metric', 'selectbox', 'page_link'].includes(component.type)
-        && config.heightMode === 'auto'
         && !component.layout?.manualHeight
     );
 

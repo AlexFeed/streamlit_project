@@ -13,9 +13,9 @@ import {
     findGridInsertionPosition,
     findNearestGridPosition,
     getComponentGridHeight,
+    getComponentGridWidth,
     gridUnitsToContentHeight,
     moveGridItem,
-    rectanglesOverlap,
     resolveGridCollisions,
     resizeGridItem,
     toReactGridLayout,
@@ -237,32 +237,13 @@ export const useCanvasGrid = ({
                 // so taller charts could not be placed directly below text.
                 const compactX = (source?.x || 0) + roundedCols;
                 const compactY = (source?.y || 0) + roundedRows;
-                const requestedCandidate = source ? {
-                    ...source,
-                    x: Math.max(
-                        0,
-                        Math.min(
-                            GRID_COLUMNS - insertionWidth,
-                            Math.round(compactX)
-                        )
-                    ),
-                    y: Math.max(0, Math.round(compactY)),
-                    w: insertionWidth,
-                    h: insertionHeight,
-                } : null;
-                const requestedSpaceIsFree = requestedCandidate
-                    && !otherItems.some((item) => (
-                        rectanglesOverlap(requestedCandidate, item)
-                    ));
-                const insertion = requestedSpaceIsFree
-                    ? null
-                    : findGridInsertionPosition(
-                        otherItems,
-                        compactX,
-                        compactY + insertionHeight / 2,
-                        insertionWidth,
-                        insertionHeight
-                    );
+                const insertion = findGridInsertionPosition(
+                    otherItems,
+                    compactX,
+                    compactY,
+                    insertionWidth,
+                    insertionHeight
+                );
 
                 if (insertion && source) {
                     const activeItem = {
@@ -409,7 +390,18 @@ export const useCanvasGrid = ({
         ) / GRID_COLUMNS;
         const unitWidth = columnWidth + GRID_COLUMN_GAP;
         const unitHeight = GRID_ROW_HEIGHT + GRID_ROW_GAP;
-        const minWidth = Math.max(1, Number(paletteItem.minWidth || 2));
+        // A new palette item must be dragged with its real initial footprint,
+        // not with its resize minimum. Using minWidth made text look like a
+        // one-column strip even though it became a wider block after dropping.
+        const previewWidth = getComponentGridWidth({
+            type: paletteItem.type,
+            config: paletteItem.defaultConfig || {},
+            bindings: paletteItem.defaultBindings || {},
+            layout: {
+                width: paletteItem.defaultWidth,
+                height: paletteItem.defaultHeight,
+            },
+        });
         const minHeight = getComponentGridHeight({
             type: paletteItem.type,
             config: paletteItem.defaultConfig || {},
@@ -421,7 +413,7 @@ export const useCanvasGrid = ({
         const centerX = dragRect.left + dragRect.width / 2;
         const centerY = dragRect.top + dragRect.height / 2;
         const requestedX = (
-            (centerX - bounds.left) / unitWidth - minWidth / 2
+            (centerX - bounds.left) / unitWidth - previewWidth / 2
         );
         const requestedY = (
             (centerY - bounds.top) / unitHeight - minHeight / 2
@@ -430,12 +422,12 @@ export const useCanvasGrid = ({
             gridLayout,
             requestedX,
             requestedY,
-            minWidth,
+            previewWidth,
             minHeight
         );
         const roundedX = Math.max(
             0,
-            Math.min(GRID_COLUMNS - minWidth, Math.round(requestedX))
+            Math.min(GRID_COLUMNS - previewWidth, Math.round(requestedX))
         );
         const roundedY = Math.max(0, Math.round(requestedY));
         const position = (
@@ -447,8 +439,8 @@ export const useCanvasGrid = ({
             : findGridInsertionPosition(
                 gridLayout,
                 requestedX,
-                (centerY - bounds.top) / unitHeight,
-                minWidth,
+                requestedY,
+                previewWidth,
                 minHeight
             ) || nearestPosition;
         if (!position) return null;
@@ -460,6 +452,7 @@ export const useCanvasGrid = ({
             height: gridUnitsToContentHeight(position.h, paletteItem.type),
             gridHeight: position.h,
             insert: Boolean(position.insert),
+            axis: position.axis,
         };
     }, [gridLayout, gridWidth]);
 
