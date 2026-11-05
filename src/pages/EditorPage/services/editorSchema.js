@@ -38,8 +38,13 @@ export const buildDashboardSchema = (snapshot, t = (key) => key) => {
             contentAlignment: component.config?.contentAlignment || 'left',
             verticalAlignment: component.config?.verticalAlignment || 'top',
             padding: Number(component.config?.padding ?? 12),
-            contentWidth: component.config?.contentWidth || 'stretch',
-            heightMode: component.config?.heightMode || (
+            spacing: Number(component.config?.spacing ?? 0),
+            contentWidth: (
+                paletteItems[component.type]?.isChart
+                || component.type === 'table'
+                || component.layout?.manualWidth
+            ) ? 'stretch' : 'content',
+            heightMode: component.layout?.manualHeight ? 'fixed' : (
                 ['text', 'metric', 'selectbox', 'page_link'].includes(component.type)
                     ? 'auto'
                     : 'fixed'
@@ -124,6 +129,7 @@ export const buildDashboardSchema = (snapshot, t = (key) => key) => {
                 title: component.config?.title || t('palette.pageLink.defaultTitle'),
                 targetPageId: component.config?.targetPageId || '',
                 displayStyle: component.config?.displayStyle || 'button',
+                buttonColor: component.config?.buttonColor || '#f47721',
             });
         }
         else if (component.type === 'table') {
@@ -131,8 +137,13 @@ export const buildDashboardSchema = (snapshot, t = (key) => key) => {
                 ...base,
                 title: component.config?.title || t('palette.table.label'),
                 columns: component.bindings?.columns || [],
+                tableMode: component.config?.tableMode || 'data',
+                rowMode: component.config?.rowMode || 'limit',
                 rowLimit: component.config?.rowLimit || 50,
                 hideIndex: component.config?.hideIndex !== false,
+                pivotIndex: component.config?.pivotIndex || '',
+                pivotValue: component.config?.pivotValue || '',
+                pivotAggregation: component.config?.pivotAggregation || 'sum',
             });
         }
         else if (component.type === 'layout_group') {
@@ -342,21 +353,41 @@ export const validateSchema = (snapshot, t = (key) => key) => {
         else if (component.type === 'page_link') {
             const targetPageId = component.config?.targetPageId;
             const displayStyle = component.config?.displayStyle || 'button';
+            const buttonColor = component.config?.buttonColor || '#f47721';
             if (!targetPageId || !pageIds.has(targetPageId)) {
                 errors.push(t('editor.validation.pageTarget', { name }));
             }
             if (!['button', 'link'].includes(displayStyle)) {
                 errors.push(t('editor.validation.pageLinkStyle', { name }));
             }
+            if (!/^#[0-9a-fA-F]{6}$/.test(buttonColor)) {
+                errors.push(t('editor.validation.color', { name }));
+            }
         }
         else if (component.type === 'table') {
             const columns = component.bindings?.columns || [];
             const rowLimit = Number(component.config?.rowLimit || 50);
+            const tableMode = component.config?.tableMode || 'data';
+            const rowMode = component.config?.rowMode || 'limit';
             if (!Array.isArray(columns) || columns.some((field) => !hasField(field))) {
                 errors.push(t('editor.validation.tableColumns', { name }));
             }
-            if (rowLimit < 1 || rowLimit > 500) {
+            if (!['data', 'pivot'].includes(tableMode) || !['all', 'limit'].includes(rowMode)) {
+                errors.push(t('editor.validation.tableMode', { name }));
+            }
+            if (rowMode === 'limit' && (rowLimit < 1 || rowLimit > 10000)) {
                 errors.push(t('editor.validation.tableRows', { name }));
+            }
+            if (tableMode === 'pivot') {
+                const pivotIndex = component.config?.pivotIndex || '';
+                const pivotValue = component.config?.pivotValue || '';
+                const pivotAggregation = component.config?.pivotAggregation || 'sum';
+                if (!hasField(pivotIndex) || !hasField(pivotValue)) {
+                    errors.push(t('editor.validation.pivotFields', { name }));
+                }
+                if (!['sum', 'mean', 'count', 'min', 'max'].includes(pivotAggregation)) {
+                    errors.push(t('editor.validation.pivotAggregation', { name }));
+                }
             }
         }
     });

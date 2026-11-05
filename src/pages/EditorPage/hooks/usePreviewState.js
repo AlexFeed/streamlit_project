@@ -24,17 +24,12 @@ export const usePreviewState = () => {
 
             const currentSchemaStr = JSON.stringify(schema);
 
-            // Scenario 1: Session already exists and schema is unchanged.
-            // Reopen modal instantly without extra network roundtrips.
-            if (previewSessionId && previewUrl && currentSchemaStr === lastSchemaStrRef.current) {
-                setIsPreviewModalOpen(true);
-                return;
-            }
-
             setIsPreviewLoading(true);
 
-            // Scenario 2: Session exists, but dashboard schema changed.
-            // Update the existing session in-place (PUT /preview/{sessionId}).
+            // Always verify/update the backend session before opening. A
+            // backend restart can invalidate its in-memory session while the
+            // browser still holds the old URL, even when the schema itself is
+            // unchanged.
             if (previewSessionId) {
                 try {
                     const session = await updatePreviewSession(previewSessionId, { schema });
@@ -48,7 +43,7 @@ export const usePreviewState = () => {
                 }
             }
 
-            // Scenario 3: First launch or fallback after TTL expiration.
+            // First launch or fallback after expiration/backend restart.
             const session = await createPreviewSession({ schema });
             setPreviewUrl(session.previewUrl);
             setPreviewSessionId(session.sessionId);

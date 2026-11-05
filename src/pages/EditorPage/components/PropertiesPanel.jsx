@@ -112,6 +112,11 @@ const PropertiesPanel = ({
                 [key]: value,
                 ...(key === 'content' ? { contentKey: undefined } : {}),
             },
+            layout: {
+                ...component.layout,
+                ...(key === 'heightMode' && value === 'auto' ? { manualHeight: false } : {}),
+                ...(key === 'contentWidth' && value === 'content' ? { manualWidth: false } : {}),
+            },
         }));
     };
 
@@ -280,6 +285,16 @@ const PropertiesPanel = ({
 
                     {type === 'table' && (
                         <>
+                            <OptionSelect
+                                label={t('editor.tableMode')}
+                                value={config.tableMode || 'data'}
+                                onChange={(value) => updateConfig('tableMode', value)}
+                                options={[
+                                    { value: 'data', label: t('editor.tableModeData') },
+                                    { value: 'pivot', label: t('editor.tableModePivot') },
+                                ]}
+                            />
+                            {(config.tableMode || 'data') === 'data' ? (
                             <MultiFieldSelect
                                 label={t('editor.tableColumns')}
                                 value={bindings.columns || []}
@@ -287,12 +302,30 @@ const PropertiesPanel = ({
                                 options={fieldOptions}
                                 helperText={t('editor.tableColumnsHelp')}
                             />
-                            <TextField
-                                label={t('editor.tableRowLimit')}
-                                value={String(config.rowLimit || 50)}
-                                onChange={(value) => updateConfig('rowLimit', Math.max(1, Math.min(500, Number(value) || 1)))}
-                                helperText={t('editor.tableRowLimitHelp')}
+                            ) : (
+                                <>
+                                    <FieldSelect label={t('editor.pivotRows')} value={config.pivotIndex || ''} onChange={(value) => updateConfig('pivotIndex', value)} options={fieldOptions} placeholder={t('editor.chooseField')} />
+                                    <FieldSelect label={t('editor.pivotValues')} value={config.pivotValue || ''} onChange={(value) => updateConfig('pivotValue', value)} options={valueFieldOptions} placeholder={t('editor.chooseField')} />
+                                    <OptionSelect label={t('editor.pivotAggregation')} value={config.pivotAggregation || 'sum'} onChange={(value) => updateConfig('pivotAggregation', value)} options={localizeOptions(aggregationOptions.filter((option) => option.value !== 'none'))} />
+                                </>
+                            )}
+                            <OptionSelect
+                                label={t('editor.tableRowsMode')}
+                                value={config.rowMode || 'limit'}
+                                onChange={(value) => updateConfig('rowMode', value)}
+                                options={[
+                                    { value: 'all', label: t('editor.tableAllRows') },
+                                    { value: 'limit', label: t('editor.tableFirstRows') },
+                                ]}
                             />
+                            {(config.rowMode || 'limit') === 'limit' && (
+                                <TextField
+                                    label={t('editor.tableRowLimit')}
+                                    value={String(config.rowLimit || 50)}
+                                    onChange={(value) => updateConfig('rowLimit', Math.max(1, Math.min(10000, Number(value) || 1)))}
+                                    helperText={t('editor.tableRowLimitHelp')}
+                                />
+                            )}
                         </>
                     )}
 
@@ -312,6 +345,11 @@ const PropertiesPanel = ({
                                     { value: 'button', label: t('editor.asButton') },
                                     { value: 'link', label: t('editor.asTextLink') },
                                 ]}
+                            />
+                            <ColorField
+                                label={t('editor.buttonColor')}
+                                value={config.buttonColor || '#f47721'}
+                                onChange={(value) => updateConfig('buttonColor', value)}
                             />
                         </>
                     )}
@@ -420,31 +458,6 @@ const PropertiesPanel = ({
                         </>
                     )}
 
-                    {!paletteItems[type]?.isChart && type !== 'table' && (
-                        <>
-                            <OptionSelect
-                                label={t('editor.contentWidth')}
-                                value={config.contentWidth || 'content'}
-                                onChange={(value) => updateConfig('contentWidth', value)}
-                                options={[
-                                    { value: 'content', label: t('editor.fitContent') },
-                                    { value: 'stretch', label: t('editor.stretch') },
-                                ]}
-                            />
-                            {type !== 'layout_group' && (
-                                <OptionSelect
-                                    label={t('editor.heightMode')}
-                                    value={config.heightMode || 'auto'}
-                                    onChange={(value) => updateConfig('heightMode', value)}
-                                    options={[
-                                        { value: 'auto', label: t('editor.fitContent') },
-                                        { value: 'fixed', label: t('editor.fixedSize') },
-                                    ]}
-                                />
-                            )}
-                        </>
-                    )}
-
                     <OptionSelect
                         label={t('editor.showBorder')}
                         value={appearance.showBorder ? 'show' : 'hide'}
@@ -467,29 +480,37 @@ const PropertiesPanel = ({
 
                     {!paletteItems[type]?.isChart && type !== 'table' && type !== 'layout_group' && (
                         <>
-                            <OptionSelect
-                                label={t('editor.contentAlignment')}
-                                value={appearance.contentAlignment}
-                                onChange={(value) => updateConfig('contentAlignment', value)}
-                                options={localizeOptions(textAlignOptions)}
-                            />
-                            {appearance.heightMode === 'fixed' && (
-                                <OptionSelect
-                                    label={t('editor.verticalAlignment')}
-                                    value={appearance.verticalAlignment}
-                                    onChange={(value) => updateConfig('verticalAlignment', value)}
-                                    options={[
-                                        { value: 'top', label: t('editor.alignTop') },
-                                        { value: 'center', label: t('editor.alignMiddle') },
-                                        { value: 'bottom', label: t('editor.alignBottom') },
-                                    ]}
-                                />
+                            {type !== 'text' && (
+                                <>
+                                    <OptionSelect
+                                        label={t('editor.contentAlignment')}
+                                        value={appearance.contentAlignment}
+                                        onChange={(value) => updateConfig('contentAlignment', value)}
+                                        options={localizeOptions(textAlignOptions)}
+                                    />
+                                    <OptionSelect
+                                        label={t('editor.verticalAlignment')}
+                                        value={appearance.verticalAlignment}
+                                        onChange={(value) => updateConfig('verticalAlignment', value)}
+                                        options={[
+                                            { value: 'top', label: t('editor.alignTop') },
+                                            { value: 'center', label: t('editor.alignMiddle') },
+                                            { value: 'bottom', label: t('editor.alignBottom') },
+                                        ]}
+                                    />
+                                </>
                             )}
                             <OptionSelect
                                 label={t('editor.padding')}
                                 value={String(appearance.padding)}
                                 onChange={(value) => updateConfig('padding', Number(value))}
                                 options={[0, 4, 8, 12, 16, 24, 32].map((size) => ({ value: String(size), label: `${size} px` }))}
+                            />
+                            <OptionSelect
+                                label={t('editor.externalSpacing')}
+                                value={String(appearance.spacing)}
+                                onChange={(value) => updateConfig('spacing', Number(value))}
+                                options={[0, 4, 8, 12, 16].map((size) => ({ value: String(size), label: `${size} px` }))}
                             />
                         </>
                     )}

@@ -67,7 +67,7 @@ export const paletteItems = {
         defaultWidth: 6,
         minWidth: 1,
         defaultHeight: 68,
-        minHeight: 60,
+        minHeight: 40,
     },
     selectbox: {
         type: 'selectbox',
@@ -105,6 +105,7 @@ export const paletteItems = {
             titleKey: 'palette.pageLink.defaultTitle',
             targetPageId: '',
             displayStyle: 'button',
+            buttonColor: '#f47721',
         },
         defaultBindings: {},
         defaultWidth: 2,
@@ -241,8 +242,8 @@ export const paletteItems = {
         defaultBindings: {
             valueField: '',
         },
-        defaultWidth: 1,
-        minWidth: 1,
+        defaultWidth: 2,
+        minWidth: 2,
         defaultHeight: 80,
         minHeight: 60,
     },
@@ -257,8 +258,13 @@ export const paletteItems = {
         descriptionKey: 'palette.table.description',
         defaultConfig: {
             title: '',
+            tableMode: 'data',
+            rowMode: 'limit',
             rowLimit: 50,
             hideIndex: true,
+            pivotIndex: '',
+            pivotValue: '',
+            pivotAggregation: 'sum',
         },
         defaultBindings: {
             columns: [],

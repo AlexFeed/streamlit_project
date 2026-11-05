@@ -8,7 +8,9 @@ export const getAppearanceDefaults = (type, config = {}) => {
     const isFilter = type === 'selectbox';
 
     return {
-        showBorder: config.showBorder ?? ['card', 'outline'].includes(surface),
+        // New components start with a visible footprint on the canvas.
+        // Users can still disable the border explicitly in properties.
+        showBorder: config.showBorder ?? true,
         showBackground: config.showBackground ?? ['card', 'soft'].includes(surface),
         contentAlignment: config.contentAlignment || (isMetric ? 'center' : 'left'),
         verticalAlignment: config.verticalAlignment || (
@@ -17,6 +19,7 @@ export const getAppearanceDefaults = (type, config = {}) => {
         padding: Number(config.padding ?? (
             ['text', 'page_link'].includes(type) ? 0 : (isFilter || isMetric) ? 8 : 12
         )),
+        spacing: Number(config.spacing ?? 0),
         contentWidth: config.contentWidth || (
             ['text', 'metric', 'selectbox', 'page_link'].includes(type)
                 ? 'content'
@@ -41,7 +44,6 @@ export const withAppearanceDefaults = (type, config = {}) => {
 
     if (!config.appearanceVersion) {
         if (['text', 'page_link'].includes(type)) {
-            next.showBorder = false;
             next.showBackground = false;
             next.padding = 0;
             next.verticalAlignment = 'top';

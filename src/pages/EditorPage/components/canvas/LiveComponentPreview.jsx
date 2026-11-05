@@ -187,6 +187,7 @@ const LiveChart = ({ item, rows, height, t, theme }) => {
                             strokeWidth={3}
                             dot={false}
                             activeDot={{ r: 5, fill: color, strokeWidth: 0 }}
+                            isAnimationActive={false}
                         />
                     </LineChart>
                 ) : item.type === 'bar_chart' ? (
@@ -197,6 +198,7 @@ const LiveChart = ({ item, rows, height, t, theme }) => {
                             fill={color}
                             radius={[6, 6, 2, 2]}
                             maxBarSize={56}
+                            isAnimationActive={false}
                         >
                             {chartData.map((point, index) => (
                                 <Cell
@@ -221,12 +223,13 @@ const LiveChart = ({ item, rows, height, t, theme }) => {
                             stroke={color}
                             strokeWidth={3}
                             fill={`url(#area-${item.id})`}
+                            isAnimationActive={false}
                         />
                     </AreaChart>
                 ) : (
                     <ScatterChart margin={{ top: 12, right: 12, left: 8, bottom: 24 }}>
                         {common}
-                        <Scatter data={chartData} fill={color}>
+                        <Scatter data={chartData} fill={color} isAnimationActive={false}>
                             {chartData.map((point, index) => (
                                 <Cell
                                     key={`${point.x}-${index}`}
@@ -255,9 +258,18 @@ const LiveMetric = ({ item, rows, height, t, theme }) => {
         );
     }
 
+    const formattedValue = formatMetricValue(value);
+    const automaticFontSize = formattedValue.length <= 6
+        ? 30
+        : formattedValue.length <= 9
+            ? 26
+            : formattedValue.length <= 12
+                ? 22
+                : 18;
+
     return (
         <div
-            className="live-preview-metric flex flex-col justify-center px-2 py-1"
+            className="live-preview-metric flex flex-col justify-center px-1"
             style={{
                 height,
                 color: item.config?.elementTextColor && item.config.elementTextColor !== '#d4d4d8'
@@ -274,11 +286,15 @@ const LiveMetric = ({ item, rows, height, t, theme }) => {
                 style={{
                     fontSize: item.config?.elementFontSize && item.config.elementFontSize !== 'auto'
                         ? `${item.config.elementFontSize}px`
-                        : undefined,
+                        : `${automaticFontSize}px`,
                     fontWeight: item.config?.elementFontWeight || 600,
+                    maxWidth: '100%',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
                 }}
             >
-                {formatMetricValue(value)}
+                {formattedValue}
             </p>
             {item.config?.description?.trim() && (
                 <p className="mt-1 text-xs" style={{ color: theme.muted }}>
@@ -303,7 +319,7 @@ const LiveText = ({ item, height, t, theme }) => {
 
     return (
         <div
-            className="live-preview-text overflow-auto whitespace-pre-wrap text-sm leading-6"
+            className="live-preview-text w-full overflow-visible whitespace-pre-wrap text-sm leading-6"
             style={{
                 height,
                 fontSize: `${item.config?.fontSize || 16}px`,
@@ -406,7 +422,7 @@ const LiveFilter = ({
 
     return (
         <div
-            className="live-preview-filter flex flex-col justify-center"
+            className={`live-preview-filter flex flex-col ${item.layout?.manualHeight ? 'is-manual-height justify-start' : 'justify-center'}`}
             style={{
                 height,
                 color: item.config?.elementTextColor && item.config.elementTextColor !== '#d4d4d8'
@@ -439,6 +455,8 @@ const LivePageLink = ({ item, pages, height, t, theme }) => {
             <span
                 className={isLink ? 'live-preview-page-link-text' : 'live-preview-page-link-button'}
                 style={{
+                    backgroundColor: !isLink ? (item.config?.buttonColor || '#f47721') : undefined,
+                    borderColor: !isLink ? (item.config?.buttonColor || '#f47721') : undefined,
                     color: isLink && item.config?.elementTextColor && item.config.elementTextColor !== '#d4d4d8'
                         ? item.config.elementTextColor
                         : undefined,
@@ -459,10 +477,45 @@ const LivePageLink = ({ item, pages, height, t, theme }) => {
 const LiveTable = ({ item, rows, height, t, theme }) => {
     const selectedColumns = item.bindings?.columns || [];
     const availableColumns = rows[0] ? Object.keys(rows[0]) : [];
-    const columns = selectedColumns.length > 0
+    let columns = selectedColumns.length > 0
         ? selectedColumns.filter((column) => availableColumns.includes(column))
         : availableColumns;
-    const visibleRows = rows.slice(0, item.config?.rowLimit || 50);
+    let tableRows = rows;
+    if ((item.config?.tableMode || 'data') === 'pivot') {
+        const indexField = item.config?.pivotIndex;
+        const valueField = item.config?.pivotValue;
+        const aggregation = item.config?.pivotAggregation || 'sum';
+        if (!availableColumns.includes(indexField) || !availableColumns.includes(valueField)) {
+            return <EmptyPreview height={height} theme={theme}>{t('editor.tableNoData')}</EmptyPreview>;
+        }
+        const groups = new Map();
+        rows.forEach((row) => {
+            const key = String(row[indexField] ?? '');
+            const numeric = Number(row[valueField]);
+            const group = groups.get(key) || { values: [], count: 0 };
+            group.count += 1;
+            if (Number.isFinite(numeric)) group.values.push(numeric);
+            groups.set(key, group);
+        });
+        tableRows = Array.from(groups, ([key, group]) => {
+            let value = group.count;
+            if (aggregation !== 'count') {
+                const values = group.values;
+                if (!values.length) value = '';
+                else if (aggregation === 'mean') value = values.reduce((sum, itemValue) => sum + itemValue, 0) / values.length;
+                else if (aggregation === 'min') value = Math.min(...values);
+                else if (aggregation === 'max') value = Math.max(...values);
+                else value = values.reduce((sum, itemValue) => sum + itemValue, 0);
+            }
+            return { [indexField]: key, [valueField]: value };
+        });
+        columns = [indexField, valueField];
+    }
+    const requestedLimit = item.config?.rowMode === 'all'
+        ? tableRows.length
+        : Number(item.config?.rowLimit || 50);
+    const canvasLimit = Math.min(requestedLimit, 200);
+    const visibleRows = tableRows.slice(0, canvasLimit);
 
     if (!columns.length) return <EmptyPreview height={height} theme={theme}>{t('editor.tableNoData')}</EmptyPreview>;
 
@@ -480,6 +533,11 @@ const LiveTable = ({ item, rows, height, t, theme }) => {
                     ))}
                 </tbody>
             </table>
+            {requestedLimit > canvasLimit && (
+                <div className="px-2 py-1 text-xs" style={{ color: theme.muted }}>
+                    {t('editor.tableCanvasLimit', { count: canvasLimit, total: requestedLimit })}
+                </div>
+            )}
         </div>
     );
 };

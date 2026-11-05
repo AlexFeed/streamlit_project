@@ -80,7 +80,7 @@ export const getDataset = async (datasetId) => {
 //   returnedRows: number,
 //   limit: number
 // }
-export const getDatasetPreview = async (datasetId, limit = 500) => {
+export const getDatasetPreview = async (datasetId, limit = 10000) => {
     const response = await authFetch(
         `/datasets/${datasetId}/preview?limit=${limit}`
     );
