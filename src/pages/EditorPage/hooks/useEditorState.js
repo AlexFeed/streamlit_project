@@ -111,26 +111,34 @@ export const useEditorState = ({ useDraftStorage = true, defaultDatasetId = ''})
             return;
         }
 
-        try {
-            localStorage.setItem(
-                EDITOR_DRAFT_STORAGE_KEY,
-                JSON.stringify(components)
-            );
-        } catch (error) {
-            console.error('Could not save the editor draft to local storage:', error);
-        }
+        const timeoutId = window.setTimeout(() => {
+            try {
+                localStorage.setItem(
+                    EDITOR_DRAFT_STORAGE_KEY,
+                    JSON.stringify(components)
+                );
+            } catch (error) {
+                console.error('Could not save the editor draft to local storage:', error);
+            }
+        }, 400);
+
+        return () => window.clearTimeout(timeoutId);
     }, [components, useDraftStorage]);
 
     useEffect(() => {
         if (!useDraftStorage) return;
-        try {
-            localStorage.setItem(
-                EDITOR_PAGES_DRAFT_STORAGE_KEY,
-                JSON.stringify(pages)
-            );
-        } catch (error) {
-            console.error('Could not save editor pages to local storage:', error);
-        }
+        const timeoutId = window.setTimeout(() => {
+            try {
+                localStorage.setItem(
+                    EDITOR_PAGES_DRAFT_STORAGE_KEY,
+                    JSON.stringify(pages)
+                );
+            } catch (error) {
+                console.error('Could not save editor pages to local storage:', error);
+            }
+        }, 400);
+
+        return () => window.clearTimeout(timeoutId);
     }, [pages, useDraftStorage]);
 
 
@@ -144,7 +152,7 @@ export const useEditorState = ({ useDraftStorage = true, defaultDatasetId = ''})
     );
 
 
-    const addComponent = (
+    const addComponent = useCallback((
         paletteItem,
         targetIndex,
         targetLayout = null,
@@ -215,7 +223,7 @@ export const useEditorState = ({ useDraftStorage = true, defaultDatasetId = ''})
             });
         });
         setSelectedId(newComponent.id);
-    };
+    }, [activePageId, components.length, defaultDatasetId, pages, setComponents]);
 
     const moveComponent = useCallback((id, parentId = null, targetLayout = null) => {
         setComponents((current) => {
@@ -240,7 +248,7 @@ export const useEditorState = ({ useDraftStorage = true, defaultDatasetId = ''})
         setSelectedId(id);
     }, [pages, setComponents]);
 
-    const reorderComponent = (activeId, overId) => {
+    const reorderComponent = useCallback((activeId, overId) => {
         if (!activeId || !overId || activeId === overId) return;
 
         setComponents((prev) => {
@@ -254,7 +262,7 @@ export const useEditorState = ({ useDraftStorage = true, defaultDatasetId = ''})
             next.splice(toIndex, 0, moved);
             return next;
         });
-    };
+    }, [setComponents]);
 
     const duplicateComponent = useCallback((id) => {
         const source = components.find((item) => item.id === id);
@@ -313,13 +321,13 @@ export const useEditorState = ({ useDraftStorage = true, defaultDatasetId = ''})
         setSelectedId(id);
     }, []);
 
-    const updateComponent = (id, updater) => {
+    const updateComponent = useCallback((id, updater) => {
         setComponents((prev) =>
             prev.map((item) =>
                 item.id === id ? updater(item) : item
             )
         );
-    };
+    }, [setComponents]);
 
     const deleteComponent = useCallback((id) => {
         setComponents((prev) => prev
@@ -331,10 +339,10 @@ export const useEditorState = ({ useDraftStorage = true, defaultDatasetId = ''})
         setSelectedId((prev) => (prev === id ? null : prev));
     }, [setComponents]);
 
-    const deleteSelectedComponent = () => {
+    const deleteSelectedComponent = useCallback(() => {
         if (!selectedId) return;
         deleteComponent(selectedId);
-    };
+    }, [deleteComponent, selectedId]);
 
     const selectPage = useCallback((pageId) => {
         if (!pages.some((page) => page.id === pageId)) return;
@@ -384,7 +392,7 @@ export const useEditorState = ({ useDraftStorage = true, defaultDatasetId = ''})
         setSelectedId(null);
     }, [pages, setComponents]);
 
-    const clearCanvas = () => {
+    const clearCanvas = useCallback(() => {
         if (pageComponents.length === 0) return;
         const confirmed = window.confirm(
             t('editor.clearPageConfirm')
@@ -396,7 +404,7 @@ export const useEditorState = ({ useDraftStorage = true, defaultDatasetId = ''})
             (component) => component.pageId !== activePageId
         ));
         setSelectedId(null);
-    };
+    }, [activePageId, pageComponents.length, setComponents, t]);
 
     return {
         components,
