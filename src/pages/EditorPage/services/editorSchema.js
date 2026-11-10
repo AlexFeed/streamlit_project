@@ -71,7 +71,9 @@ export const buildDashboardSchema = (snapshot, t = (key) => key) => {
         if (component.type === 'selectbox') {
             filters.push({
                 ...base,
-                title: component.config?.title || t(meta.labelKey),
+                // A filter label is optional. Streamlit receives the field name
+                // as its accessible label when the visible title is omitted.
+                title: component.config?.title || '',
                 field: component.bindings?.field || '',
                 scope: 'global',
                 widget: component.config?.widget || 'selectbox',
@@ -80,7 +82,7 @@ export const buildDashboardSchema = (snapshot, t = (key) => key) => {
         else if (meta?.isChart) {
             views.push({
                 ...base,
-                title: component.config?.title || t(meta.labelKey),
+                title: component.config?.title || '',
                 x: component.bindings?.xField || '',
                 y: component.bindings?.yField || '',
                 aggregation: component.config?.aggregation || 'none',
@@ -103,7 +105,7 @@ export const buildDashboardSchema = (snapshot, t = (key) => key) => {
         else if (component.type === 'metric') {
             views.push({
                 ...base,
-                title: component.config?.title || t(meta.labelKey),
+                title: component.config?.title || '',
                 description: component.config?.description || '',
                 field: component.bindings?.valueField || '',
                 aggregation: component.config?.aggregation || 'sum',
@@ -135,7 +137,7 @@ export const buildDashboardSchema = (snapshot, t = (key) => key) => {
         else if (component.type === 'table') {
             views.push({
                 ...base,
-                title: component.config?.title || t('palette.table.label'),
+                title: component.config?.title || '',
                 columns: component.bindings?.columns || [],
                 tableMode: component.config?.tableMode || 'data',
                 rowMode: component.config?.rowMode || 'limit',

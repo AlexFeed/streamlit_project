@@ -16,6 +16,9 @@ import {
 } from '../hooks/useCanvasGrid.js';
 import useTranslation from '../../../shared/translation/useTranslation.js';
 import { calculateMetric, formatMetricValue } from '../services/chartData.js';
+import GridStackCanvas from './canvas/GridStackCanvas.jsx';
+
+const GRIDSTACK_SPIKE_ENABLED = true;
 
 const clampAutoWidth = (value) => Math.max(2, Math.min(4, value));
 
@@ -120,7 +123,9 @@ const Canvas = ({
                 || current.width !== item.w
                 || contentHeightToGridUnits(current.height, component.type) !== item.h;
         });
-        if (needsSynchronization) onLayoutChange(gridLayout);
+        if (!GRIDSTACK_SPIKE_ENABLED && needsSynchronization) {
+            onLayoutChange(gridLayout);
+        }
     }, [gridLayout, layoutComponents, onLayoutChange]);
     const { setNodeRef, isOver } = useDroppable({
         id: 'dashboard-canvas',
@@ -188,6 +193,14 @@ const Canvas = ({
         }));
     }, []);
 
+    const rowsForComponent = useCallback((component) => {
+        const datasetId = resolveDatasetId(component);
+        return {
+            rawRows: previewRowsByDataset[datasetId] || [],
+            rows: filteredRowsByDataset[datasetId] || [],
+        };
+    }, [filteredRowsByDataset, previewRowsByDataset, resolveDatasetId]);
+
     const visibleDropPreview = (
         insertionPreview
         || (isDragging ? dropPreview : null)
@@ -235,11 +248,13 @@ const Canvas = ({
             }}
             data-dashboard-canvas
             onClick={(event) => {
-                if (!event.target.closest('[data-canvas-item]')) {
+                if (!event.target.closest(
+                    '[data-canvas-item], [data-canvas-grid-item], .ui-resizable-handle'
+                )) {
                     onSelect(null);
                 }
             }}
-            className={`dashboard-canvas${isOver ? ' is-over' : ''}`}
+            className={`dashboard-canvas${isOver ? ' is-over' : ''}${GRIDSTACK_SPIKE_ENABLED ? ' is-gridstack' : ''}`}
         >
             <div className="dashboard-canvas-header">
                 <div>
@@ -289,6 +304,24 @@ const Canvas = ({
                     </div>
                 </div>
             ) : (
+                GRIDSTACK_SPIKE_ENABLED ? (
+                    <GridStackCanvas
+                        components={autoSizedLayoutComponents}
+                        allComponents={components}
+                        selectedId={selectedId}
+                        onSelect={onSelect}
+                        onDelete={onDelete}
+                        onDuplicate={onDuplicate}
+                        onLayoutChange={onLayoutChange}
+                        rowsForComponent={rowsForComponent}
+                        filterValues={filterValues}
+                        onFilterChange={handleFilterChange}
+                        pages={pages}
+                        onMoveToContainer={onMoveToContainer}
+                        onReorderComponent={onReorderComponent}
+                        legacyGridRef={setGridNode}
+                    />
+                ) : (
                 <div
                     ref={setGridNode}
                     className="dashboard-layout-grid dashboard-grid"
@@ -366,6 +399,7 @@ const Canvas = ({
                         );
                     })}
                 </div>
+                )
             )}
 
             {isDragging && layoutComponents.length > 0 && (

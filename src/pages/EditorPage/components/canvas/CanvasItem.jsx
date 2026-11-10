@@ -123,6 +123,7 @@ const CanvasItem = ({
     item, isSelected, onSelect, onDelete, onDuplicate, rows, filterValue,
     onFilterChange, onBeginInteraction, pages, children = [], selectedId,
     isContainerDropTarget = false, onMoveChild, onReorderChild,
+    managedByGridStack = false,
 }) => {
     const { t } = useTranslation();
     const { theme } = useTheme();
@@ -158,6 +159,7 @@ const CanvasItem = ({
     }, []);
 
     const beginCardDrag = (event) => {
+        if (managedByGridStack) return;
         const explicitSurface = event.target.closest('[data-canvas-drag-surface]');
         if (!explicitSurface && event.target.closest('button, input, select, textarea, a, [data-no-canvas-drag], [data-container-child]')) return;
         onBeginInteraction(event, item.id, 'drag');
@@ -184,7 +186,7 @@ const CanvasItem = ({
                 className={usesFloatingChrome
                     ? `canvas-item-compact-actions absolute -top-10 right-0 z-30 flex touch-none items-center rounded-xl border p-0.5 shadow-lg backdrop-blur transition-opacity ${isSelected || actionsVisible ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'}`
                     : 'canvas-item-header canvas-drag-handle flex shrink-0 touch-none cursor-grab items-center justify-between gap-3 border-b px-4 py-3 active:cursor-grabbing'}
-                onPointerDown={usesFloatingChrome ? undefined : (event) => onBeginInteraction(event, item.id, 'drag')}
+                onPointerDown={usesFloatingChrome || managedByGridStack ? undefined : (event) => onBeginInteraction(event, item.id, 'drag')}
                 title={usesFloatingChrome ? undefined : t('editor.dragCard')}
             >
                 {!usesFloatingChrome && (
@@ -216,7 +218,7 @@ const CanvasItem = ({
                         <div
                             data-layout-group-id={item.id}
                             data-layout-group-direction={item.config?.direction || 'vertical'}
-                            className="dashboard-layout-group relative flex h-full min-h-0 overflow-auto rounded-xl"
+                            className="dashboard-layout-group relative flex h-full min-h-0 overflow-hidden rounded-xl"
                             style={{
                                 flexDirection: item.config?.direction === 'horizontal' ? 'row' : 'column',
                                 gap: Number(item.config?.gap ?? 8),
@@ -242,9 +244,11 @@ const CanvasItem = ({
                 </Suspense>
             </div>
 
-            <button type="button" aria-label={t('editor.resize')} title={t('editor.resizeHint')} onClick={(event) => event.stopPropagation()} onPointerDown={(event) => onBeginInteraction(event, item.id, 'resize')} className={`canvas-resize-handle absolute bottom-1 right-1 z-20 flex touch-none cursor-se-resize items-end justify-end rounded-xl p-2 text-blue-300 transition hover:bg-blue-500/15 hover:text-blue-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 ${isCompact ? `h-8 w-8 ${isSelected ? 'opacity-100' : 'pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100'}` : 'h-9 w-9'}`}>
-                <MoveDiagonal2 className="h-4 w-4" />
-            </button>
+            {!managedByGridStack && (
+                <button type="button" aria-label={t('editor.resize')} title={t('editor.resizeHint')} onClick={(event) => event.stopPropagation()} onPointerDown={(event) => onBeginInteraction(event, item.id, 'resize')} className={`canvas-resize-handle absolute bottom-1 right-1 z-20 flex touch-none cursor-se-resize items-end justify-end rounded-xl p-2 text-blue-300 transition hover:bg-blue-500/15 hover:text-blue-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 ${isCompact ? `h-8 w-8 ${isSelected ? 'opacity-100' : 'pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100'}` : 'h-9 w-9'}`}>
+                    <MoveDiagonal2 className="h-4 w-4" />
+                </button>
+            )}
         </article>
     );
 };

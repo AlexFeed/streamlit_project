@@ -52,11 +52,10 @@ export const useProjectState = ({
     }, [projectId, setDatasets, setEditorState]);
 
     const createProjectFromDraft = async (snapshot) => {
-        const { schema, errors } = compileDashboardSchema(snapshot, t);
-        if (errors.length > 0) {
-            errors.forEach((err) => toast.error(err));
-            return null;
-        }
+        // Saving is intentionally more permissive than preview/export. The editor
+        // must be able to persist an unfinished component; a runnable schema is
+        // attached only when the current draft is complete and valid.
+        const { schema } = compileDashboardSchema(snapshot, t);
 
         const payload = {
             title: snapshot.title,
@@ -68,7 +67,7 @@ export const useProjectState = ({
                 pages: snapshot.pages,
                 previewImage: snapshot.previewImage,
             },
-            schema,
+            schema: schema || null,
         };
 
         try {
@@ -94,11 +93,7 @@ export const useProjectState = ({
     const saveExistingProject = async (snapshot) => {
         if (!projectId || !project) return null;
 
-        const { schema, errors } = compileDashboardSchema(snapshot, t);
-        if (errors.length > 0) {
-            errors.forEach((err) => toast.error(err));
-            return null;
-        }
+        const { schema } = compileDashboardSchema(snapshot, t);
 
         const payload = {
             title: snapshot.title,
@@ -110,8 +105,13 @@ export const useProjectState = ({
                 pages: snapshot.pages,
                 previewImage: snapshot.previewImage,
             },
-            schema,
         };
+
+        // Keep the last runnable schema while the user is saving an unfinished
+        // draft. Preview/export will compile and validate the latest editor state.
+        if (schema) {
+            payload.schema = schema;
+        }
 
         try {
             setIsProjectSaving(true);

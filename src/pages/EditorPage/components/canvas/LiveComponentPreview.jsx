@@ -278,9 +278,11 @@ const LiveMetric = ({ item, rows, height, t, theme }) => {
                 fontStyle: item.config?.elementFontStyle || 'normal',
             }}
         >
-            <p className="mb-1 text-xs font-medium" style={{ color: theme.muted }}>
-                {item.config?.title || t(paletteItems.metric.labelKey)}
-            </p>
+            {item.config?.title?.trim() && (
+                <p className="mb-1 text-xs font-medium" style={{ color: theme.muted }}>
+                    {item.config.title}
+                </p>
+            )}
             <p
                 className="text-3xl tracking-tight"
                 style={{
