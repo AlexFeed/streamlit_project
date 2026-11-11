@@ -1,4 +1,5 @@
 import {
+    startTransition,
     useCallback,
     useEffect,
     useMemo,
@@ -197,11 +198,20 @@ const Canvas = ({
     }, [hasActiveFilterValues, datasets, previewRowsByDataset, activeFilters, filterValues, resolveDatasetId]);
 
     const handleFilterChange = useCallback((id, value) => {
-        setFilterValues((current) => ({
-            ...current,
-            [id]: value,
-        }));
+        startTransition(() => {
+            setFilterValues((current) => ({
+                ...current,
+                [id]: value,
+            }));
+        });
     }, []);
+
+    const handleMoveChild = useCallback((childId, targetContainerId, dragRect, childMeta) => {
+        const targetLayout = targetContainerId
+            ? null
+            : getPaletteDropLayout(dragRect, childMeta);
+        onMoveToContainer?.(childId, targetContainerId, targetLayout);
+    }, [getPaletteDropLayout, onMoveToContainer]);
 
     const visibleDropPreview = (
         insertionPreview
@@ -369,14 +379,9 @@ const Canvas = ({
                                                 };
                                             })
                                         : NO_CHILDREN}
-                                    selectedId={selectedId}
+                                    selectedId={item.type === 'layout_group' ? selectedId : null}
                                     isContainerDropTarget={containerDropTargetId === item.id}
-                                    onMoveChild={(childId, targetContainerId, dragRect, childMeta) => {
-                                        const targetLayout = targetContainerId
-                                            ? null
-                                            : getPaletteDropLayout(dragRect, childMeta);
-                                        onMoveToContainer?.(childId, targetContainerId, targetLayout);
-                                    }}
+                                    onMoveChild={handleMoveChild}
                                     onReorderChild={onReorderComponent}
                                 />
                             </div>

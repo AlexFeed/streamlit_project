@@ -744,6 +744,21 @@
   background: #181614;
   color: #e5ddd8;
   box-shadow: 0 12px 30px rgb(0 0 0 / 16%);
+
+  /*
+   * 1. layout: Prevents layout recalculation/reflow of other cards on canvas.
+   * 2. style: Isolates CSS counter and style invalidations.
+   * Note: We avoid 'paint' because .canvas-item-compact-actions extends 40px outside.
+   */
+  contain: layout style;
+}
+
+/*
+ * Apply GPU-layer only to the ghost element that actually moves during drag,
+ * where it gives smooth animation on gpu
+ */
+.dashboard-interaction-ghost {
+  will-change: transform;
 }
 
 .canvas-item-card:not(.is-selected):hover {

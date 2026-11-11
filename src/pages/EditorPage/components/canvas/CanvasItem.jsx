@@ -1,14 +1,14 @@
-import { lazy, memo, Suspense, useEffect, useRef, useState } from 'react';
-import { Copy, MoveDiagonal2, Trash2, WalletCards } from 'lucide-react';
-import { useDroppable } from '@dnd-kit/core';
-import { paletteItems } from '../../data/paletteItems';
-import { getAppearanceDefaults } from '../../services/componentAppearance.js';
+import {memo, useEffect, useRef, useState} from 'react';
+import {Copy, MoveDiagonal2, Trash2, WalletCards} from 'lucide-react';
+import {useDroppable} from '@dnd-kit/core';
+import {paletteItems} from '../../data/paletteItems';
+import {getAppearanceDefaults} from '../../services/componentAppearance.js';
 import useTranslation from '../../../../shared/translation/useTranslation.js';
 import useTheme from '../../../../shared/theme/useTheme.js';
 
-const LiveComponentPreview = lazy(() => import('./LiveComponentPreview'));
+import LiveComponentPreview from './LiveComponentPreview';
 
-const ContainerChild = ({ child, parent, rows, value, onChange, onSelect, isSelected, pages, onMove, onReorder }) => {
+const ContainerChild = ({child, parent, rows, value, onChange, onSelect, isSelected, pages, onMove, onReorder}) => {
     const nodeRef = useRef(null);
     const meta = paletteItems[child.type];
     const appearance = getAppearanceDefaults(child.type, child.config);
@@ -30,7 +30,13 @@ const ContainerChild = ({ child, parent, rows, value, onChange, onSelect, isSele
         ghost.removeAttribute('data-container-child');
         ghost.setAttribute('aria-hidden', 'true');
         ghost.classList.add('dashboard-container-child-ghost');
-        Object.assign(ghost.style, { position: 'fixed', left: `${sourceRect.left}px`, top: `${sourceRect.top}px`, width: `${sourceRect.width}px`, height: `${sourceRect.height}px` });
+        Object.assign(ghost.style, {
+            position: 'fixed',
+            left: `${sourceRect.left}px`,
+            top: `${sourceRect.top}px`,
+            width: `${sourceRect.width}px`,
+            height: `${sourceRect.height}px`
+        });
         document.body.appendChild(ghost);
         sourceNode.classList.add('dashboard-interaction-source');
         const previousUserSelect = document.body.style.userSelect;
@@ -86,10 +92,10 @@ const ContainerChild = ({ child, parent, rows, value, onChange, onSelect, isSele
                 top: sourceRect.top + lastY - startY,
                 width: sourceRect.width,
                 height: sourceRect.height,
-            }, { ...meta, minWidth: child.layout?.width || meta?.defaultWidth || meta?.minWidth });
+            }, {...meta, minWidth: child.layout?.width || meta?.defaultWidth || meta?.minWidth});
         };
 
-        window.addEventListener('pointermove', move, { passive: false });
+        window.addEventListener('pointermove', move, {passive: false});
         window.addEventListener('pointerup', finish);
         window.addEventListener('pointercancel', finish);
         event.currentTarget.setPointerCapture?.(event.pointerId);
@@ -101,7 +107,10 @@ const ContainerChild = ({ child, parent, rows, value, onChange, onSelect, isSele
             data-container-child
             data-container-child-id={child.id}
             onPointerDown={beginChildDrag}
-            onClick={(event) => { event.stopPropagation(); onSelect(child.id); }}
+            onClick={(event) => {
+                event.stopPropagation();
+                onSelect(child.id);
+            }}
             className={`dashboard-container-child ${isSelected ? 'is-selected' : ''}`}
             style={{
                 flex: isHorizontal ? (shouldStretch ? '1 1 0' : '0 1 auto') : '0 0 auto',
@@ -114,18 +123,19 @@ const ContainerChild = ({ child, parent, rows, value, onChange, onSelect, isSele
                 background: appearance.showBackground ? undefined : 'transparent',
             }}
         >
-            <LiveComponentPreview item={child} height={previewHeight} rows={rows} value={value} onChange={onChange} pages={pages} />
+            <LiveComponentPreview item={child} height={previewHeight} rows={rows} value={value} onChange={onChange}
+                                  pages={pages}/>
         </div>
     );
 };
 
 const CanvasItem = ({
-    item, isSelected, onSelect, onDelete, onDuplicate, rows, filterValue,
-    onFilterChange, onBeginInteraction, pages, children = [], selectedId,
-    isContainerDropTarget = false, onMoveChild, onReorderChild,
-}) => {
-    const { t } = useTranslation();
-    const { theme } = useTheme();
+                        item, isSelected, onSelect, onDelete, onDuplicate, rows, filterValue,
+                        onFilterChange, onBeginInteraction, pages, children = [], selectedId,
+                        isContainerDropTarget = false, onMoveChild, onReorderChild,
+                    }) => {
+    const {t} = useTranslation();
+    const {theme} = useTheme();
     const [actionsVisible, setActionsVisible] = useState(false);
     const actionsHideTimerRef = useRef(null);
     const meta = paletteItems[item.type];
@@ -135,12 +145,20 @@ const CanvasItem = ({
     const appearance = getAppearanceDefaults(item.type, item.config);
     const isAutoHeight = isCompact && !item.layout?.manualHeight;
     const usesContentHeight = isAutoHeight && ['text', 'page_link'].includes(item.type);
-    const groupAlignment = { left: 'flex-start', center: 'center', right: 'flex-end', distribute: 'space-between' }[item.config?.horizontalAlignment || 'left'];
+    const groupAlignment = {
+        left: 'flex-start',
+        center: 'center',
+        right: 'flex-end',
+        distribute: 'space-between'
+    }[item.config?.horizontalAlignment || 'left'];
+
+    const isLayoutGroup = item.type === 'layout_group';
     const { setNodeRef, isOver } = useDroppable({
         id: `layout-group-${item.id}`,
-        disabled: item.type !== 'layout_group',
+        disabled: !isLayoutGroup,
         data: { source: 'layout-group', containerId: item.id },
     });
+    const isDropTarget = isLayoutGroup && (isOver || isContainerDropTarget);
 
     const showActions = () => {
         window.clearTimeout(actionsHideTimerRef.current);
@@ -165,20 +183,20 @@ const CanvasItem = ({
 
     return (
         <article
-            ref={setNodeRef}
+            ref={isLayoutGroup ? setNodeRef : undefined}
             data-canvas-item
             data-canvas-theme={theme}
-            data-layout-group-id={item.type === 'layout_group' ? item.id : undefined}
+            data-layout-group-id={isLayoutGroup ? item.id : undefined}
             onPointerEnter={showActions}
             onPointerLeave={hideActionsLater}
             onPointerDown={beginCardDrag}
             onClick={() => onSelect(item.id)}
-            style={!isSelected && !isOver && !isContainerDropTarget ? {
+            style={!isSelected && !isDropTarget ? {
                 borderColor: appearance.showBorder ? undefined : 'transparent',
                 background: appearance.showBackground ? undefined : 'transparent',
                 boxShadow: appearance.showBorder || appearance.showBackground ? undefined : 'none',
             } : undefined}
-            className={`canvas-item-card group relative flex min-h-0 w-full flex-col rounded-2xl border transition-colors ${usesFloatingChrome ? 'overflow-visible' : 'overflow-hidden'} ${usesContentHeight ? 'h-auto' : 'h-full'} ${isSelected ? 'is-selected' : ''} ${isOver || isContainerDropTarget ? 'is-drop-target' : ''}`}
+            className={`canvas-item-card group relative flex min-h-0 w-full flex-col rounded-2xl border transition-colors ${usesFloatingChrome ? 'overflow-visible' : 'overflow-hidden'} ${usesContentHeight ? 'h-auto' : 'h-full'} ${isSelected ? 'is-selected' : ''} ${isDropTarget ? 'is-drop-target' : ''}`}
         >
             <header
                 className={usesFloatingChrome
@@ -189,13 +207,22 @@ const CanvasItem = ({
             >
                 {!usesFloatingChrome && (
                     <div className="flex min-w-0 items-center gap-3">
-                        <div className="canvas-item-icon rounded-xl border p-2"><Icon className="h-4 w-4" /></div>
+                        <div className="canvas-item-icon rounded-xl border p-2"><Icon className="h-4 w-4"/></div>
                         <h3 className="canvas-item-title truncate text-sm font-semibold">{item.config?.title || t(meta?.labelKey || 'editor.componentLabel')}</h3>
                     </div>
                 )}
                 <div className="flex shrink-0 items-center gap-0.5">
-                    <button type="button" title={t('editor.duplicate')} aria-label={t('editor.duplicate')} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => { event.stopPropagation(); onDuplicate(item.id); }} className="canvas-item-action rounded-lg p-2 transition"><Copy className="h-4 w-4" /></button>
-                    <button type="button" title={t('common.delete')} aria-label={t('common.delete')} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => { event.stopPropagation(); onDelete(item.id); }} className="canvas-item-action canvas-item-delete rounded-lg p-2 transition"><Trash2 className="h-4 w-4" /></button>
+                    <button type="button" title={t('editor.duplicate')} aria-label={t('editor.duplicate')}
+                            onPointerDown={(event) => event.stopPropagation()} onClick={(event) => {
+                        event.stopPropagation();
+                        onDuplicate(item.id);
+                    }} className="canvas-item-action rounded-lg p-2 transition"><Copy className="h-4 w-4"/></button>
+                    <button type="button" title={t('common.delete')} aria-label={t('common.delete')}
+                            onPointerDown={(event) => event.stopPropagation()} onClick={(event) => {
+                        event.stopPropagation();
+                        onDelete(item.id);
+                    }} className="canvas-item-action canvas-item-delete rounded-lg p-2 transition"><Trash2
+                        className="h-4 w-4"/></button>
                 </div>
             </header>
 
@@ -203,47 +230,66 @@ const CanvasItem = ({
                 className="canvas-item-content flex min-h-0 flex-1"
                 style={{
                     padding: item.type === 'layout_group' ? 0 : appearance.padding,
-                    justifyContent: { left: 'flex-start', center: 'center', right: 'flex-end' }[appearance.contentAlignment],
-                    alignItems: { top: 'flex-start', center: 'center', bottom: 'flex-end' }[usesContentHeight ? 'top' : appearance.verticalAlignment],
+                    justifyContent: {
+                        left: 'flex-start',
+                        center: 'center',
+                        right: 'flex-end'
+                    }[appearance.contentAlignment],
+                    alignItems: {
+                        top: 'flex-start',
+                        center: 'center',
+                        bottom: 'flex-end'
+                    }[usesContentHeight ? 'top' : appearance.verticalAlignment],
                     color: appearance.elementTextColor,
                     fontSize: appearance.elementFontSize === 'auto' ? undefined : `${appearance.elementFontSize}px`,
                     fontWeight: appearance.elementFontWeight,
                     fontStyle: appearance.elementFontStyle,
                 }}
             >
-                <Suspense fallback={<div className="canvas-item-loading h-full animate-pulse rounded-xl" />}>
-                    {item.type === 'layout_group' ? (
-                        <div
-                            data-layout-group-id={item.id}
-                            data-layout-group-direction={item.config?.direction || 'vertical'}
-                            className="dashboard-layout-group relative flex h-full min-h-0 overflow-auto rounded-xl"
-                            style={{
-                                flexDirection: item.config?.direction === 'horizontal' ? 'row' : 'column',
-                                gap: Number(item.config?.gap ?? 8),
-                                padding: Number(item.config?.padding ?? 8),
-                                paddingTop: Number(item.config?.padding ?? 8) + (item.config?.title?.trim() ? 24 : 0),
-                                alignItems: item.config?.direction === 'horizontal' ? 'stretch' : groupAlignment,
-                                justifyContent: item.config?.direction === 'horizontal' ? groupAlignment : 'flex-start',
-                                flexWrap: item.config?.wrap === false ? 'nowrap' : 'wrap',
-                            }}
-                        >
-                            {item.config?.title?.trim() && <div className="dashboard-layout-group-title">{item.config.title}</div>}
-                            {children.length === 0 ? (
-                                <div className="dashboard-layout-group-empty">{t('editor.containerEmpty')}</div>
-                            ) : children.map(({ item: child, rows: childRows, filterValue: childValue }) => (
-                                <ContainerChild key={child.id} child={child} parent={item} rows={childRows} value={childValue} onChange={(value) => onFilterChange(child.id, value)} onSelect={onSelect} isSelected={selectedId === child.id} pages={pages} onMove={onMoveChild} onReorder={onReorderChild} />
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="min-w-0" style={{ width: item.type === 'text' || appearance.contentWidth === 'stretch' ? '100%' : 'fit-content', height: usesContentHeight ? 'auto' : '100%', maxWidth: '100%' }}>
-                            <LiveComponentPreview item={item} height={usesContentHeight ? 'auto' : '100%'} rows={rows} value={filterValue} onChange={(value) => onFilterChange(item.id, value)} pages={pages} />
-                        </div>
-                    )}
-                </Suspense>
+                {item.type === 'layout_group' ? (
+                    <div
+                        data-layout-group-id={item.id}
+                        data-layout-group-direction={item.config?.direction || 'vertical'}
+                        className="dashboard-layout-group relative flex h-full min-h-0 overflow-auto rounded-xl"
+                        style={{
+                            flexDirection: item.config?.direction === 'horizontal' ? 'row' : 'column',
+                            gap: Number(item.config?.gap ?? 8),
+                            padding: Number(item.config?.padding ?? 8),
+                            paddingTop: Number(item.config?.padding ?? 8) + (item.config?.title?.trim() ? 24 : 0),
+                            alignItems: item.config?.direction === 'horizontal' ? 'stretch' : groupAlignment,
+                            justifyContent: item.config?.direction === 'horizontal' ? groupAlignment : 'flex-start',
+                            flexWrap: item.config?.wrap === false ? 'nowrap' : 'wrap',
+                        }}
+                    >
+                        {item.config?.title?.trim() &&
+                            <div className="dashboard-layout-group-title">{item.config.title}</div>}
+                        {children.length === 0 ? (
+                            <div className="dashboard-layout-group-empty">{t('editor.containerEmpty')}</div>
+                        ) : children.map(({item: child, rows: childRows, filterValue: childValue}) => (
+                            <ContainerChild key={child.id} child={child} parent={item} rows={childRows}
+                                            value={childValue} onChange={(value) => onFilterChange(child.id, value)}
+                                            onSelect={onSelect} isSelected={selectedId === child.id} pages={pages}
+                                            onMove={onMoveChild} onReorder={onReorderChild}/>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="min-w-0" style={{
+                        width: item.type === 'text' || appearance.contentWidth === 'stretch' ? '100%' : 'fit-content',
+                        height: usesContentHeight ? 'auto' : '100%',
+                        maxWidth: '100%'
+                    }}>
+                        <LiveComponentPreview item={item} height={usesContentHeight ? 'auto' : '100%'} rows={rows}
+                                              value={filterValue} onChange={(value) => onFilterChange(item.id, value)}
+                                              pages={pages}/>
+                    </div>
+                )}
             </div>
 
-            <button type="button" aria-label={t('editor.resize')} title={t('editor.resizeHint')} onClick={(event) => event.stopPropagation()} onPointerDown={(event) => onBeginInteraction(event, item.id, 'resize')} className={`canvas-resize-handle absolute bottom-1 right-1 z-20 flex touch-none cursor-se-resize items-end justify-end rounded-xl p-2 text-blue-300 transition hover:bg-blue-500/15 hover:text-blue-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 ${isCompact ? `h-8 w-8 ${isSelected ? 'opacity-100' : 'pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100'}` : 'h-9 w-9'}`}>
-                <MoveDiagonal2 className="h-4 w-4" />
+            <button type="button" aria-label={t('editor.resize')} title={t('editor.resizeHint')}
+                    onClick={(event) => event.stopPropagation()}
+                    onPointerDown={(event) => onBeginInteraction(event, item.id, 'resize')}
+                    className={`canvas-resize-handle absolute bottom-1 right-1 z-20 flex touch-none cursor-se-resize items-end justify-end rounded-xl p-2 text-blue-300 transition hover:bg-blue-500/15 hover:text-blue-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 ${isCompact ? `h-8 w-8 ${isSelected ? 'opacity-100' : 'pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100'}` : 'h-9 w-9'}`}>
+                <MoveDiagonal2 className="h-4 w-4"/>
             </button>
         </article>
     );

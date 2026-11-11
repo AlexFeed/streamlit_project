@@ -55,8 +55,8 @@ const minMaxSample = (data, limit) => {
 
 export const limitChartDataForPreview = (data, chartType) => {
     if (chartType === 'bar_chart') return evenlySample(data, 120);
-    if (chartType === 'scatter_plot') return evenlySample(data, 800);
-    return minMaxSample(data, 600);
+    if (chartType === 'scatter_plot') return evenlySample(data, 600);
+    return minMaxSample(data, 500);
 };
 
 export const prepareChartData = (rows, item) => {
