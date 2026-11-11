@@ -4,7 +4,7 @@ import { useDroppable } from '@dnd-kit/core';
 import { paletteItems } from '../../data/paletteItems';
 import { getAppearanceDefaults } from '../../services/componentAppearance.js';
 import useTranslation from '../../../../shared/translation/useTranslation.js';
-import useTheme from '../../../../shared/useTheme.js';
+import useTheme from '../../../../shared/theme/useTheme.js';
 
 const LiveComponentPreview = lazy(() => import('./LiveComponentPreview'));
 

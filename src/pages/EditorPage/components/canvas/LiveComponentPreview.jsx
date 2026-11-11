@@ -5,9 +5,9 @@ import {
     Bar,
     BarChart,
     CartesianGrid,
-    Cell,
     Line,
     LineChart,
+    Rectangle,
     ResponsiveContainer,
     Scatter,
     ScatterChart,
@@ -27,7 +27,7 @@ import {
 } from '../../services/chartData';
 import { paletteItems } from '../../data/paletteItems.js';
 import useTranslation from '../../../../shared/translation/useTranslation.js';
-import useTheme from '../../../../shared/useTheme.js';
+import useTheme from '../../../../shared/theme/useTheme.js';
 
 const previewThemes = {
     light: {
@@ -65,9 +65,18 @@ const EmptyPreview = ({ children, height = 240, theme }) => (
 );
 
 const LiveChart = ({ item, rows, height, t, theme }) => {
+    // Only recompute dataset points when fields or aggregation settings change.
     const chartData = useMemo(
         () => prepareChartData(rows, item),
-        [rows, item]
+        [
+            rows,
+            item.type,
+            item.bindings?.xField,
+            item.bindings?.yField,
+            item.config?.aggregation,
+            item.config?.sort,
+            item.config?.sortBy,
+        ]
     );
     const xField = item.bindings?.xField;
     const yField = item.bindings?.yField;
@@ -75,6 +84,7 @@ const LiveChart = ({ item, rows, height, t, theme }) => {
     const color = getChartColor(item.type, configuredColor)
         || '#3478c8';
     const colorMode = item.config?.colorMode || 'solid';
+    const isMultiColor = colorMode === 'gradient' || colorMode === 'categorical';
     const paletteColors = getPaletteColors(
         item.config?.palette,
         item.config?.reversePalette
@@ -152,6 +162,7 @@ const LiveChart = ({ item, rows, height, t, theme }) => {
                 label={{ value: yField, angle: -90, position: 'insideLeft', style: axisTitle }}
             />
             <Tooltip
+                isAnimationActive={false}
                 contentStyle={{
                     backgroundColor: theme.tooltip,
                     border: `1px solid ${theme.border}`,
@@ -199,14 +210,13 @@ const LiveChart = ({ item, rows, height, t, theme }) => {
                             radius={[6, 6, 2, 2]}
                             maxBarSize={56}
                             isAnimationActive={false}
-                        >
-                            {chartData.map((point, index) => (
-                                <Cell
-                                    key={`${point.x}-${index}`}
-                                    fill={getPointColor(point, index)}
+                            shape={isMultiColor ? (props) => (
+                                <Rectangle
+                                    {...props}
+                                    fill={getPointColor(props.payload || props, props.index)}
                                 />
-                            ))}
-                        </Bar>
+                            ) : undefined}
+                        />
                     </BarChart>
                 ) : item.type === 'area_chart' ? (
                     <AreaChart data={chartData} margin={{ top: 12, right: 12, left: 8, bottom: 24 }}>
@@ -229,14 +239,19 @@ const LiveChart = ({ item, rows, height, t, theme }) => {
                 ) : (
                     <ScatterChart margin={{ top: 12, right: 12, left: 8, bottom: 24 }}>
                         {common}
-                        <Scatter data={chartData} fill={color} isAnimationActive={false}>
-                            {chartData.map((point, index) => (
-                                <Cell
-                                    key={`${point.x}-${index}`}
-                                    fill={getPointColor(point, index)}
+                        <Scatter
+                            data={chartData}
+                            fill={color}
+                            isAnimationActive={false}
+                            shape={isMultiColor ? (props) => (
+                                <circle
+                                    cx={props.cx}
+                                    cy={props.cy}
+                                    r={3}
+                                    fill={getPointColor(props.payload || props, props.index)}
                                 />
-                            ))}
-                        </Scatter>
+                            ) : undefined}
+                        />
                     </ScatterChart>
                 )}
             </ResponsiveContainer>

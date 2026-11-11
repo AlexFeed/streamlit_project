@@ -43,6 +43,9 @@ const getDataDrivenWidth = (component, rows) => {
     return null;
 };
 
+// Constant for proper UseMemo work
+const NO_CHILDREN = [];
+
 const Canvas = ({
                     components,
                     selectedId,
@@ -154,7 +157,19 @@ const Canvas = ({
         [components]
     );
 
+    // Skip iterating through thousands of rows when no filters have values selected.
+    const hasActiveFilterValues = useMemo(() => (
+        activeFilters.some((filter) => {
+            const value = filterValues[filter.id];
+            return Array.isArray(value) ? value.length > 0 : Boolean(value);
+        })
+    ), [activeFilters, filterValues]);
+
     const filteredRowsByDataset = useMemo(() => {
+        if (!hasActiveFilterValues) {
+            return previewRowsByDataset;
+        }
+
         const result = {};
 
         datasets.forEach((ds) => {
@@ -179,7 +194,7 @@ const Canvas = ({
         });
 
         return result;
-    }, [datasets, previewRowsByDataset, activeFilters, filterValues, resolveDatasetId]);
+    }, [hasActiveFilterValues, datasets, previewRowsByDataset, activeFilters, filterValues, resolveDatasetId]);
 
     const handleFilterChange = useCallback((id, value) => {
         setFilterValues((current) => ({
@@ -340,18 +355,20 @@ const Canvas = ({
                                     onFilterChange={handleFilterChange}
                                     onBeginInteraction={beginInteraction}
                                     pages={pages}
-                                    children={components
-                                        .filter((component) => component.parentId === item.id)
-                                        .map((component) => {
-                                            const datasetId = resolveDatasetId(component);
-                                            return {
-                                                item: component,
-                                                rows: component.type === 'selectbox'
-                                                    ? (previewRowsByDataset[datasetId] || [])
-                                                    : (filteredRowsByDataset[datasetId] || []),
-                                                filterValue: filterValues[component.id] || '',
-                                            };
-                                        })}
+                                    children={item.type === 'layout_group'
+                                        ? components
+                                            .filter((component) => component.parentId === item.id)
+                                            .map((component) => {
+                                                const datasetId = resolveDatasetId(component);
+                                                return {
+                                                    item: component,
+                                                    rows: component.type === 'selectbox'
+                                                        ? (previewRowsByDataset[datasetId] || [])
+                                                        : (filteredRowsByDataset[datasetId] || []),
+                                                    filterValue: filterValues[component.id] || '',
+                                                };
+                                            })
+                                        : NO_CHILDREN}
                                     selectedId={selectedId}
                                     isContainerDropTarget={containerDropTargetId === item.id}
                                     onMoveChild={(childId, targetContainerId, dragRect, childMeta) => {
