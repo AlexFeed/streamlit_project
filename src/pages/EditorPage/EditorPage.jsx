@@ -329,14 +329,6 @@ const EditorPage = () => {
                         onClose={handleClosePreview}
                     />
 
-                    {isProjectLoading && (
-                        <div className="editor-loading-wrap">
-                            <div className="editor-loading">
-                                {t('editor.loadingProject')}
-                            </div>
-                        </div>
-                    )}
-
                     {isProjectSaving && (
                         <div className="editor-loading-wrap">
                             <div className="editor-loading">

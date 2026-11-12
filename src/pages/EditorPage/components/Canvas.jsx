@@ -119,17 +119,22 @@ const Canvas = ({
 
     const isDataLoaded = !isProjectLoading && !isDataLoading;
 
+    // Checking if all canvas data and animations have finished loading before displaying the interface
     useEffect(() => {
         if (!isDataLoaded) {
             setIsCanvasReady(false);
             return;
         }
 
-        const rafId = requestAnimationFrame(() => {
-            requestAnimationFrame(() => setIsCanvasReady(true));
-        });
+        // Allow ResponsiveContainer debounce (50ms) and initial SVG mount to settle behind the skeleton
+        const timer = setTimeout(() => {
+            const rafId = requestAnimationFrame(() => {
+                requestAnimationFrame(() => setIsCanvasReady(true));
+            });
+            return () => cancelAnimationFrame(rafId);
+        }, 200);
 
-        return () => cancelAnimationFrame(rafId);
+        return () => clearTimeout(timer);
     }, [isDataLoaded]);
 
     useEffect(() => {
@@ -322,95 +327,102 @@ const Canvas = ({
                 </div>
             </div>
 
-            {!isCanvasReady ? (
-                <CanvasSkeleton />
-            ) : layoutComponents.length === 0 ? (
-                <div className={`dashboard-canvas-empty${isOver ? ' is-over' : ''}`}>
-                    <div>
-                        <h3>
-                            {t('editor.canvasEmptyTitle')}
-                        </h3>
-                        <p>
-                            {t('editor.canvasEmptyDescription')}
-                        </p>
-                    </div>
-                </div>
-            ) : (
-                <div
-                    ref={setGridNode}
-                    className="dashboard-layout-grid dashboard-grid"
-                    style={{ height: gridHeight }}
-                >
-                    {visibleDropPreview && (
-                        <div
-                            className={`dashboard-drop-preview${visibleDropPreview.insert ? ' is-insertion' : ''}`}
-                            style={dropPreviewStyle}
-                        >
-                            {!visibleDropPreview.insert && (
-                                <div className="dashboard-drop-label">
-                                    {t('editor.dropHere')}
-                                </div>
-                            )}
+            <div className="dashboard-canvas-body">
+                {layoutComponents.length === 0 ? (
+                    <div className={`dashboard-canvas-empty${isOver ? ' is-over' : ''}`}>
+                        <div>
+                            <h3>
+                                {t('editor.canvasEmptyTitle')}
+                            </h3>
+                            <p>
+                                {t('editor.canvasEmptyDescription')}
+                            </p>
                         </div>
-                    )}
-                    {gridLayout.map((layoutItem) => {
-                        const item = layoutComponents.find(
-                            (component) => component.id === layoutItem.i
-                        );
-                        if (!item) return null;
-
-                        const itemDatasetId = resolveDatasetId(item);
-                        const itemRawRows = previewRowsByDataset[itemDatasetId] || [];
-                        const itemFilteredRows = filteredRowsByDataset[itemDatasetId] || [];
-
-                        return (
+                    </div>
+                ) : (
+                    <div
+                        ref={setGridNode}
+                        className="dashboard-layout-grid dashboard-grid"
+                        style={{ height: gridHeight }}
+                    >
+                        {visibleDropPreview && (
                             <div
-                                key={item.id}
-                                data-grid-item={item.id}
-                                className="dashboard-grid-item"
-                                style={{
-                                    ...getGridItemStyle(layoutItem, gridWidth),
-                                    boxSizing: 'border-box',
-                                    padding: Number(item.config?.spacing || 0),
-                                }}
+                                className={`dashboard-drop-preview${visibleDropPreview.insert ? ' is-insertion' : ''}`}
+                                style={dropPreviewStyle}
                             >
-                                <CanvasItem
-                                    item={item}
-                                    isSelected={selectedId === item.id}
-                                    onSelect={handleItemSelect}
-                                    onDelete={onDelete}
-                                    onDuplicate={onDuplicate}
-                                    rows={item.type === 'selectbox'
-                                        ? itemRawRows
-                                        : itemFilteredRows}
-                                    filterValue={filterValues[item.id] || ''}
-                                    onFilterChange={handleFilterChange}
-                                    onBeginInteraction={beginInteraction}
-                                    pages={pages}
-                                    children={item.type === 'layout_group'
-                                        ? components
-                                            .filter((component) => component.parentId === item.id)
-                                            .map((component) => {
-                                                const datasetId = resolveDatasetId(component);
-                                                return {
-                                                    item: component,
-                                                    rows: component.type === 'selectbox'
-                                                        ? (previewRowsByDataset[datasetId] || [])
-                                                        : (filteredRowsByDataset[datasetId] || []),
-                                                    filterValue: filterValues[component.id] || '',
-                                                };
-                                            })
-                                        : NO_CHILDREN}
-                                    selectedId={item.type === 'layout_group' ? selectedId : null}
-                                    isContainerDropTarget={containerDropTargetId === item.id}
-                                    onMoveChild={handleMoveChild}
-                                    onReorderChild={onReorderComponent}
-                                />
+                                {!visibleDropPreview.insert && (
+                                    <div className="dashboard-drop-label">
+                                        {t('editor.dropHere')}
+                                    </div>
+                                )}
                             </div>
-                        );
-                    })}
+                        )}
+                        {gridLayout.map((layoutItem) => {
+                            const item = layoutComponents.find(
+                                (component) => component.id === layoutItem.i
+                            );
+                            if (!item) return null;
+
+                            const itemDatasetId = resolveDatasetId(item);
+                            const itemRawRows = previewRowsByDataset[itemDatasetId] || [];
+                            const itemFilteredRows = filteredRowsByDataset[itemDatasetId] || [];
+
+                            return (
+                                <div
+                                    key={item.id}
+                                    data-grid-item={item.id}
+                                    className="dashboard-grid-item"
+                                    style={{
+                                        ...getGridItemStyle(layoutItem, gridWidth),
+                                        boxSizing: 'border-box',
+                                        padding: Number(item.config?.spacing || 0),
+                                    }}
+                                >
+                                    <CanvasItem
+                                        item={item}
+                                        isSelected={selectedId === item.id}
+                                        onSelect={handleItemSelect}
+                                        onDelete={onDelete}
+                                        onDuplicate={onDuplicate}
+                                        rows={item.type === 'selectbox'
+                                            ? itemRawRows
+                                            : itemFilteredRows}
+                                        filterValue={filterValues[item.id] || ''}
+                                        onFilterChange={handleFilterChange}
+                                        onBeginInteraction={beginInteraction}
+                                        pages={pages}
+                                        children={item.type === 'layout_group'
+                                            ? components
+                                                .filter((component) => component.parentId === item.id)
+                                                .map((component) => {
+                                                    const datasetId = resolveDatasetId(component);
+                                                    return {
+                                                        item: component,
+                                                        rows: component.type === 'selectbox'
+                                                            ? (previewRowsByDataset[datasetId] || [])
+                                                            : (filteredRowsByDataset[datasetId] || []),
+                                                        filterValue: filterValues[component.id] || '',
+                                                    };
+                                                })
+                                            : NO_CHILDREN}
+                                        selectedId={item.type === 'layout_group' ? selectedId : null}
+                                        isContainerDropTarget={containerDropTargetId === item.id}
+                                        onMoveChild={handleMoveChild}
+                                        onReorderChild={onReorderComponent}
+                                    />
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+
+                <div
+                    className={`dashboard-canvas-skeleton-overlay ${isCanvasReady ? 'is-ready' : ''}`}
+                    aria-hidden={isCanvasReady}
+                >
+                    <CanvasSkeleton />
                 </div>
-            )}
+            </div>
 
             {isDragging && layoutComponents.length > 0 && (
                 <div className="dashboard-drop-hint">
