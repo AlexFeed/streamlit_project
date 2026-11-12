@@ -161,7 +161,7 @@ export const useEditorState = ({ useDraftStorage = true, defaultDatasetId = ''})
         const shouldInsert = Boolean(targetLayout?.insert);
         const componentLayout = targetLayout
             ? Object.fromEntries(
-                Object.entries(targetLayout).filter(([key]) => key !== 'insert')
+                Object.entries(targetLayout).filter(([key]) => !['insert', 'tabId'].includes(key))
             )
             : null;
         const newComponent = createComponentFromPaletteItem(
@@ -177,8 +177,9 @@ export const useEditorState = ({ useDraftStorage = true, defaultDatasetId = ''})
                 || activePageId
             );
         }
-        if (newComponent.type !== 'layout_group') {
+        if (!['layout_group', 'tab_group'].includes(newComponent.type)) {
             newComponent.parentId = parentId;
+            newComponent.tabId = targetLayout?.tabId || null;
         }
         setComponents((prev) => {
             const insertIndex = Number.isInteger(targetIndex)
@@ -222,7 +223,7 @@ export const useEditorState = ({ useDraftStorage = true, defaultDatasetId = ''})
                 };
             });
         });
-        setSelectedId(newComponent.id);
+        setSelectedId(null);
     }, [activePageId, components.length, defaultDatasetId, pages, setComponents]);
 
     const moveComponent = useCallback((id, parentId = null, targetLayout = null) => {
@@ -231,12 +232,14 @@ export const useEditorState = ({ useDraftStorage = true, defaultDatasetId = ''})
                 if (component.id !== id) return component;
                 const cleanTargetLayout = targetLayout
                     ? Object.fromEntries(
-                        Object.entries(targetLayout).filter(([key]) => key !== 'insert')
+                        Object.entries(targetLayout).filter(([key]) => !['insert', 'tabId'].includes(key))
                     )
                     : null;
+                const tabId = targetLayout?.tabId || null;
                 return {
                     ...component,
-                    parentId: component.type === 'layout_group' ? null : parentId,
+                    parentId: ['layout_group', 'tab_group'].includes(component.type) ? null : parentId,
+                    tabId: parentId ? tabId : null,
                     layout: {
                         ...component.layout,
                         ...(cleanTargetLayout || {}),
@@ -245,7 +248,6 @@ export const useEditorState = ({ useDraftStorage = true, defaultDatasetId = ''})
             });
             return normalizeComponentsByPage(next, pages);
         });
-        setSelectedId(id);
     }, [pages, setComponents]);
 
     const reorderComponent = useCallback((activeId, overId) => {

@@ -1,11 +1,11 @@
-const compactTypes = new Set(['text', 'metric', 'selectbox', 'page_link']);
+const compactTypes = new Set(['text', 'metric', 'selectbox', 'data_control', 'progress', 'page_link']);
 
 export const getAppearanceDefaults = (type, config = {}) => {
     const surface = config.surface || (
         ['text', 'page_link'].includes(type) ? 'none' : 'card'
     );
-    const isMetric = type === 'metric';
-    const isFilter = type === 'selectbox';
+    const isMetric = ['metric', 'progress'].includes(type);
+    const isFilter = ['selectbox', 'data_control'].includes(type);
 
     return {
         // New components start with a visible footprint on the canvas.
@@ -14,13 +14,15 @@ export const getAppearanceDefaults = (type, config = {}) => {
         showBackground: config.showBackground ?? ['card', 'soft'].includes(surface),
         contentAlignment: config.contentAlignment || (isMetric ? 'center' : 'left'),
         verticalAlignment: config.verticalAlignment || (
-            ['metric', 'selectbox', 'page_link'].includes(type) ? 'center' : 'top'
+            ['metric', 'progress', 'selectbox', 'data_control', 'page_link'].includes(type) ? 'center' : 'top'
         ),
         padding: Number(config.padding ?? (
             ['text', 'page_link'].includes(type) ? 0 : (isFilter || isMetric) ? 8 : 12
         )),
         spacing: Number(config.spacing ?? 0),
         contentWidth: config.contentWidth || (
+            // Controls and progress bars need a real track width. Text,
+            // metrics and links can safely size themselves to their content.
             ['text', 'metric', 'selectbox', 'page_link'].includes(type)
                 ? 'content'
                 : 'stretch'
@@ -49,7 +51,7 @@ export const withAppearanceDefaults = (type, config = {}) => {
             next.verticalAlignment = 'top';
         }
         if (
-            ['metric', 'selectbox'].includes(type)
+            ['metric', 'progress', 'selectbox', 'data_control'].includes(type)
             && config.surface === 'soft'
         ) {
             next.surface = 'none';

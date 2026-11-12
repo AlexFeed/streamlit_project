@@ -1,5 +1,9 @@
 const numericValue = (value) => {
-    const number = typeof value === 'number' ? value : Number(value);
+    if (value == null || value === '') return null;
+    const normalized = typeof value === 'string'
+        ? value.trim().replace(/[\s\u00a0]/g, '').replace(',', '.')
+        : value;
+    const number = typeof normalized === 'number' ? normalized : Number(normalized);
     return Number.isFinite(number) ? number : null;
 };
 

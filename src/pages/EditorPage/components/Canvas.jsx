@@ -18,6 +18,9 @@ import {
 } from '../hooks/useCanvasGrid.js';
 import useTranslation from '../../../shared/translation/useTranslation.js';
 import { calculateMetric, formatMetricValue } from '../services/chartData.js';
+import GridStackCanvas from './canvas/GridStackCanvas.jsx';
+
+const GRIDSTACK_SPIKE_ENABLED = true;
 
 const clampAutoWidth = (value) => Math.max(2, Math.min(4, value));
 
@@ -149,7 +152,9 @@ const Canvas = ({
                 || current.width !== item.w
                 || contentHeightToGridUnits(current.height, component.type) !== item.h;
         });
-        if (needsSynchronization) onLayoutChange(gridLayout);
+        if (!GRIDSTACK_SPIKE_ENABLED && needsSynchronization) {
+            onLayoutChange(gridLayout);
+        }
     }, [gridLayout, layoutComponents, onLayoutChange]);
     const { setNodeRef, isOver } = useDroppable({
         id: 'dashboard-canvas',
@@ -179,7 +184,7 @@ const Canvas = ({
     });
 
     const activeFilters = useMemo(
-        () => components.filter((component) => component.type === 'selectbox'),
+        () => components.filter((component) => ['selectbox', 'data_control'].includes(component.type)),
         [components]
     );
 
@@ -210,6 +215,20 @@ const Canvas = ({
                     const field = filter.bindings?.field;
 
                     if (!selectedValue || !field) return true;
+                    if (filter.type === 'data_control') {
+                        const controlType = filter.config?.controlType || 'range';
+                        if (controlType === 'toggle') return !selectedValue || Boolean(row[field]);
+                        if (Array.isArray(selectedValue) && selectedValue.length === 2) {
+                            if (controlType === 'date') {
+                                const value = new Date(row[field]).getTime();
+                                return value >= new Date(selectedValue[0]).getTime()
+                                    && value <= new Date(selectedValue[1]).getTime();
+                            }
+                            const value = Number(String(row[field] ?? '').replace(/\s/g, '').replace(',', '.'));
+                            return value >= selectedValue[0] && value <= selectedValue[1];
+                        }
+                        return true;
+                    }
                     if (Array.isArray(selectedValue)) {
                         return selectedValue.length === 0
                             || selectedValue.includes(String(row[field]));
@@ -230,6 +249,14 @@ const Canvas = ({
             }));
         });
     }, []);
+
+    const rowsForComponent = useCallback((component) => {
+        const datasetId = resolveDatasetId(component);
+        return {
+            rawRows: previewRowsByDataset[datasetId] || [],
+            rows: filteredRowsByDataset[datasetId] || [],
+        };
+    }, [filteredRowsByDataset, previewRowsByDataset, resolveDatasetId]);
 
     const handleMoveChild = useCallback((childId, targetContainerId, dragRect, childMeta) => {
         const targetLayout = targetContainerId
@@ -285,11 +312,13 @@ const Canvas = ({
             }}
             data-dashboard-canvas
             onClick={(event) => {
-                if (!event.target.closest('[data-canvas-item]')) {
+                if (!event.target.closest(
+                    '[data-canvas-item], [data-canvas-grid-item], .ui-resizable-handle'
+                )) {
                     onSelect(null);
                 }
             }}
-            className={`dashboard-canvas${isOver ? ' is-over' : ''}`}
+            className={`dashboard-canvas${isOver ? ' is-over' : ''}${GRIDSTACK_SPIKE_ENABLED ? ' is-gridstack' : ''}`}
         >
             <div className="dashboard-canvas-header">
                 <div>
@@ -339,6 +368,23 @@ const Canvas = ({
                             </p>
                         </div>
                     </div>
+                ) : GRIDSTACK_SPIKE_ENABLED ? (
+                    <GridStackCanvas
+                        components={autoSizedLayoutComponents}
+                        allComponents={components}
+                        selectedId={selectedId}
+                        onSelect={onSelect}
+                        onDelete={onDelete}
+                        onDuplicate={onDuplicate}
+                        onLayoutChange={onLayoutChange}
+                        rowsForComponent={rowsForComponent}
+                        filterValues={filterValues}
+                        onFilterChange={handleFilterChange}
+                        pages={pages}
+                        onMoveToContainer={onMoveToContainer}
+                        onReorderComponent={onReorderComponent}
+                        legacyGridRef={setGridNode}
+                    />
                 ) : (
                     <div
                         ref={setGridNode}
@@ -391,21 +437,19 @@ const Canvas = ({
                                         onFilterChange={handleFilterChange}
                                         onBeginInteraction={beginInteraction}
                                         pages={pages}
-                                        children={item.type === 'layout_group'
-                                            ? components
-                                                .filter((component) => component.parentId === item.id)
-                                                .map((component) => {
-                                                    const datasetId = resolveDatasetId(component);
-                                                    return {
-                                                        item: component,
-                                                        rows: component.type === 'selectbox'
-                                                            ? (previewRowsByDataset[datasetId] || [])
-                                                            : (filteredRowsByDataset[datasetId] || []),
-                                                        filterValue: filterValues[component.id] || '',
-                                                    };
-                                                })
-                                            : NO_CHILDREN}
-                                        selectedId={item.type === 'layout_group' ? selectedId : null}
+                                        children={components
+                                            .filter((component) => component.parentId === item.id)
+                                            .map((component) => {
+                                                const datasetId = resolveDatasetId(component);
+                                                return {
+                                                    item: component,
+                                                    rows: component.type === 'selectbox'
+                                                        ? (previewRowsByDataset[datasetId] || [])
+                                                        : (filteredRowsByDataset[datasetId] || []),
+                                                    filterValue: filterValues[component.id] || '',
+                                                };
+                                            })}
+                                        selectedId={selectedId}
                                         isContainerDropTarget={containerDropTargetId === item.id}
                                         onMoveChild={handleMoveChild}
                                         onReorderChild={onReorderComponent}

@@ -11,7 +11,7 @@ export const GRID_ROW_GAP = 8;
 export const CARD_CHROME_HEIGHT = 96;
 
 export const getCardChromeHeight = (type) => (
-    ['text', 'metric', 'selectbox', 'page_link', 'layout_group'].includes(type)
+    ['text', 'metric', 'selectbox', 'data_control', 'progress', 'page_link', 'layout_group', 'tab_group'].includes(type)
         ? 0
         : CARD_CHROME_HEIGHT
 );
@@ -27,7 +27,7 @@ export const normalizeGridWidth = (value, type) => {
     return Math.max(minimum, Math.min(GRID_COLUMNS, numeric));
 };
 
-const compactWidthTypes = new Set(['text', 'metric', 'selectbox', 'page_link']);
+const compactWidthTypes = new Set(['text', 'metric', 'selectbox', 'data_control', 'progress', 'page_link']);
 
 const getRequiredContainerGridWidth = (container, components) => {
     const children = (components || []).filter(
@@ -66,6 +66,10 @@ export const getComponentGridWidth = (component, components = []) => {
         component.config || {}
     );
 
+    if (component.type === 'selectbox' && !component.layout?.manualWidth) {
+        return 2;
+    }
+
     if (
         !component.layout?.manualWidth
         && Number.isFinite(Number(component.layout?.autoWidth))
@@ -74,7 +78,7 @@ export const getComponentGridWidth = (component, components = []) => {
     }
 
     if (
-        component.type === 'layout_group'
+        ['layout_group', 'tab_group'].includes(component.type)
         && !component.layout?.manualWidth
     ) {
         return getRequiredContainerGridWidth(component, components);
@@ -115,7 +119,7 @@ export const getComponentGridWidth = (component, components = []) => {
             component.type === 'selectbox'
             && ['selectbox', 'multiselect'].includes(config.widget || 'selectbox')
         ) {
-            return 3;
+            return 2;
         }
         return paletteItems[component.type]?.minWidth || 2;
     }
@@ -175,39 +179,74 @@ const getAutomaticContentHeight = (component) => {
         );
     }
     if (component.type === 'page_link') return 40 + padding;
-    if (component.type === 'metric') {
+    if (['metric', 'progress'].includes(component.type)) {
         // Label + value need four grid rows in the native Streamlit render.
         // The former 58px estimate described only the text and ignored the
         // widget's own vertical spacing, so consecutive metrics overlapped.
         return 58 + (config.description ? 18 : 0) + padding;
     }
-    if (component.type === 'selectbox') {
+    if (['selectbox', 'data_control'].includes(component.type)) {
         return 56 + padding;
     }
     return normalizeContentHeight(component.layout?.height, component.type);
 };
 
-const getRequiredContainerHeight = (container, components) => {
+export const getRequiredContainerHeight = (container, components) => {
     const children = components.filter((item) => item.parentId === container.id);
     if (children.length === 0) {
-        return paletteItems.layout_group.defaultHeight;
+        return paletteItems[container.type]?.defaultHeight || paletteItems.layout_group.defaultHeight;
     }
 
     const gap = Math.max(0, Number(container.config?.gap ?? 8));
     const padding = Math.max(0, Number(container.config?.padding ?? 8)) * 2;
-    const childHeights = children.map((child) => {
+    const getChildHeight = (child, includeCardHeader = true) => {
         const childConfig = withAppearanceDefaults(child.type, {
             ...(paletteItems[child.type]?.defaultConfig || {}),
             ...child.config,
         });
-        if (['text', 'metric', 'selectbox', 'page_link'].includes(child.type)) {
+        if (['text', 'metric', 'selectbox', 'data_control', 'progress', 'page_link'].includes(child.type)) {
             return Math.max(40, getAutomaticContentHeight({
                 ...child,
                 config: childConfig,
             }));
         }
-        return normalizeContentHeight(child.layout?.height, child.type) + 40;
-    });
+        return normalizeContentHeight(child.layout?.height, child.type)
+            + (includeCardHeader ? 40 : 0);
+    };
+
+    if (container.type === 'tab_group') {
+        const tabs = container.config?.tabs || [];
+        const fallbackTabId = tabs[0]?.id || null;
+        const tabIds = tabs.length ? tabs.map((tab) => tab.id) : [fallbackTabId];
+        const tabContentHeights = tabIds.map((tabId) => {
+            const tabChildren = children.filter((child) => (child.tabId || fallbackTabId) === tabId);
+            const rows = [];
+            let currentRow = [];
+            let occupied = 0;
+
+            tabChildren.forEach((child) => {
+                const width = Math.max(1, Math.min(GRID_COLUMNS, getComponentGridWidth(child, components)));
+                if (currentRow.length && occupied + width > GRID_COLUMNS) {
+                    rows.push(currentRow);
+                    currentRow = [];
+                    occupied = 0;
+                }
+                currentRow.push(getChildHeight(child, false));
+                occupied += width;
+            });
+            if (currentRow.length) rows.push(currentRow);
+
+            return rows.reduce((total, row) => total + Math.max(...row), 0)
+                + gap * Math.max(0, rows.length - 1);
+        });
+
+        // Tab labels occupy one compact header row. Child layout heights are
+        // already total card heights, so no additional chart chrome belongs
+        // in the container calculation.
+        return Math.min(720, Math.ceil(Math.max(0, ...tabContentHeights) + 28 + padding));
+    }
+
+    const childHeights = children.map((child) => getChildHeight(child));
     const contentHeight = container.config?.direction === 'horizontal'
         ? Math.max(...childHeights)
         : childHeights.reduce((total, height) => total + height, 0)
@@ -218,7 +257,7 @@ const getRequiredContainerHeight = (container, components) => {
 
 export const getComponentGridHeight = (component) => {
     const config = withAppearanceDefaults(component.type, component.config || {});
-    if (['text', 'metric', 'selectbox', 'page_link'].includes(component.type)) {
+    if (['text', 'metric', 'selectbox', 'data_control', 'progress', 'page_link'].includes(component.type)) {
         const height = getAutomaticContentHeight({ ...component, config });
         const automaticGridHeight = Math.max(
             1,
@@ -509,7 +548,7 @@ export const normalizeComponentLayouts = (components) => {
             ...component,
             config: normalizedConfig,
         }, components);
-        const requestedHeight = component.type === 'layout_group'
+        const requestedHeight = ['layout_group', 'tab_group'].includes(component.type)
             ? (component.layout?.manualHeight
                 ? component.layout?.height
                 : getRequiredContainerHeight(component, components))
@@ -587,7 +626,7 @@ export const toReactGridLayout = (components) => {
     return components.map((component) => {
     const height = getComponentGridHeight(component);
     const usesAutomaticHeight = (
-        ['text', 'metric', 'selectbox', 'page_link'].includes(component.type)
+        ['text', 'metric', 'selectbox', 'data_control', 'progress', 'page_link'].includes(component.type)
         && !component.layout?.manualHeight
     );
 
