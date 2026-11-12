@@ -369,6 +369,7 @@ const EditorPage = () => {
                                 datasets={datasets}
                                 previewRowsByDataset={previewRowsByDataset}
                                 isDataLoading={isDatasetPreviewLoading}
+                                isProjectLoading={isProjectLoading}
                                 pages={pages}
                             />
                         </main>

@@ -7,6 +7,7 @@ import {
 } from 'react';
 import { useDndMonitor, useDroppable } from '@dnd-kit/core';
 import CanvasItem from './canvas/CanvasItem';
+import CanvasSkeleton from './canvas/CanvasSkeleton';
 import {
     GRID_COLUMNS,
     contentHeightToGridUnits,
@@ -60,12 +61,15 @@ const Canvas = ({
                     datasets = [],
                     previewRowsByDataset = {},
                     isDataLoading = false,
+                    isProjectLoading = false,
                     canvasRef,
                     pages = [],
                 }) => {
     const { t } = useTranslation();
     const [filterValues, setFilterValues] = useState({});
     const [dropPreview, setDropPreview] = useState(null);
+    const [isCanvasReady, setIsCanvasReady] = useState(false);
+
     const layoutComponents = useMemo(
         () => components.filter((component) => !component.parentId),
         [components]
@@ -112,6 +116,22 @@ const Canvas = ({
         onSelect,
         onMoveToContainer,
     });
+
+    const isDataLoaded = !isProjectLoading && !isDataLoading;
+
+    useEffect(() => {
+        if (!isDataLoaded) {
+            setIsCanvasReady(false);
+            return;
+        }
+
+        const rafId = requestAnimationFrame(() => {
+            requestAnimationFrame(() => setIsCanvasReady(true));
+        });
+
+        return () => cancelAnimationFrame(rafId);
+    }, [isDataLoaded]);
+
     useEffect(() => {
         const layoutById = new Map(
             layoutComponents.map((component) => [component.id, component])
@@ -302,7 +322,9 @@ const Canvas = ({
                 </div>
             </div>
 
-            {layoutComponents.length === 0 ? (
+            {!isCanvasReady ? (
+                <CanvasSkeleton />
+            ) : layoutComponents.length === 0 ? (
                 <div className={`dashboard-canvas-empty${isOver ? ' is-over' : ''}`}>
                     <div>
                         <h3>
