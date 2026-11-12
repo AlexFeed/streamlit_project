@@ -11,11 +11,13 @@ import {
     getComponentGridWidth,
 } from '../../services/gridLayout.js';
 
-const compactTypes = new Set(['text', 'metric', 'selectbox', 'page_link']);
+const compactTypes = new Set(['text', 'metric', 'selectbox', 'data_control', 'progress', 'page_link']);
 const compactMinimumWidths = {
     metric: 2,
     page_link: 2,
-    selectbox: 3,
+    selectbox: 2,
+    data_control: 2,
+    progress: 2,
     text: 2,
 };
 
@@ -28,6 +30,11 @@ const getMinimumGridWidth = (type) => (
 const getGridWidth = (item, components) => Math.max(
     getMinimumGridWidth(item.type),
     getComponentGridWidth(item, components)
+);
+
+const getGridHeight = (item) => contentHeightToGridUnits(
+    item.layout?.height,
+    item.type
 );
 
 const GridStackCanvas = ({
@@ -113,6 +120,8 @@ const GridStackCanvas = ({
 
         const beginResize = (_event, element) => {
             grid.el.classList.add('is-gridstack-resizing');
+            const card = element?.querySelector('[data-canvas-item]');
+            if (card) card.dataset.suppressSelect = 'true';
             const node = element?.gridstackNode;
             resizeStartRef.current = node ? {
                 id: String(node.id),
@@ -130,6 +139,12 @@ const GridStackCanvas = ({
                 manualHeight: !start || node.h !== start.height,
             } : null);
             resizeStartRef.current = null;
+            const card = element?.querySelector('[data-canvas-item]');
+            if (card) {
+                window.setTimeout(() => {
+                    delete card.dataset.suppressSelect;
+                }, 160);
+            }
         };
         const snapResizePreview = (_event, element) => {
             const node = element?.gridstackNode;
@@ -145,6 +160,12 @@ const GridStackCanvas = ({
 
         const finishDrag = (event, element) => {
             commitLayout();
+            const card = element?.querySelector('[data-canvas-item]');
+            if (card) {
+                window.setTimeout(() => {
+                    delete card.dataset.suppressSelect;
+                }, 160);
+            }
 
             const draggedId = String(element?.gridstackNode?.id || '');
             if (!draggedId || !Number.isFinite(event?.clientX) || !Number.isFinite(event?.clientY)) {
@@ -152,7 +173,7 @@ const GridStackCanvas = ({
             }
 
             const target = componentsRef.current.find((component) => {
-                if (component.id === draggedId || component.type !== 'layout_group') return false;
+                if (component.id === draggedId || !['layout_group', 'tab_group'].includes(component.type)) return false;
                 const targetElement = rootRef.current?.querySelector(
                     `[data-gridstack-id="${CSS.escape(component.id)}"]`
                 );
@@ -165,10 +186,22 @@ const GridStackCanvas = ({
             });
 
             if (target) {
-                onMoveToContainerRef.current?.(draggedId, target.id, null);
+                const targetElement = rootRef.current?.querySelector(
+                    `[data-gridstack-id="${CSS.escape(target.id)}"]`
+                );
+                const tabId = target.type === 'tab_group'
+                    ? targetElement?.querySelector('[data-active-tab]')?.dataset.activeTab
+                    : null;
+                onMoveToContainerRef.current?.(draggedId, target.id, tabId ? { tabId } : null);
             }
         };
 
+        const beginDrag = (_event, element) => {
+            const card = element?.querySelector('[data-canvas-item]');
+            if (card) card.dataset.suppressSelect = 'true';
+        };
+
+        grid.on('dragstart', beginDrag);
         grid.on('dragstop', finishDrag);
         grid.on('resizestart', beginResize);
         grid.on('resize', snapResizePreview);
@@ -236,7 +269,7 @@ const GridStackCanvas = ({
                 x: Number.isFinite(item.layout?.x) ? item.layout.x : undefined,
                 y: Number.isFinite(item.layout?.y) ? item.layout.y : undefined,
                 w: getGridWidth(item, allComponents),
-                h: contentHeightToGridUnits(item.layout?.height, item.type),
+                h: getGridHeight(item),
                 minW: getMinimumGridWidth(item.type),
                 minH: compactTypes.has(item.type) ? 2 : 4,
                 autoPosition: !Number.isFinite(item.layout?.x)
@@ -276,7 +309,7 @@ const GridStackCanvas = ({
                             gs-x={item.layout?.x}
                             gs-y={item.layout?.y}
                             gs-w={getGridWidth(item, allComponents)}
-                            gs-h={contentHeightToGridUnits(item.layout?.height, item.type)}
+                            gs-h={getGridHeight(item)}
                         >
                             <div className="grid-stack-item-content">
                                 <CanvasItem
@@ -285,7 +318,7 @@ const GridStackCanvas = ({
                                     onSelect={onSelect}
                                     onDelete={onDelete}
                                     onDuplicate={onDuplicate}
-                                    rows={item.type === 'selectbox' ? rawRows : rows}
+                                    rows={['selectbox', 'data_control'].includes(item.type) ? rawRows : rows}
                                     filterValue={filterValues[item.id] || ''}
                                     onFilterChange={onFilterChange}
                                     onBeginInteraction={() => {}}
@@ -296,17 +329,30 @@ const GridStackCanvas = ({
                                             const childRows = rowsForComponent(component);
                                             return {
                                                 item: component,
-                                                rows: component.type === 'selectbox'
+                                                rows: ['selectbox', 'data_control'].includes(component.type)
                                                     ? childRows.rawRows
                                                     : childRows.rows,
                                                 filterValue: filterValues[component.id] || '',
                                             };
                                         })}
                                     selectedId={selectedId}
-                                    onMoveChild={(childId, targetContainerId) => {
-                                        onMoveToContainer?.(childId, targetContainerId, null);
+                                    onMoveChild={(childId, targetContainerId, targetLayout) => {
+                                        onMoveToContainer?.(childId, targetContainerId, targetLayout);
                                     }}
                                     onReorderChild={onReorderComponent}
+                                    onResizeChild={(childId, size) => {
+                                        const child = allComponents.find((component) => component.id === childId);
+                                        if (!child) return;
+                                        onLayoutChange?.([{
+                                            i: child.id,
+                                            x: Number(child.layout?.x || 0),
+                                            y: Number(child.layout?.y || 0),
+                                            w: size.width,
+                                            h: contentHeightToGridUnits(size.height, child.type),
+                                            manualWidth: true,
+                                            manualHeight: true,
+                                        }]);
+                                    }}
                                     managedByGridStack
                                 />
                             </div>

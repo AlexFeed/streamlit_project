@@ -155,7 +155,7 @@ const Canvas = ({
     });
 
     const activeFilters = useMemo(
-        () => components.filter((component) => component.type === 'selectbox'),
+        () => components.filter((component) => ['selectbox', 'data_control'].includes(component.type)),
         [components]
     );
 
@@ -174,6 +174,20 @@ const Canvas = ({
                     const field = filter.bindings?.field;
 
                     if (!selectedValue || !field) return true;
+                    if (filter.type === 'data_control') {
+                        const controlType = filter.config?.controlType || 'range';
+                        if (controlType === 'toggle') return !selectedValue || Boolean(row[field]);
+                        if (Array.isArray(selectedValue) && selectedValue.length === 2) {
+                            if (controlType === 'date') {
+                                const value = new Date(row[field]).getTime();
+                                return value >= new Date(selectedValue[0]).getTime()
+                                    && value <= new Date(selectedValue[1]).getTime();
+                            }
+                            const value = Number(String(row[field] ?? '').replace(/\s/g, '').replace(',', '.'));
+                            return value >= selectedValue[0] && value <= selectedValue[1];
+                        }
+                        return true;
+                    }
                     if (Array.isArray(selectedValue)) {
                         return selectedValue.length === 0
                             || selectedValue.includes(String(row[field]));

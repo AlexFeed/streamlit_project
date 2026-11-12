@@ -60,6 +60,7 @@ const PropertiesPanel = ({
                              onClose,
                              datasets = [],
                              pages = [],
+                             components = [],
                          }) => {
     const { t } = useTranslation();
 
@@ -68,6 +69,8 @@ const PropertiesPanel = ({
     }
 
     const { type, config, bindings } = selectedComponent;
+    const parentComponent = components.find((component) => component.id === selectedComponent.parentId);
+    const isTabChild = parentComponent?.type === 'tab_group';
     const appearance = getAppearanceDefaults(type, config);
     const componentLabel = t(paletteItems[type]?.labelKey || 'editor.componentLabel');
     const localizeOptions = (options) => options.map(({ labelKey, ...option }) => ({
@@ -180,6 +183,36 @@ const PropertiesPanel = ({
                 </div>
 
                 <div className="properties-panel-fields">
+                    {isTabChild && (
+                        <section className="property-section">
+                            <h3 className="property-section-title">{t('editor.tabItemLayout')}</h3>
+                            <OptionSelect
+                                label={t('editor.tabItemWidth')}
+                                value={String(selectedComponent.layout?.width || paletteItems[type]?.defaultWidth || 4)}
+                                onChange={(value) => onUpdateComponent(selectedComponent.id, (component) => ({
+                                    ...component,
+                                    layout: { ...component.layout, width: Number(value), manualWidth: true },
+                                }))}
+                                options={[
+                                    { value: '3', label: t('editor.tabWidthQuarter') },
+                                    { value: '4', label: t('editor.tabWidthThird') },
+                                    { value: '6', label: t('editor.tabWidthHalf') },
+                                    { value: '8', label: t('editor.tabWidthTwoThirds') },
+                                    { value: '12', label: t('editor.tabWidthFull') },
+                                ]}
+                            />
+                            <OptionSelect
+                                label={t('editor.tabItemHeight')}
+                                value={String(Math.max(160, Number(selectedComponent.layout?.height || paletteItems[type]?.defaultHeight || 320)))}
+                                onChange={(value) => onUpdateComponent(selectedComponent.id, (component) => ({
+                                    ...component,
+                                    config: { ...component.config, heightMode: 'fixed' },
+                                    layout: { ...component.layout, height: Number(value), manualHeight: true },
+                                }))}
+                                options={[160, 220, 280, 360, 440].map((height) => ({ value: String(height), label: `${height} px` }))}
+                            />
+                        </section>
+                    )}
                     <TextField
                         label={type === 'text' ? t('editor.optionalTitle') : t('editor.chartTitle')}
                         value={config.title || ''}
@@ -192,7 +225,7 @@ const PropertiesPanel = ({
                             : t('editor.titleAbove')}
                     />
 
-                    {!['text', 'page_link', 'layout_group'].includes(type) && (
+                    {!['text', 'page_link', 'layout_group', 'tab_group'].includes(type) && (
                         <FieldSelect
                             label={t('editor.dataSource')}
                             value={activeDataset?.datasetId || ''}
@@ -278,6 +311,27 @@ const PropertiesPanel = ({
                                     { value: 'radio', label: t('editor.filterRadio') },
                                     { value: 'segmented', label: t('editor.filterSegmented') },
                                     { value: 'pills', label: t('editor.filterPills') },
+                                ]}
+                            />
+                        </>
+                    )}
+
+                    {type === 'data_control' && (
+                        <>
+                            <FieldSelect
+                                label={t('editor.dataField')}
+                                value={bindings.field || ''}
+                                onChange={(value) => updateBinding('field', value)}
+                                options={fieldOptions}
+                                placeholder={t('editor.chooseField')}
+                            />
+                            <OptionSelect
+                                label={t('editor.controlType')}
+                                value={config.controlType || 'range'}
+                                onChange={(value) => updateConfig('controlType', value)}
+                                options={[
+                                    { value: 'range', label: t('editor.controlRange') },
+                                    { value: 'date', label: t('editor.controlDate') },
                                 ]}
                             />
                         </>
@@ -370,6 +424,52 @@ const PropertiesPanel = ({
                         </>
                     )}
 
+                    {type === 'tab_group' && (
+                        <div className="property-field-card">
+                            <div className="mb-2 text-sm font-semibold">{t('editor.tabsLabels')}</div>
+                            <div className="space-y-2">
+                                {(config.tabs || []).map((tab, index) => (
+                                    <div key={tab.id} className="flex items-end gap-2">
+                                        <div className="min-w-0 flex-1">
+                                            <TextField
+                                                label={`${t('palette.tabs.label')} ${index + 1}`}
+                                                value={tab.label}
+                                                onChange={(value) => updateConfig('tabs', config.tabs.map((current) => (
+                                                    current.id === tab.id ? { ...current, label: value } : current
+                                                )))}
+                                            />
+                                        </div>
+                                        {(config.tabs || []).length > 1 && (
+                                            <button
+                                                type="button"
+                                                className="btn btn-secondary mb-1 px-3"
+                                                title={t('editor.removeTab')}
+                                                onClick={() => updateConfig('tabs', config.tabs.filter((current) => current.id !== tab.id))}
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </button>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                            {(config.tabs || []).length < 8 && (
+                                <button
+                                    type="button"
+                                    className="btn btn-secondary mt-3 w-full"
+                                    onClick={() => {
+                                        const nextIndex = (config.tabs || []).length + 1;
+                                        updateConfig('tabs', [
+                                            ...(config.tabs || []),
+                                            { id: `tab-${Date.now()}`, label: `${t('palette.tabs.label')} ${nextIndex}` },
+                                        ]);
+                                    }}
+                                >
+                                    + {t('editor.addTab')}
+                                </button>
+                            )}
+                        </div>
+                    )}
+
                     {paletteItems[type]?.isChart && (
                         <>
                             <FieldSelect
@@ -458,6 +558,45 @@ const PropertiesPanel = ({
                         </>
                     )}
 
+                    {type === 'progress' && (
+                        <>
+                            <FieldSelect
+                                label={t('editor.dataField')}
+                                value={bindings.valueField || ''}
+                                onChange={(value) => updateBinding('valueField', value)}
+                                options={valueFieldOptions}
+                                placeholder={t('editor.chooseField')}
+                            />
+                            <OptionSelect
+                                label={t('editor.aggregation')}
+                                value={config.aggregation || 'mean'}
+                                onChange={(value) => updateConfig('aggregation', value)}
+                                options={localizeOptions(aggregationOptions.filter((option) => option.value !== 'none'))}
+                            />
+                            <TextField
+                                label={t('editor.progressMinimum')}
+                                value={String(config.minimum ?? 0)}
+                                onChange={(value) => {
+                                    const parsed = Number(value);
+                                    if (Number.isFinite(parsed)) updateConfig('minimum', parsed);
+                                }}
+                            />
+                            <TextField
+                                label={t('editor.progressMaximum')}
+                                value={String(config.maximum ?? 100)}
+                                onChange={(value) => {
+                                    const parsed = Number(value);
+                                    if (Number.isFinite(parsed)) updateConfig('maximum', parsed);
+                                }}
+                            />
+                            <ColorField
+                                label={t('editor.progressColor')}
+                                value={config.color || '#10b981'}
+                                onChange={(value) => updateConfig('color', value)}
+                            />
+                        </>
+                    )}
+
                     <OptionSelect
                         label={t('editor.showBorder')}
                         value={appearance.showBorder ? 'show' : 'hide'}
@@ -478,7 +617,7 @@ const PropertiesPanel = ({
                         ]}
                     />
 
-                    {!paletteItems[type]?.isChart && type !== 'table' && type !== 'layout_group' && (
+                    {!paletteItems[type]?.isChart && type !== 'table' && !['layout_group', 'tab_group'].includes(type) && (
                         <>
                             {type !== 'text' && (
                                 <>

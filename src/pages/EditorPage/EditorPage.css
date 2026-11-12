@@ -342,7 +342,7 @@
 }
 
 .editor-workspace.has-properties {
-  grid-template-columns: minmax(0, 1fr) 360px;
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .editor-canvas-area {
@@ -350,6 +350,17 @@
   min-height: 0;
   overflow: auto;
   padding: var(--space-4);
+}
+
+/* The properties panel floats above the workspace. Add scrollable room after
+   the unchanged canvas so its right edge can be brought out from under the
+   panel without recalculating GridStack column widths. */
+.editor-workspace.has-properties .editor-canvas-area::after {
+  display: block;
+  width: 360px;
+  height: 1px;
+  margin-left: 100%;
+  content: '';
 }
 
 .dashboard-canvas {
@@ -372,7 +383,7 @@
 }
 
 .dashboard-canvas.is-gridstack {
-  min-width: 0;
+  min-width: 1100px;
 }
 
 .dashboard-canvas-header {
@@ -587,12 +598,16 @@
 }
 
 .properties-panel {
-  position: relative;
-  z-index: 20;
-  min-width: 0;
+  position: fixed;
+  top: 65px;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  width: min(360px, calc(100vw - 24px));
   overflow-y: auto;
   border-left: 1px solid var(--color-border);
   background: var(--color-surface);
+  box-shadow: 0 24px 48px var(--color-shadow);
 }
 
 .properties-panel-header,
@@ -698,9 +713,9 @@
     grid-template-columns: 220px minmax(0, 1fr);
   }
 
-  .editor-workspace.has-properties {
-    grid-template-columns: minmax(0, 1fr) 320px;
-  }
+  .properties-panel { width: 320px; }
+
+  .editor-workspace.has-properties .editor-canvas-area::after { width: 320px; }
 }
 
 @media (max-width: 1099px) {
@@ -720,12 +735,7 @@
   }
 
   .properties-backdrop {
-    position: fixed;
-    inset: 65px 0 0 252px;
-    z-index: 30;
-    display: block;
-    border: 0;
-    background: var(--color-overlay);
+    display: none;
   }
 }
 
@@ -944,7 +954,8 @@
 .dashboard-interaction-source { opacity: 0; pointer-events: none; }
 .dashboard-container-insert-target::before { content: ''; position: absolute; z-index: 5; top: -5px; left: 0; right: 0; height: 3px; border-radius: 3px; background: var(--color-accent); box-shadow: 0 0 10px color-mix(in srgb, var(--color-accent) 60%, transparent); }
 
-.live-preview-options { display: flex; max-height: none; flex-wrap: wrap; gap: 6px; overflow: hidden; }
+.live-preview-options { display: flex; width: 100%; max-height: none; flex-wrap: wrap; gap: 6px; overflow: hidden; }
+.live-preview-filter .live-preview-select { width: 100%; min-width: 0; }
 .live-preview-filter.is-manual-height { min-height: 0; }
 .live-preview-filter.is-manual-height .live-preview-options { max-height: none; flex: 1; align-content: flex-start; }
 .live-preview-filter.is-manual-height .live-preview-select[multiple] { min-height: 0; height: 100%; flex: 1; }

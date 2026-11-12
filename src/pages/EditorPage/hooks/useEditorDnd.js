@@ -60,7 +60,7 @@ export const useEditorDnd = ({
             const targetLayout = over.data.current?.getPaletteDropLayout?.(
                 active.rect.current.translated,
                 dragData.paletteItem
-            ) || null;
+            ) || (over.data.current?.tabId ? { tabId: over.data.current.tabId } : null);
             addComponent(
                 dragData.paletteItem,
                 targetIndex,

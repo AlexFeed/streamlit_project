@@ -1,6 +1,7 @@
 import { getPaletteColors } from '../data/chartPalettes.js';
 import { paletteItems } from '../data/paletteItems.js';
 import { DEFAULT_PAGE_ID, normalizePages } from './pageState.js';
+import { getRequiredContainerHeight } from './gridLayout.js';
 
 export const buildDashboardSchema = (snapshot, t = (key) => key) => {
     const {
@@ -32,6 +33,7 @@ export const buildDashboardSchema = (snapshot, t = (key) => key) => {
             type: component.type,
             pageId: component.pageId || DEFAULT_PAGE_ID,
             parentId: component.parentId || null,
+            tabId: component.tabId || null,
             surface: component.config?.surface || meta?.defaultConfig?.surface || 'card',
             showBorder: component.config?.showBorder,
             showBackground: component.config?.showBackground,
@@ -42,10 +44,11 @@ export const buildDashboardSchema = (snapshot, t = (key) => key) => {
             contentWidth: (
                 paletteItems[component.type]?.isChart
                 || component.type === 'table'
+                || ['selectbox', 'data_control'].includes(component.type)
                 || component.layout?.manualWidth
             ) ? 'stretch' : 'content',
             heightMode: component.layout?.manualHeight ? 'fixed' : (
-                ['text', 'metric', 'selectbox', 'page_link'].includes(component.type)
+                ['text', 'metric', 'selectbox', 'data_control', 'progress', 'page_link'].includes(component.type)
                     ? 'auto'
                     : 'fixed'
             ),
@@ -53,7 +56,7 @@ export const buildDashboardSchema = (snapshot, t = (key) => key) => {
             elementTextColor: component.config?.elementTextColor || '#d4d4d8',
             elementFontWeight: component.config?.elementFontWeight || 'normal',
             elementFontStyle: component.config?.elementFontStyle || 'normal',
-            datasetId: ['text', 'page_link', 'layout_group'].includes(component.type)
+            datasetId: ['text', 'page_link', 'layout_group', 'tab_group'].includes(component.type)
                 ? null
                 : resolveDatasetId(component),
             order: index + 1,
@@ -63,7 +66,11 @@ export const buildDashboardSchema = (snapshot, t = (key) => key) => {
                 width: component.layout?.width || meta?.defaultWidth || 6,
                 height: Math.max(
                     meta?.minHeight || 1,
-                    Number(component.layout?.height || meta?.defaultHeight || 320)
+                    Number(
+                        component.type === 'tab_group' && !component.layout?.manualHeight
+                            ? getRequiredContainerHeight(component, components)
+                            : component.layout?.height || meta?.defaultHeight || 320
+                    )
                 ),
             },
         };
@@ -77,6 +84,15 @@ export const buildDashboardSchema = (snapshot, t = (key) => key) => {
                 field: component.bindings?.field || '',
                 scope: 'global',
                 widget: component.config?.widget || 'selectbox',
+            });
+        }
+        else if (component.type === 'data_control') {
+            filters.push({
+                ...base,
+                title: component.config?.title || '',
+                field: component.bindings?.field || '',
+                scope: 'global',
+                controlType: component.config?.controlType || 'range',
             });
         }
         else if (meta?.isChart) {
@@ -109,6 +125,18 @@ export const buildDashboardSchema = (snapshot, t = (key) => key) => {
                 description: component.config?.description || '',
                 field: component.bindings?.valueField || '',
                 aggregation: component.config?.aggregation || 'sum',
+            });
+        }
+        else if (component.type === 'progress') {
+            views.push({
+                ...base,
+                title: component.config?.title || '',
+                field: component.bindings?.valueField || '',
+                aggregation: component.config?.aggregation || 'mean',
+                minimum: Number(component.config?.minimum ?? 0),
+                maximum: Number(component.config?.maximum ?? 100),
+                showValue: component.config?.showValue !== false,
+                color: component.config?.color || '#10b981',
             });
         }
         else if (component.type === 'text') {
@@ -160,6 +188,16 @@ export const buildDashboardSchema = (snapshot, t = (key) => key) => {
                 wrap: component.config?.wrap !== false,
             });
         }
+        else if (component.type === 'tab_group') {
+            views.push({
+                ...base,
+                title: component.config?.title || '',
+                tabs: component.config?.tabs || [],
+                activeTabId: component.config?.activeTabId || component.config?.tabs?.[0]?.id || '',
+                gap: Number(component.config?.gap ?? 8),
+                padding: Number(component.config?.padding ?? 8),
+            });
+        }
     });
 
     return {
@@ -199,7 +237,7 @@ export const validateSchema = (snapshot, t = (key) => key) => {
     const allowedSortFields = new Set(['x', 'y']);
     const groupsById = new Map(
         components
-            .filter((component) => component.type === 'layout_group')
+            .filter((component) => ['layout_group', 'tab_group'].includes(component.type))
             .map((component) => [component.id, component])
     );
 
@@ -234,7 +272,7 @@ export const validateSchema = (snapshot, t = (key) => key) => {
             return;
         }
 
-        if (component.type === 'layout_group' && component.parentId) {
+        if (['layout_group', 'tab_group'].includes(component.type) && component.parentId) {
             errors.push(t('editor.validation.nestedContainer', { name }));
         }
         if (component.parentId) {
@@ -250,7 +288,7 @@ export const validateSchema = (snapshot, t = (key) => key) => {
 
         const minimumHeight = meta?.minHeight || 120;
         const usesAutomaticCompactHeight = (
-            ['text', 'metric', 'selectbox', 'page_link'].includes(component.type)
+            ['text', 'metric', 'selectbox', 'data_control', 'progress', 'page_link'].includes(component.type)
             && (component.config?.heightMode || 'auto') === 'auto'
         );
         if (height && ((!usesAutomaticCompactHeight && height < minimumHeight) || height > 720)) {
@@ -268,6 +306,15 @@ export const validateSchema = (snapshot, t = (key) => key) => {
             } else if (!hasField(field)) {
                 errors.push(t('editor.validation.fieldMissing', { name, field }));
             }
+        }
+        else if (component.type === 'data_control') {
+            const field = component.bindings?.field;
+            const controlType = component.config?.controlType || 'range';
+            if (!['range', 'date', 'toggle'].includes(controlType)) {
+                errors.push(t('editor.validation.filterWidget', { name }));
+            }
+            if (!field) errors.push(t('editor.validation.filterField', { name }));
+            else if (!hasField(field)) errors.push(t('editor.validation.fieldMissing', { name, field }));
         }
         else if (meta.isChart) {
             const xField = component.bindings?.xField;
@@ -312,7 +359,7 @@ export const validateSchema = (snapshot, t = (key) => key) => {
                 errors.push(t('editor.validation.fieldMissing', { name, field: yField }));
             }
         }
-        else if (component.type === 'metric') {
+        else if (['metric', 'progress'].includes(component.type)) {
             const valueField = component.bindings?.valueField;
             const aggregation = component.config?.aggregation || 'sum';
 
@@ -324,6 +371,12 @@ export const validateSchema = (snapshot, t = (key) => key) => {
                 errors.push(t('editor.validation.metricField', { name }));
             } else if (!hasField(valueField)) {
                 errors.push(t('editor.validation.fieldMissing', { name, field: valueField }));
+            }
+            if (
+                component.type === 'progress'
+                && Number(component.config?.maximum ?? 100) <= Number(component.config?.minimum ?? 0)
+            ) {
+                errors.push(t('editor.validation.progressRange', { name }));
             }
         }
         else if (component.type === 'text') {
