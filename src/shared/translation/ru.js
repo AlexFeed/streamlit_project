@@ -131,7 +131,7 @@ export default {
   "editor.goHomeTitle": "На главную (Мои проекты)",
   "editor.components": "Компоненты",
   "editor.loadingProject": "Загрузка проекта...",
-  "editor.savingProject": "Сохранение проекта...",
+  "editor.savingProject": "Сохранить",
   "editor.dragOverlayTitle": "Компонент дашборда",
   "editor.dragOverlayDescription": "Переместите в нужную позицию",
   "editor.canvasTitle": "Холст дашборда",

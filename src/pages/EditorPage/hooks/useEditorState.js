@@ -87,6 +87,8 @@ export const useEditorState = ({ useDraftStorage = true, defaultDatasetId = ''})
         redo,
         canUndo,
         canRedo,
+        markAsSaved,
+        isDirty
     } = useCanvasHistory(() => {
         if (!useDraftStorage) {
             return [];
@@ -434,5 +436,7 @@ export const useEditorState = ({ useDraftStorage = true, defaultDatasetId = ''})
         redo,
         canUndo,
         canRedo,
+        markAsSaved,
+        isDirty,
     };
 };

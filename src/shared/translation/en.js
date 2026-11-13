@@ -131,7 +131,7 @@ export default {
   "editor.goHomeTitle": "Go to projects",
   "editor.components": "Components",
   "editor.loadingProject": "Loading project...",
-  "editor.savingProject": "Saving project...",
+  "editor.savingProject": "Save",
   "editor.dragOverlayTitle": "Dashboard component",
   "editor.dragOverlayDescription": "Move to the desired position",
   "editor.canvasTitle": "Dashboard canvas",

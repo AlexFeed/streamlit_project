@@ -1224,6 +1224,9 @@
     transform: rotate(360deg);
   }
 }
+.editor-btn-spinner {
+  animation: editor-preview-spin 1s linear infinite;
+}
 .editor-preview-loading-text {
   font-size: 13px;
   font-weight: 500;
