@@ -1,4 +1,5 @@
 import {
+    startTransition,
     useCallback,
     useEffect,
     useMemo,
@@ -6,6 +7,7 @@ import {
 } from 'react';
 import { useDndMonitor, useDroppable } from '@dnd-kit/core';
 import CanvasItem from './canvas/CanvasItem';
+import CanvasSkeleton from './canvas/CanvasSkeleton';
 import {
     GRID_COLUMNS,
     contentHeightToGridUnits,
@@ -46,6 +48,9 @@ const getDataDrivenWidth = (component, rows) => {
     return null;
 };
 
+// Constant for proper UseMemo work
+const NO_CHILDREN = [];
+
 const Canvas = ({
                     components,
                     selectedId,
@@ -59,12 +64,15 @@ const Canvas = ({
                     datasets = [],
                     previewRowsByDataset = {},
                     isDataLoading = false,
+                    isProjectLoading = false,
                     canvasRef,
                     pages = [],
                 }) => {
     const { t } = useTranslation();
     const [filterValues, setFilterValues] = useState({});
     const [dropPreview, setDropPreview] = useState(null);
+    const [isCanvasReady, setIsCanvasReady] = useState(false);
+
     const layoutComponents = useMemo(
         () => components.filter((component) => !component.parentId),
         [components]
@@ -111,6 +119,27 @@ const Canvas = ({
         onSelect,
         onMoveToContainer,
     });
+
+    const isDataLoaded = !isProjectLoading && !isDataLoading;
+
+    // Checking if all canvas data and animations have finished loading before displaying the interface
+    useEffect(() => {
+        if (!isDataLoaded) {
+            setIsCanvasReady(false);
+            return;
+        }
+
+        // Allow ResponsiveContainer debounce (50ms) and initial SVG mount to settle behind the skeleton
+        const timer = setTimeout(() => {
+            const rafId = requestAnimationFrame(() => {
+                requestAnimationFrame(() => setIsCanvasReady(true));
+            });
+            return () => cancelAnimationFrame(rafId);
+        }, 200);
+
+        return () => clearTimeout(timer);
+    }, [isDataLoaded]);
+
     useEffect(() => {
         const layoutById = new Map(
             layoutComponents.map((component) => [component.id, component])
@@ -159,7 +188,19 @@ const Canvas = ({
         [components]
     );
 
+    // Skip iterating through thousands of rows when no filters have values selected.
+    const hasActiveFilterValues = useMemo(() => (
+        activeFilters.some((filter) => {
+            const value = filterValues[filter.id];
+            return Array.isArray(value) ? value.length > 0 : Boolean(value);
+        })
+    ), [activeFilters, filterValues]);
+
     const filteredRowsByDataset = useMemo(() => {
+        if (!hasActiveFilterValues) {
+            return previewRowsByDataset;
+        }
+
         const result = {};
 
         datasets.forEach((ds) => {
@@ -198,13 +239,15 @@ const Canvas = ({
         });
 
         return result;
-    }, [datasets, previewRowsByDataset, activeFilters, filterValues, resolveDatasetId]);
+    }, [hasActiveFilterValues, datasets, previewRowsByDataset, activeFilters, filterValues, resolveDatasetId]);
 
     const handleFilterChange = useCallback((id, value) => {
-        setFilterValues((current) => ({
-            ...current,
-            [id]: value,
-        }));
+        startTransition(() => {
+            setFilterValues((current) => ({
+                ...current,
+                [id]: value,
+            }));
+        });
     }, []);
 
     const rowsForComponent = useCallback((component) => {
@@ -214,6 +257,13 @@ const Canvas = ({
             rows: filteredRowsByDataset[datasetId] || [],
         };
     }, [filteredRowsByDataset, previewRowsByDataset, resolveDatasetId]);
+
+    const handleMoveChild = useCallback((childId, targetContainerId, dragRect, childMeta) => {
+        const targetLayout = targetContainerId
+            ? null
+            : getPaletteDropLayout(dragRect, childMeta);
+        onMoveToContainer?.(childId, targetContainerId, targetLayout);
+    }, [getPaletteDropLayout, onMoveToContainer]);
 
     const visibleDropPreview = (
         insertionPreview
@@ -306,19 +356,19 @@ const Canvas = ({
                 </div>
             </div>
 
-            {layoutComponents.length === 0 ? (
-                <div className={`dashboard-canvas-empty${isOver ? ' is-over' : ''}`}>
-                    <div>
-                        <h3>
-                            {t('editor.canvasEmptyTitle')}
-                        </h3>
-                        <p>
-                            {t('editor.canvasEmptyDescription')}
-                        </p>
+            <div className="dashboard-canvas-body">
+                {layoutComponents.length === 0 ? (
+                    <div className={`dashboard-canvas-empty${isOver ? ' is-over' : ''}`}>
+                        <div>
+                            <h3>
+                                {t('editor.canvasEmptyTitle')}
+                            </h3>
+                            <p>
+                                {t('editor.canvasEmptyDescription')}
+                            </p>
+                        </div>
                     </div>
-                </div>
-            ) : (
-                GRIDSTACK_SPIKE_ENABLED ? (
+                ) : GRIDSTACK_SPIKE_ENABLED ? (
                     <GridStackCanvas
                         components={autoSizedLayoutComponents}
                         allComponents={components}
@@ -336,85 +386,87 @@ const Canvas = ({
                         legacyGridRef={setGridNode}
                     />
                 ) : (
-                <div
-                    ref={setGridNode}
-                    className="dashboard-layout-grid dashboard-grid"
-                    style={{ height: gridHeight }}
-                >
-                    {visibleDropPreview && (
-                        <div
-                            className={`dashboard-drop-preview${visibleDropPreview.insert ? ' is-insertion' : ''}`}
-                            style={dropPreviewStyle}
-                        >
-                            {!visibleDropPreview.insert && (
-                                <div className="dashboard-drop-label">
-                                    {t('editor.dropHere')}
-                                </div>
-                            )}
-                        </div>
-                    )}
-                    {gridLayout.map((layoutItem) => {
-                        const item = layoutComponents.find(
-                            (component) => component.id === layoutItem.i
-                        );
-                        if (!item) return null;
-
-                        const itemDatasetId = resolveDatasetId(item);
-                        const itemRawRows = previewRowsByDataset[itemDatasetId] || [];
-                        const itemFilteredRows = filteredRowsByDataset[itemDatasetId] || [];
-
-                        return (
+                    <div
+                        ref={setGridNode}
+                        className="dashboard-layout-grid dashboard-grid"
+                        style={{ height: gridHeight }}
+                    >
+                        {visibleDropPreview && (
                             <div
-                                key={item.id}
-                                data-grid-item={item.id}
-                                className="dashboard-grid-item"
-                                style={{
-                                    ...getGridItemStyle(layoutItem, gridWidth),
-                                    boxSizing: 'border-box',
-                                    padding: Number(item.config?.spacing || 0),
-                                }}
+                                className={`dashboard-drop-preview${visibleDropPreview.insert ? ' is-insertion' : ''}`}
+                                style={dropPreviewStyle}
                             >
-                                <CanvasItem
-                                    item={item}
-                                    isSelected={selectedId === item.id}
-                                    onSelect={handleItemSelect}
-                                    onDelete={onDelete}
-                                    onDuplicate={onDuplicate}
-                                    rows={item.type === 'selectbox'
-                                        ? itemRawRows
-                                        : itemFilteredRows}
-                                    filterValue={filterValues[item.id] || ''}
-                                    onFilterChange={handleFilterChange}
-                                    onBeginInteraction={beginInteraction}
-                                    pages={pages}
-                                    children={components
-                                        .filter((component) => component.parentId === item.id)
-                                        .map((component) => {
-                                            const datasetId = resolveDatasetId(component);
-                                            return {
-                                                item: component,
-                                                rows: component.type === 'selectbox'
-                                                    ? (previewRowsByDataset[datasetId] || [])
-                                                    : (filteredRowsByDataset[datasetId] || []),
-                                                filterValue: filterValues[component.id] || '',
-                                            };
-                                        })}
-                                    selectedId={selectedId}
-                                    isContainerDropTarget={containerDropTargetId === item.id}
-                                    onMoveChild={(childId, targetContainerId, dragRect, childMeta) => {
-                                        const targetLayout = targetContainerId
-                                            ? null
-                                            : getPaletteDropLayout(dragRect, childMeta);
-                                        onMoveToContainer?.(childId, targetContainerId, targetLayout);
-                                    }}
-                                    onReorderChild={onReorderComponent}
-                                />
+                                {!visibleDropPreview.insert && (
+                                    <div className="dashboard-drop-label">
+                                        {t('editor.dropHere')}
+                                    </div>
+                                )}
                             </div>
-                        );
-                    })}
+                        )}
+                        {gridLayout.map((layoutItem) => {
+                            const item = layoutComponents.find(
+                                (component) => component.id === layoutItem.i
+                            );
+                            if (!item) return null;
+
+                            const itemDatasetId = resolveDatasetId(item);
+                            const itemRawRows = previewRowsByDataset[itemDatasetId] || [];
+                            const itemFilteredRows = filteredRowsByDataset[itemDatasetId] || [];
+
+                            return (
+                                <div
+                                    key={item.id}
+                                    data-grid-item={item.id}
+                                    className="dashboard-grid-item"
+                                    style={{
+                                        ...getGridItemStyle(layoutItem, gridWidth),
+                                        boxSizing: 'border-box',
+                                        padding: Number(item.config?.spacing || 0),
+                                    }}
+                                >
+                                    <CanvasItem
+                                        item={item}
+                                        isSelected={selectedId === item.id}
+                                        onSelect={handleItemSelect}
+                                        onDelete={onDelete}
+                                        onDuplicate={onDuplicate}
+                                        rows={item.type === 'selectbox'
+                                            ? itemRawRows
+                                            : itemFilteredRows}
+                                        filterValue={filterValues[item.id] || ''}
+                                        onFilterChange={handleFilterChange}
+                                        onBeginInteraction={beginInteraction}
+                                        pages={pages}
+                                        children={components
+                                            .filter((component) => component.parentId === item.id)
+                                            .map((component) => {
+                                                const datasetId = resolveDatasetId(component);
+                                                return {
+                                                    item: component,
+                                                    rows: component.type === 'selectbox'
+                                                        ? (previewRowsByDataset[datasetId] || [])
+                                                        : (filteredRowsByDataset[datasetId] || []),
+                                                    filterValue: filterValues[component.id] || '',
+                                                };
+                                            })}
+                                        selectedId={selectedId}
+                                        isContainerDropTarget={containerDropTargetId === item.id}
+                                        onMoveChild={handleMoveChild}
+                                        onReorderChild={onReorderComponent}
+                                    />
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+
+                <div
+                    className={`dashboard-canvas-skeleton-overlay ${isCanvasReady ? 'is-ready' : ''}`}
+                    aria-hidden={isCanvasReady}
+                >
+                    <CanvasSkeleton />
                 </div>
-                )
-            )}
+            </div>
 
             {isDragging && layoutComponents.length > 0 && (
                 <div className="dashboard-drop-hint">

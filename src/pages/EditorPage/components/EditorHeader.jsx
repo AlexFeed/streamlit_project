@@ -9,6 +9,7 @@ import {
     X,
     House,
     Eye,
+    Loader2,
 } from 'lucide-react';
 import useTranslation from '../../../shared/translation/useTranslation.js';
 
@@ -21,6 +22,7 @@ const EditorHeader = ({
                           isDatasetClearing,
                           isGenerating,
                           isPreviewLoading,
+                          isProjectSaving = false,
                           onUndo,
                           onRedo,
                           canUndo,
@@ -106,10 +108,15 @@ const EditorHeader = ({
                 <button
                     type="button"
                     onClick={onSaveProject}
+                    disabled={isProjectSaving}
                     className="btn btn-secondary editor-action-button"
                 >
-                    <Save aria-hidden="true" />
-                    {t('editor.save')}
+                    {isProjectSaving ? (
+                        <Loader2 className="editor-btn-spinner" aria-hidden="true" />
+                    ) : (
+                        <Save aria-hidden="true" />
+                    )}
+                    {isProjectSaving ? t('editor.savingProject') : t('editor.save')}
                 </button>
 
                 <button

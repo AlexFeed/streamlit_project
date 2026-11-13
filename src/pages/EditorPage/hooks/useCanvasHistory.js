@@ -10,6 +10,7 @@ export const useCanvasHistory = (initialState) => {
     const [state, setStateValue] = useState(initialState);
     const [pastStates, setPastStates] = useState([]);
     const [futureStates, setFutureStates] = useState([]);
+    const [savedIndex, setSavedIndex] = useState(0);
     const stateRef = useRef(state);
     const pastRef = useRef([]);
     const futureRef = useRef([]);
@@ -45,6 +46,7 @@ export const useCanvasHistory = (initialState) => {
         setStateValue(nextState);
         setPastStates([]);
         setFutureStates([]);
+        setSavedIndex(0);
     }, []);
 
     const undo = useCallback(() => {
@@ -79,6 +81,11 @@ export const useCanvasHistory = (initialState) => {
         setFutureStates(nextFutureStates);
     }, []);
 
+    const markAsSaved = useCallback(() => {
+        // Sets checkpoint to the current history depth
+        setSavedIndex(pastRef.current.length);
+    }, []);
+
     return {
         state,
         setState,
@@ -87,5 +94,7 @@ export const useCanvasHistory = (initialState) => {
         redo,
         canUndo: pastStates.length > 0,
         canRedo: futureStates.length > 0,
+        markAsSaved,
+        isDirty: pastStates.length !== savedIndex,
     };
 };

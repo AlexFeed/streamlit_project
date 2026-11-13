@@ -7,7 +7,7 @@ import ExtensionsPage from './pages/ExtensionsPage/ExtensionsPage.jsx';
 import ProtectedRoute from "./pages/AuthPage/components/ProtectedRoute.jsx";
 import { ThemeProvider } from './shared/theme/ThemeContext.jsx';
 import { I18nProvider } from './shared/translation/I18nContext.jsx';
-import useTheme from './shared/useTheme.js';
+import useTheme from './shared/theme/useTheme.js';
 
 function AppContent() {
     const { theme } = useTheme();

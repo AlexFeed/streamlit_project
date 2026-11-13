@@ -1,12 +1,12 @@
-import { lazy, memo, Suspense, useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import { Copy, GripVertical, MoveDiagonal2, Trash2, WalletCards } from 'lucide-react';
 import { useDroppable } from '@dnd-kit/core';
 import { paletteItems } from '../../data/paletteItems';
 import { getAppearanceDefaults } from '../../services/componentAppearance.js';
 import useTranslation from '../../../../shared/translation/useTranslation.js';
-import useTheme from '../../../../shared/useTheme.js';
+import useTheme from '../../../../shared/theme/useTheme.js';
 
-const LiveComponentPreview = lazy(() => import('./LiveComponentPreview'));
+import LiveComponentPreview from './LiveComponentPreview';
 
 const ContainerChild = ({ child, parent, rows, value, onChange, onSelect, isSelected, pages, onMove, onReorder, onResize, onDuplicate, onDelete }) => {
     const nodeRef = useRef(null);
@@ -87,7 +87,13 @@ const ContainerChild = ({ child, parent, rows, value, onChange, onSelect, isSele
         ghost.removeAttribute('data-container-child');
         ghost.setAttribute('aria-hidden', 'true');
         ghost.classList.add('dashboard-container-child-ghost');
-        Object.assign(ghost.style, { position: 'fixed', left: `${sourceRect.left}px`, top: `${sourceRect.top}px`, width: `${sourceRect.width}px`, height: `${sourceRect.height}px` });
+        Object.assign(ghost.style, {
+            position: 'fixed',
+            left: `${sourceRect.left}px`,
+            top: `${sourceRect.top}px`,
+            width: `${sourceRect.width}px`,
+            height: `${sourceRect.height}px`
+        });
         document.body.appendChild(ghost);
         sourceNode.classList.add('dashboard-interaction-source');
         const previousUserSelect = document.body.style.userSelect;
@@ -147,7 +153,7 @@ const ContainerChild = ({ child, parent, rows, value, onChange, onSelect, isSele
             onMove(child.id, targetGroupId, targetTabId ? { tabId: targetTabId } : null);
         };
 
-        window.addEventListener('pointermove', move, { passive: false });
+        window.addEventListener('pointermove', move, {passive: false});
         window.addEventListener('pointerup', finish);
         window.addEventListener('pointercancel', finish);
         event.currentTarget.setPointerCapture?.(event.pointerId);
@@ -216,7 +222,13 @@ const CanvasItem = ({
     const appearance = getAppearanceDefaults(item.type, item.config);
     const isAutoHeight = isCompact && !item.layout?.manualHeight;
     const usesContentHeight = isAutoHeight && ['text', 'page_link'].includes(item.type);
-    const groupAlignment = { left: 'flex-start', center: 'center', right: 'flex-end', distribute: 'space-between' }[item.config?.horizontalAlignment || 'left'];
+    const groupAlignment = {
+        left: 'flex-start',
+        center: 'center',
+        right: 'flex-end',
+        distribute: 'space-between'
+    }[item.config?.horizontalAlignment || 'left'];
+
     const { setNodeRef, isOver } = useDroppable({
         id: `layout-group-${item.id}`,
         disabled: !['layout_group', 'tab_group'].includes(item.type),
@@ -300,67 +312,65 @@ const CanvasItem = ({
                     fontStyle: appearance.elementFontStyle,
                 }}
             >
-                <Suspense fallback={<div className="canvas-item-loading h-full animate-pulse rounded-xl" />}>
-                    {item.type === 'layout_group' ? (
-                        <div
-                            data-layout-group-id={item.id}
-                            data-layout-group-direction={item.config?.direction || 'vertical'}
-                            className="dashboard-layout-group relative flex h-full min-h-0 overflow-hidden rounded-xl"
-                            style={{
-                                flexDirection: item.config?.direction === 'horizontal' ? 'row' : 'column',
-                                gap: Number(item.config?.gap ?? 8),
-                                padding: Number(item.config?.padding ?? 8),
-                                paddingTop: Number(item.config?.padding ?? 8) + (item.config?.title?.trim() ? 24 : 0),
-                                alignItems: item.config?.direction === 'horizontal' ? 'stretch' : groupAlignment,
-                                justifyContent: item.config?.direction === 'horizontal' ? groupAlignment : 'flex-start',
-                                flexWrap: item.config?.wrap === false ? 'nowrap' : 'wrap',
-                            }}
-                        >
-                            {item.config?.title?.trim() && <div className="dashboard-layout-group-title">{item.config.title}</div>}
-                            {children.length === 0 ? (
-                                <div className="dashboard-layout-group-empty">{t('editor.containerEmpty')}</div>
-                            ) : children.map(({ item: child, rows: childRows, filterValue: childValue }) => (
-                                <ContainerChild key={child.id} child={child} parent={item} rows={childRows} value={childValue} onChange={(value) => onFilterChange(child.id, value)} onSelect={onSelect} isSelected={selectedId === child.id} pages={pages} onMove={onMoveChild} onReorder={onReorderChild} onDuplicate={onDuplicate} onDelete={onDelete} />
+                {item.type === 'layout_group' ? (
+                    <div
+                        data-layout-group-id={item.id}
+                        data-layout-group-direction={item.config?.direction || 'vertical'}
+                        className="dashboard-layout-group relative flex h-full min-h-0 overflow-hidden rounded-xl"
+                        style={{
+                            flexDirection: item.config?.direction === 'horizontal' ? 'row' : 'column',
+                            gap: Number(item.config?.gap ?? 8),
+                            padding: Number(item.config?.padding ?? 8),
+                            paddingTop: Number(item.config?.padding ?? 8) + (item.config?.title?.trim() ? 24 : 0),
+                            alignItems: item.config?.direction === 'horizontal' ? 'stretch' : groupAlignment,
+                            justifyContent: item.config?.direction === 'horizontal' ? groupAlignment : 'flex-start',
+                            flexWrap: item.config?.wrap === false ? 'nowrap' : 'wrap',
+                        }}
+                    >
+                        {item.config?.title?.trim() && <div className="dashboard-layout-group-title">{item.config.title}</div>}
+                        {children.length === 0 ? (
+                            <div className="dashboard-layout-group-empty">{t('editor.containerEmpty')}</div>
+                        ) : children.map(({ item: child, rows: childRows, filterValue: childValue }) => (
+                            <ContainerChild key={child.id} child={child} parent={item} rows={childRows} value={childValue} onChange={(value) => onFilterChange(child.id, value)} onSelect={onSelect} isSelected={selectedId === child.id} pages={pages} onMove={onMoveChild} onReorder={onReorderChild} onDuplicate={onDuplicate} onDelete={onDelete} />
+                        ))}
+                    </div>
+                ) : item.type === 'tab_group' ? (
+                    <div
+                        data-layout-group-id={item.id}
+                        data-active-tab={resolvedActiveTabId}
+                        className="dashboard-layout-group flex h-full min-h-0 w-full flex-col overflow-hidden rounded-xl"
+                        style={{ gap: Number(item.config?.gap ?? 8), padding: Number(item.config?.padding ?? 8) }}
+                    >
+                        <div className="flex shrink-0 cursor-grab items-center gap-1 border-b active:cursor-grabbing" data-canvas-drag-surface title={t('editor.dragCard')}>
+                            {tabs.map((tab) => (
+                                <button
+                                    key={tab.id}
+                                    type="button"
+                                    onClick={(event) => { event.stopPropagation(); setActiveTabId(tab.id); }}
+                                    className={`rounded-t-lg px-3 py-2 text-sm ${resolvedActiveTabId === tab.id ? 'bg-blue-500/15 text-blue-300' : 'opacity-70'}`}
+                                >
+                                    {tab.label}
+                                </button>
                             ))}
+                            <div className="ml-auto flex h-9 w-9 shrink-0 items-center justify-center opacity-55" aria-hidden="true">
+                                <GripVertical className="h-4 w-4" />
+                            </div>
                         </div>
-                    ) : item.type === 'tab_group' ? (
-                        <div
-                            data-layout-group-id={item.id}
-                            data-active-tab={resolvedActiveTabId}
-                            className="dashboard-layout-group flex h-full min-h-0 w-full flex-col overflow-hidden rounded-xl"
-                            style={{ gap: Number(item.config?.gap ?? 8), padding: Number(item.config?.padding ?? 8) }}
-                        >
-                            <div className="flex shrink-0 cursor-grab items-center gap-1 border-b active:cursor-grabbing" data-canvas-drag-surface title={t('editor.dragCard')}>
-                                {tabs.map((tab) => (
-                                    <button
-                                        key={tab.id}
-                                        type="button"
-                                        onClick={(event) => { event.stopPropagation(); setActiveTabId(tab.id); }}
-                                        className={`rounded-t-lg px-3 py-2 text-sm ${resolvedActiveTabId === tab.id ? 'bg-blue-500/15 text-blue-300' : 'opacity-70'}`}
-                                    >
-                                        {tab.label}
-                                    </button>
+                        <div className="grid min-h-0 flex-1 grid-cols-12 content-start gap-2 overflow-hidden">
+                            {children.filter(({ item: child }) => resolveChildTabId(child) === resolvedActiveTabId).length === 0 ? (
+                                <div className="dashboard-layout-group-empty">{t('editor.tabsEmpty')}</div>
+                            ) : children
+                                .filter(({ item: child }) => resolveChildTabId(child) === resolvedActiveTabId)
+                                .map(({ item: child, rows: childRows, filterValue: childValue }) => (
+                                    <ContainerChild key={child.id} child={child} parent={item} rows={childRows} value={childValue} onChange={(value) => onFilterChange(child.id, value)} onSelect={onSelect} isSelected={selectedId === child.id} pages={pages} onMove={onMoveChild} onReorder={onReorderChild} onResize={onResizeChild} onDuplicate={onDuplicate} onDelete={onDelete} />
                                 ))}
-                                <div className="ml-auto flex h-9 w-9 shrink-0 items-center justify-center opacity-55" aria-hidden="true">
-                                    <GripVertical className="h-4 w-4" />
-                                </div>
-                            </div>
-                            <div className="grid min-h-0 flex-1 grid-cols-12 content-start gap-2 overflow-hidden">
-                                {children.filter(({ item: child }) => resolveChildTabId(child) === resolvedActiveTabId).length === 0 ? (
-                                    <div className="dashboard-layout-group-empty">{t('editor.tabsEmpty')}</div>
-                                ) : children
-                                    .filter(({ item: child }) => resolveChildTabId(child) === resolvedActiveTabId)
-                                    .map(({ item: child, rows: childRows, filterValue: childValue }) => (
-                                        <ContainerChild key={child.id} child={child} parent={item} rows={childRows} value={childValue} onChange={(value) => onFilterChange(child.id, value)} onSelect={onSelect} isSelected={selectedId === child.id} pages={pages} onMove={onMoveChild} onReorder={onReorderChild} onResize={onResizeChild} onDuplicate={onDuplicate} onDelete={onDelete} />
-                                    ))}
-                            </div>
                         </div>
-                    ) : (
-                        <div className="min-w-0" style={{ width: ['text', 'data_control', 'progress'].includes(item.type) || appearance.contentWidth === 'stretch' ? '100%' : 'fit-content', height: usesContentHeight ? 'auto' : '100%', maxWidth: '100%' }}>
-                            <LiveComponentPreview item={item} height={usesContentHeight ? 'auto' : '100%'} rows={rows} value={filterValue} onChange={(value) => onFilterChange(item.id, value)} pages={pages} />
-                        </div>
-                    )}
-                </Suspense>
+                    </div>
+                ) : (
+                    <div className="min-w-0" style={{ width: ['text', 'data_control', 'progress'].includes(item.type) || appearance.contentWidth === 'stretch' ? '100%' : 'fit-content', height: usesContentHeight ? 'auto' : '100%', maxWidth: '100%' }}>
+                        <LiveComponentPreview item={item} height={usesContentHeight ? 'auto' : '100%'} rows={rows} value={filterValue} onChange={(value) => onFilterChange(item.id, value)} pages={pages} />
+                    </div>
+                )}
             </div>
 
             {!managedByGridStack && (

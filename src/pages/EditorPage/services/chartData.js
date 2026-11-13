@@ -59,8 +59,8 @@ const minMaxSample = (data, limit) => {
 
 export const limitChartDataForPreview = (data, chartType) => {
     if (chartType === 'bar_chart') return evenlySample(data, 120);
-    if (chartType === 'scatter_plot') return evenlySample(data, 800);
-    return minMaxSample(data, 600);
+    if (chartType === 'scatter_plot') return evenlySample(data, 600);
+    return minMaxSample(data, 500);
 };
 
 export const prepareChartData = (rows, item) => {
@@ -101,18 +101,28 @@ export const prepareChartData = (rows, item) => {
                 };
             }
 
-            const numbers = values
-                .map(numericValue)
-                .filter((value) => value != null);
+            let sum = 0;
+            let min = Infinity;
+            let max = -Infinity;
+            let validCount = 0;
 
-            if (!numbers.length) return null;
+            for (let index = 0; index < values.length; index += 1) {
+                const numeric = numericValue(values[index]);
+                if (numeric != null) {
+                    sum += numeric;
+                    if (numeric < min) min = numeric;
+                    if (numeric > max) max = numeric;
+                    validCount += 1;
+                }
+            }
 
-            const sum = numbers.reduce((total, value) => total + value, 0);
+            if (!validCount) return null;
+
             const aggregatedValues = {
                 sum,
-                mean: sum / numbers.length,
-                min: Math.min(...numbers),
-                max: Math.max(...numbers),
+                mean: sum / validCount,
+                min,
+                max,
             };
 
             return {
@@ -146,18 +156,28 @@ export const calculateMetric = (rows, item) => {
         return rows.filter((row) => row[field] != null).length;
     }
 
-    const numbers = rows
-        .map((row) => numericValue(row[field]))
-        .filter((value) => value != null);
+    let sum = 0;
+    let min = Infinity;
+    let max = -Infinity;
+    let validCount = 0;
 
-    if (!numbers.length) return null;
+    for (let index = 0; index < rows.length; index += 1) {
+        const numeric = numericValue(rows[index][field]);
+        if (numeric != null) {
+            sum += numeric;
+            if (numeric < min) min = numeric;
+            if (numeric > max) max = numeric;
+            validCount += 1;
+        }
+    }
 
-    const sum = numbers.reduce((total, value) => total + value, 0);
+    if (!validCount) return null;
+
     const values = {
         sum,
-        mean: sum / numbers.length,
-        min: Math.min(...numbers),
-        max: Math.max(...numbers),
+        mean: sum / validCount,
+        min,
+        max,
     };
 
     return values[aggregation] ?? null;

@@ -128,9 +128,25 @@ export const useProjectState = ({
         }
     };
 
+    const updatePreviewImage = async (previewImage, targetProjectId = projectId) => {
+        if (!targetProjectId) return null;
+        try {
+            const updated = await updateProject(targetProjectId, {
+                previewImage,
+            });
+            setProject(updated);
+            return updated;
+        } catch (err) {
+            console.warn('Background preview update failed:', err);
+            return null;
+        }
+    };
+
+
     return {
         isProjectLoading,
         isProjectSaving,
+        updatePreviewImage,
         project,
         createProjectFromDraft,
         saveExistingProject,

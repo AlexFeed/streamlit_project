@@ -18,7 +18,6 @@ import { useEditorState } from './hooks/useEditorState';
 import {useDatasetState} from './hooks/useDatasetState';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { toast } from 'sonner';
 import { useProjectState } from './hooks/useProjectState.js';
 import {useGenerateState} from "./hooks/useGenerateState.jsx";
 import { useEditorDnd } from './hooks/useEditorDnd.js';
@@ -48,12 +47,15 @@ const EditorPage = () => {
     const { projectId } = useParams();
     const navigate = useNavigate();
     const { t } = useTranslation();
+    const translationRef = useRef(t);
+    useEffect(() => {
+        translationRef.current = t;
+    }, [t]);
 
     const isDraftMode = !(projectId);
 
     const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
     const [isUploadDatasetModalOpen, setIsUploadDatasetModalOpen] = useState(false);
-    const [pendingPreviewImage, setPendingPreviewImage] = useState(null);
     const canvasRef = useRef(null);
 
     const {
@@ -93,10 +95,13 @@ const EditorPage = () => {
         redo,
         canUndo,
         canRedo,
+        markAsSaved,
+        isDirty,
     } = useEditorState({
         useDraftStorage: isDraftMode,
         defaultDatasetId: datasets[0]?.datasetId || '',
     });
+
     const addLocalizedComponent = useCallback((item, targetIndex, targetLayout, parentId) => {
         addComponent(item, targetIndex, targetLayout, parentId);
     }, [addComponent]);
@@ -104,6 +109,7 @@ const EditorPage = () => {
     const {
         isProjectLoading,
         isProjectSaving,
+        updatePreviewImage,
         project,
         createProjectFromDraft,
         saveExistingProject,
@@ -163,6 +169,60 @@ const EditorPage = () => {
         return () => window.removeEventListener('keydown', handleHistoryShortcut);
     }, [redo, undo]);
 
+    // Flag to confirm saving when changes are unsaved.
+    const hasUnsavedChanges = isDirty || isProjectSaving;
+
+    const hasUnsavedChangesRef = useRef(hasUnsavedChanges);
+    useEffect(() => {
+        hasUnsavedChangesRef.current = hasUnsavedChanges;
+    }, [hasUnsavedChanges]);
+
+    useEffect(() => {
+        // Push a guard entry so the browser's back button triggers popstate before leaving
+        if (!window.history.state?.isEditorGuard) {
+            window.history.pushState({ isEditorGuard: true }, '', window.location.href);
+        }
+
+        // Prevent infinite popstate loops when programmatically navigating back after user confirmation
+        let isNavigatingAway = false;
+
+        const handleBeforeUnload = (event) => {
+            if (!hasUnsavedChangesRef.current) return;
+            event.preventDefault();
+            // Required standard assignment for cross-browser native reload prompt
+            event.returnValue = '';
+        };
+
+        const handlePopState = () => {
+            if (isNavigatingAway) return;
+
+            if (!hasUnsavedChangesRef.current) {
+                isNavigatingAway = true;
+                window.history.back();
+                return;
+            }
+
+            const confirmed = window.confirm(
+                translationRef.current('editor.leaveConfirm')
+            );
+
+            if (confirmed) {
+                isNavigatingAway = true;
+                window.history.back();
+            } else {
+                // Restore the guard entry so subsequent back button clicks remain intercepted
+                window.history.pushState({ isEditorGuard: true }, '', window.location.href);
+            }
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        window.addEventListener('popstate', handlePopState);
+
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+            window.removeEventListener('popstate', handlePopState);
+        };
+    }, []);
 
     const handleRemoveDataset = async (datasetId) => {
         const targetDataset = datasets.find((ds) => ds.datasetId === datasetId);
@@ -222,46 +282,68 @@ const EditorPage = () => {
 
 
     const handleGoHome = () => {
-        const confirmed = window.confirm(
-            t('editor.leaveConfirm')
-        );
+        // Show confirmation dialog only if there are actual unsaved changes
+        if (hasUnsavedChanges) {
+            const confirmed = window.confirm(
+                t('editor.leaveConfirm')
+            );
 
-        if (!confirmed) {
-            return;
+            if (!confirmed) {
+                return;
+            }
         }
 
         navigate('/');
     };
 
+    // Save for existing project
     const handleSaveClick = async () => {
-        let previewImage = null;
-        try {
-            previewImage = await captureCanvasPreview(canvasRef.current);
-        } catch (error) {
-            console.error('Could not capture project preview:', error);
-            toast.warning(t('editor.previewCaptureFailure'));
-            previewImage = project?.previewImage
-                || project?.preview_image
-                || project?.editorState?.previewImage
-                || null;
+        if (isDraftMode) {
+            setIsSaveModalOpen(true);
+            return;
         }
 
-        if (isDraftMode) {
-            setPendingPreviewImage(previewImage);
-            setIsSaveModalOpen(true);
-        } else {
-            const snapshot = getProjectSnapshot(undefined, undefined, previewImage);
-            await saveExistingProject(snapshot);
+        const snapshot = getProjectSnapshot(undefined, undefined, project?.previewImage);
+        const saved = await saveExistingProject(snapshot);
+
+        if (saved) {
+            markAsSaved();
+            // Sending a screenshot in the background without blocking the browser thread
+            const scheduleWork = window.requestIdleCallback ?? ((cb) => setTimeout(cb, 200));
+            scheduleWork(async () => {
+                try {
+                    const freshPreview = await captureCanvasPreview(canvasRef.current);
+                    if (freshPreview) {
+                        await updatePreviewImage(freshPreview);
+                    }
+                } catch (err) {
+                    console.warn('Could not generate background preview:', err);
+                }
+            });
         }
     };
 
+    // Save modal for draft project
     const handleConfirmSave = async ({ title, description }) => {
-        const snapshot = getProjectSnapshot(title, description, pendingPreviewImage);
+        const snapshot = getProjectSnapshot(title, description);
         const saved = await createProjectFromDraft(snapshot);
 
         if (saved) {
+            markAsSaved();
             setIsSaveModalOpen(false);
             navigate(`/editor/${saved.id}`, { replace: true });
+
+            const scheduleWork = window.requestIdleCallback ?? ((cb) => setTimeout(cb, 300));
+            scheduleWork(async () => {
+                try {
+                    const freshPreview = await captureCanvasPreview(canvasRef.current);
+                    if (freshPreview) {
+                        await updatePreviewImage(freshPreview, saved.id);
+                    }
+                } catch (err) {
+                    console.warn('Could not generate background preview for draft:', err);
+                }
+            });
         }
     };
 
@@ -302,6 +384,7 @@ const EditorPage = () => {
                         isDatasetClearing={isDatasetClearing}
                         isGenerating={isGenerating}
                         isPreviewLoading={isPreviewLoading}
+                        isProjectSaving={isProjectSaving}
                         onUndo={undo}
                         onRedo={redo}
                         canUndo={canUndo}
@@ -329,22 +412,6 @@ const EditorPage = () => {
                         onClose={handleClosePreview}
                     />
 
-                    {isProjectLoading && (
-                        <div className="editor-loading-wrap">
-                            <div className="editor-loading">
-                                {t('editor.loadingProject')}
-                            </div>
-                        </div>
-                    )}
-
-                    {isProjectSaving && (
-                        <div className="editor-loading-wrap">
-                            <div className="editor-loading">
-                                {t('editor.savingProject')}
-                            </div>
-                        </div>
-                    )}
-
                     <div className={`editor-workspace${selectedComponent ? ' has-properties' : ''}`}>
                         <main className="editor-canvas-area">
                             <PageTabs
@@ -369,6 +436,7 @@ const EditorPage = () => {
                                 datasets={datasets}
                                 previewRowsByDataset={previewRowsByDataset}
                                 isDataLoading={isDatasetPreviewLoading}
+                                isProjectLoading={isProjectLoading}
                                 pages={pages}
                             />
                         </main>
