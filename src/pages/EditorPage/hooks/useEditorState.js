@@ -176,7 +176,6 @@ export const useEditorState = ({ useDraftStorage = true, defaultDatasetId = ''})
         if (newComponent.type === 'page_link') {
             newComponent.config.targetPageId = (
                 pages.find((page) => page.id !== activePageId)?.id
-                || activePageId
             );
         }
         if (!['layout_group', 'tab_group'].includes(newComponent.type)) {

@@ -146,17 +146,6 @@ const GridStackCanvas = ({
                 }, 160);
             }
         };
-        const snapResizePreview = (_event, element) => {
-            const node = element?.gridstackNode;
-            if (!node) return;
-
-            // GridStack calculates the destination in grid cells, while its
-            // native resize helper follows every mouse pixel. Keep the visible
-            // card on the same snapped dimensions that will be saved on drop,
-            // otherwise the card appears to jump to the placeholder size.
-            element.style.width = `${node.w * grid.cellWidth()}px`;
-            element.style.height = `${node.h * grid.getCellHeight(true)}px`;
-        };
 
         const finishDrag = (event, element) => {
             commitLayout();
@@ -204,7 +193,6 @@ const GridStackCanvas = ({
         grid.on('dragstart', beginDrag);
         grid.on('dragstop', finishDrag);
         grid.on('resizestart', beginResize);
-        grid.on('resize', snapResizePreview);
         grid.on('resizestop', finishResize);
 
         return () => {

@@ -518,8 +518,7 @@ const LiveFilter = ({
     );
 };
 
-const LivePageLink = ({ item, pages, height, t, theme }) => {
-    const target = pages?.find((page) => page.id === item.config?.targetPageId);
+const LivePageLink = ({ item, height, t}) => {
     const label = item.config?.title || t('editor.pageLinkDefault');
     const isLink = item.config?.displayStyle === 'link';
 
@@ -530,9 +529,7 @@ const LivePageLink = ({ item, pages, height, t, theme }) => {
                 style={{
                     backgroundColor: !isLink ? (item.config?.buttonColor || '#f47721') : undefined,
                     borderColor: !isLink ? (item.config?.buttonColor || '#f47721') : undefined,
-                    color: isLink && item.config?.elementTextColor && item.config.elementTextColor !== '#d4d4d8'
-                        ? item.config.elementTextColor
-                        : undefined,
+                    color: item.config?.elementTextColor || undefined,
                     fontSize: item.config?.elementFontSize && item.config.elementFontSize !== 'auto'
                         ? `${item.config.elementFontSize}px`
                         : undefined,
@@ -542,7 +539,6 @@ const LivePageLink = ({ item, pages, height, t, theme }) => {
             >
                 {label}
             </span>
-            {!target && <span className="live-preview-page-link-warning" style={{ color: theme.muted }}>{t('editor.choosePage')}</span>}
         </div>
     );
 };
@@ -640,7 +636,7 @@ const LiveComponentPreview = (props) => {
         return <LiveDataControl {...props} t={t} theme={theme} />;
     }
     if (item.type === 'page_link') {
-        return <LivePageLink item={item} pages={props.pages} height={height} t={t} theme={theme} />;
+        return <LivePageLink item={item} height={height} t={t} />;
     }
     if (item.type === 'table') {
         return <LiveTable item={item} rows={props.rows} height={height} t={t} theme={theme} />;

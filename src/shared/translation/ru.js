@@ -385,6 +385,7 @@ export default {
   "editor.containerEmpty": "Перетащите элементы внутрь секции",
   "editor.pageLinkDefault": "Открыть страницу",
   "editor.choosePage": "Выберите страницу",
+  "editor.addOtherPages": "Добавьте другие страницы",
   "editor.tableNoData": "Выберите столбцы или загрузите данные для таблицы.",
   "editor.filterAppearance": "Вид фильтра",
   "editor.filterSelectbox": "Выпадающий список",

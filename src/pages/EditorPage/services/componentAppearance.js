@@ -10,7 +10,7 @@ export const getAppearanceDefaults = (type, config = {}) => {
     return {
         // New components start with a visible footprint on the canvas.
         // Users can still disable the border explicitly in properties.
-        showBorder: config.showBorder ?? true,
+        showBorder: config.showBorder ?? (type !== 'page_link'),
         showBackground: config.showBackground ?? ['card', 'soft'].includes(surface),
         contentAlignment: config.contentAlignment || (isMetric ? 'center' : 'left'),
         verticalAlignment: config.verticalAlignment || (
@@ -23,7 +23,7 @@ export const getAppearanceDefaults = (type, config = {}) => {
         contentWidth: config.contentWidth || (
             // Controls and progress bars need a real track width. Text,
             // metrics and links can safely size themselves to their content.
-            ['text', 'metric', 'selectbox', 'page_link'].includes(type)
+            ['text', 'metric', 'selectbox'].includes(type)
                 ? 'content'
                 : 'stretch'
         ),

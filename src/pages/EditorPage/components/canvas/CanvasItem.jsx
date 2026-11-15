@@ -221,7 +221,7 @@ const CanvasItem = ({
     const usesFloatingChrome = isCompact || ['layout_group', 'tab_group'].includes(item.type);
     const appearance = getAppearanceDefaults(item.type, item.config);
     const isAutoHeight = isCompact && !item.layout?.manualHeight;
-    const usesContentHeight = isAutoHeight && ['text', 'page_link'].includes(item.type);
+    const usesContentHeight = isAutoHeight && ['text'].includes(item.type);
     const groupAlignment = {
         left: 'flex-start',
         center: 'center',
@@ -303,7 +303,7 @@ const CanvasItem = ({
             <div
                 className="canvas-item-content flex min-h-0 flex-1"
                 style={{
-                    padding: ['layout_group', 'tab_group'].includes(item.type) ? 0 : appearance.padding,
+                    padding: ['layout_group', 'tab_group', 'page_link'].includes(item.type) ? 0 : appearance.padding,
                     justifyContent: { left: 'flex-start', center: 'center', right: 'flex-end' }[appearance.contentAlignment],
                     alignItems: { top: 'flex-start', center: 'center', bottom: 'flex-end' }[usesContentHeight ? 'top' : appearance.verticalAlignment],
                     color: appearance.elementTextColor,
@@ -367,7 +367,7 @@ const CanvasItem = ({
                         </div>
                     </div>
                 ) : (
-                    <div className="min-w-0" style={{ width: ['text', 'data_control', 'progress'].includes(item.type) || appearance.contentWidth === 'stretch' ? '100%' : 'fit-content', height: usesContentHeight ? 'auto' : '100%', maxWidth: '100%' }}>
+                    <div className="min-w-0" style={{ width: ['text', 'data_control', 'progress', 'page_link'].includes(item.type) || appearance.contentWidth === 'stretch' ? '100%' : 'fit-content', height: usesContentHeight ? 'auto' : '100%', maxWidth: '100%' }}>
                         <LiveComponentPreview item={item} height={usesContentHeight ? 'auto' : '100%'} rows={rows} value={filterValue} onChange={(value) => onFilterChange(item.id, value)} pages={pages} />
                     </div>
                 )}

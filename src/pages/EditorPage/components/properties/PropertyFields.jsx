@@ -136,12 +136,25 @@ export const TextAreaField = ({
     );
 };
 
+const basicColorPresets = [
+    '#3478c8',
+    '#7656c8',
+    '#c94f8a',
+    '#d65f59',
+    '#d99a2b',
+    '#398b67',
+    '#2f91a0',
+    '#ffffff',
+    '#18181b'
+];
+
 export const ColorField = ({
-    label,
-    value,
-    onChange,
-    helperText,
-}) => (
+                               label,
+                               value,
+                               onChange,
+                               helperText,
+                               presets = basicColorPresets,
+                           }) => (
     <div className={panelSectionClassName}>
         <LabelWithTooltip label={label} helperText={helperText} />
         <div className="flex items-center gap-3">
@@ -149,29 +162,58 @@ export const ColorField = ({
                 type="color"
                 value={value || '#d4d4d8'}
                 onChange={(event) => onChange(event.target.value)}
-                className="h-10 w-12 cursor-pointer rounded-lg border border-zinc-700 bg-zinc-950 p-1"
+                className="h-9 w-11 cursor-pointer rounded-lg border border-zinc-700 bg-zinc-950 p-0.5"
             />
             <span className="font-mono text-xs uppercase text-zinc-400">
                 {value || '#d4d4d8'}
             </span>
         </div>
+        {presets && presets.length > 0 && (
+            <div className="mt-2.5 flex items-center gap-1.5">
+                {presets.map((preset) => (
+                    <button
+                        key={preset}
+                        type="button"
+                        onClick={() => onChange(preset)}
+                        className={`aspect-square flex-1 min-w-0 rounded-md border-2 transition hover:scale-110 ${
+                            (value || '').toLowerCase() === preset.toLowerCase()
+                                ? 'border-white shadow-md'
+                                : preset === '#ffffff'
+                                    ? 'border-zinc-700'
+                                    : 'border-transparent'
+                        }`}
+                        style={{ backgroundColor: preset }}
+                        title={preset}
+                    />
+                ))}
+            </div>
+        )}
     </div>
 );
 
+
 export const OptionSelect = ({
-    label,
-    value,
-    onChange,
-    options,
-    helperText,
-}) => (
+                                 label,
+                                 value,
+                                 onChange,
+                                 options,
+                                 helperText,
+                                 disabled,
+                                 placeholder,
+                             }) => (
     <div className={panelSectionClassName}>
         <LabelWithTooltip  label={label} helperText={helperText} />
         <select
             value={value || ''}
             onChange={(event) => onChange(event.target.value)}
-            className={selectClassName}
+            className={`${selectClassName} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+            disabled={disabled}
         >
+            {placeholder && (
+                <option value="" disabled className="text-zinc-500">
+                    {placeholder}
+                </option>
+            )}
             {options.map((option) => (
                 <option key={option.value} value={option.value}>
                     {option.label}
