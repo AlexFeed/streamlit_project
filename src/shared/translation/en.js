@@ -385,6 +385,7 @@ export default {
   "editor.containerEmpty": "Drag components into this section",
   "editor.pageLinkDefault": "Open page",
   "editor.choosePage": "Choose a page",
+  "editor.addOtherPages": "Add other pages first",
   "editor.tableNoData": "Choose columns or upload data for the table.",
   "editor.filterAppearance": "Filter style",
   "editor.filterSelectbox": "Dropdown",

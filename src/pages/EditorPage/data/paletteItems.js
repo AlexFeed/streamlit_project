@@ -158,8 +158,8 @@ export const paletteItems = {
         defaultBindings: {},
         defaultWidth: 2,
         minWidth: 1,
-        defaultHeight: 60,
-        minHeight: 60,
+        defaultHeight: 40,
+        minHeight: 40,
     },
     line_chart: {
         type: 'line_chart',

@@ -383,30 +383,37 @@ const PropertiesPanel = ({
                         </>
                     )}
 
-                    {type === 'page_link' && (
-                        <>
-                            <OptionSelect
-                                label={t('editor.targetPage')}
-                                value={config.targetPageId || ''}
-                                onChange={(value) => updateConfig('targetPageId', value)}
-                                options={pages.filter((page) => page.id !== selectedComponent.pageId).map((page) => ({ value: page.id, label: page.title }))}
-                            />
-                            <OptionSelect
-                                label={t('editor.linkAppearance')}
-                                value={config.displayStyle || 'button'}
-                                onChange={(value) => updateConfig('displayStyle', value)}
-                                options={[
-                                    { value: 'button', label: t('editor.asButton') },
-                                    { value: 'link', label: t('editor.asTextLink') },
-                                ]}
-                            />
-                            <ColorField
-                                label={t('editor.buttonColor')}
-                                value={config.buttonColor || '#f47721'}
-                                onChange={(value) => updateConfig('buttonColor', value)}
-                            />
-                        </>
-                    )}
+                    {type === 'page_link' && (() => {
+                        const targetPages = pages.filter((page) => page.id !== selectedComponent.pageId);
+                        const hasOtherPages = targetPages.length > 0;
+
+                        return (
+                            <>
+                                <OptionSelect
+                                    label={t('editor.targetPage')}
+                                    value={hasOtherPages ? (config.targetPageId || '') : ''}
+                                    onChange={(value) => updateConfig('targetPageId', value)}
+                                    options={targetPages.map((page) => ({ value: page.id, label: page.title }))}
+                                    placeholder={hasOtherPages ? t('editor.choosePage') : (t('editor.addOtherPages') || 'Добавьте другие страницы')}
+                                    disabled={!hasOtherPages}
+                                />
+                                <OptionSelect
+                                    label={t('editor.linkAppearance')}
+                                    value={config.displayStyle || 'button'}
+                                    onChange={(value) => updateConfig('displayStyle', value)}
+                                    options={[
+                                        { value: 'button', label: t('editor.asButton') },
+                                        { value: 'link', label: t('editor.asTextLink') },
+                                    ]}
+                                />
+                                <ColorField
+                                    label={t('editor.buttonColor')}
+                                    value={config.buttonColor || '#f47721'}
+                                    onChange={(value) => updateConfig('buttonColor', value)}
+                                />
+                            </>
+                        );
+                    })()}
 
                     {type === 'layout_group' && (
                         <>
@@ -597,27 +604,34 @@ const PropertiesPanel = ({
                         </>
                     )}
 
-                    <OptionSelect
-                        label={t('editor.showBorder')}
-                        value={appearance.showBorder ? 'show' : 'hide'}
-                        onChange={(value) => updateConfig('showBorder', value === 'show')}
-                        options={[
-                            { value: 'show', label: t('editor.show') },
-                            { value: 'hide', label: t('editor.hide') },
-                        ]}
-                    />
+                    {type !== 'page_link' && (
+                        <>
+                            <OptionSelect
+                                label={t('editor.showBorder')}
+                                value={appearance.showBorder ? 'show' : 'hide'}
+                                onChange={(value) => updateConfig('showBorder', value === 'show')}
+                                options={[
+                                    { value: 'show', label: t('editor.show') },
+                                    { value: 'hide', label: t('editor.hide') },
+                                ]}
+                            />
 
-                    <OptionSelect
-                        label={t('editor.showBackground')}
-                        value={appearance.showBackground ? 'show' : 'hide'}
-                        onChange={(value) => updateConfig('showBackground', value === 'show')}
-                        options={[
-                            { value: 'show', label: t('editor.show') },
-                            { value: 'hide', label: t('editor.hide') },
-                        ]}
-                    />
+                            <OptionSelect
+                                label={t('editor.showBackground')}
+                                value={appearance.showBackground ? 'show' : 'hide'}
+                                onChange={(value) => updateConfig('showBackground', value === 'show')}
+                                options={[
+                                    { value: 'show', label: t('editor.show') },
+                                    { value: 'hide', label: t('editor.hide') },
+                                ]}
+                            />
+                        </>
 
-                    {!paletteItems[type]?.isChart && type !== 'table' && !['layout_group', 'tab_group'].includes(type) && (
+                    )
+                    }
+
+
+                    {!paletteItems[type]?.isChart && type !== 'table' && !['layout_group', 'tab_group', 'page_link'].includes(type) && (
                         <>
                             {type !== 'text' && (
                                 <>
