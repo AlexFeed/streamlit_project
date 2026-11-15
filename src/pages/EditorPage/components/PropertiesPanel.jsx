@@ -11,6 +11,7 @@ import {
 import ColorStyleField from './properties/ColorStyleField.jsx';
 import useTranslation from '../../../shared/translation/useTranslation.js';
 import { getAppearanceDefaults } from '../services/componentAppearance.js';
+import EditorTooltip from './EditorTooltip.jsx';
 
 const aggregationOptions = [
     { value: 'none', labelKey: 'editor.noAggregation' },
@@ -269,7 +270,7 @@ const PropertiesPanel = ({
 
                             <ColorField
                                 label={t('editor.textColor')}
-                                value={config.color || '#d4d4d8'}
+                                value={config.color || '#342f2b'}
                                 onChange={(value) => updateConfig('color', value)}
                             />
 
@@ -447,14 +448,16 @@ const PropertiesPanel = ({
                                             />
                                         </div>
                                         {(config.tabs || []).length > 1 && (
-                                            <button
-                                                type="button"
-                                                className="btn btn-secondary mb-1 px-3"
-                                                title={t('editor.removeTab')}
-                                                onClick={() => updateConfig('tabs', config.tabs.filter((current) => current.id !== tab.id))}
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </button>
+                                            <EditorTooltip content={t('editor.removeTab')} className="mb-1">
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-secondary px-3"
+                                                    aria-label={t('editor.removeTab')}
+                                                    onClick={() => updateConfig('tabs', config.tabs.filter((current) => current.id !== tab.id))}
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </button>
+                                            </EditorTooltip>
                                         )}
                                     </div>
                                 ))}

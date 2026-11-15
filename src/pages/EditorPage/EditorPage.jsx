@@ -23,6 +23,7 @@ import {useGenerateState} from "./hooks/useGenerateState.jsx";
 import { useEditorDnd } from './hooks/useEditorDnd.js';
 import './EditorPage.css';
 import useTranslation from '../../shared/translation/useTranslation.js';
+import useTheme from '../../shared/theme/useTheme.js';
 import { captureCanvasPreview } from './services/captureCanvasPreview.js';
 import {usePreviewState} from "./hooks/usePreviewState.js";
 import PreviewModal from "./components/modals/PreviewModal.jsx";
@@ -47,6 +48,7 @@ const EditorPage = () => {
     const { projectId } = useParams();
     const navigate = useNavigate();
     const { t } = useTranslation();
+    const { theme } = useTheme();
     const translationRef = useRef(t);
     useEffect(() => {
         translationRef.current = t;
@@ -168,6 +170,35 @@ const EditorPage = () => {
         window.addEventListener('keydown', handleHistoryShortcut);
         return () => window.removeEventListener('keydown', handleHistoryShortcut);
     }, [redo, undo]);
+
+    useEffect(() => {
+        const handleDeleteShortcut = (event) => {
+            if (
+                event.defaultPrevented
+                || event.altKey
+                || event.ctrlKey
+                || event.metaKey
+                || !['Backspace', 'Delete'].includes(event.key)
+                || !selectedId
+            ) {
+                return;
+            }
+
+            const target = event.target;
+            if (
+                target instanceof Element
+                && target.closest('input, textarea, select, button, a, [contenteditable="true"], [role="dialog"]')
+            ) {
+                return;
+            }
+
+            event.preventDefault();
+            deleteSelectedComponent();
+        };
+
+        window.addEventListener('keydown', handleDeleteShortcut);
+        return () => window.removeEventListener('keydown', handleDeleteShortcut);
+    }, [deleteSelectedComponent, selectedId]);
 
     // Flag to confirm saving when changes are unsaved.
     const hasUnsavedChanges = isDirty || isProjectSaving;
@@ -413,7 +444,7 @@ const EditorPage = () => {
                     />
 
                     <div className={`editor-workspace${selectedComponent ? ' has-properties' : ''}`}>
-                        <main className="editor-canvas-area">
+                        <main className="editor-canvas-area" data-canvas-theme={theme}>
                             <PageTabs
                                 pages={pages}
                                 activePageId={activePageId}
@@ -423,6 +454,7 @@ const EditorPage = () => {
                                 onDelete={deletePage}
                             />
                             <Canvas
+                                theme={theme}
                                 canvasRef={canvasRef}
                                 components={pageComponents}
                                 selectedId={selectedId}

@@ -12,6 +12,7 @@ import {
     Loader2,
 } from 'lucide-react';
 import useTranslation from '../../../shared/translation/useTranslation.js';
+import EditorTooltip from './EditorTooltip.jsx';
 
 const EditorHeader = ({
                           onClearCanvas,
@@ -51,16 +52,17 @@ const EditorHeader = ({
                         <span title={dataset.name}>
                             {dataset.name}
                         </span>
-                        <button
-                            type="button"
-                            onClick={() => onRemoveDataset(dataset.datasetId)}
-                            disabled={isDatasetClearing}
-                            className="editor-icon-button editor-remove-dataset"
-                            title={t('editor.deleteDataset')}
-                            aria-label={t('editor.deleteDataset')}
-                        >
-                            <X aria-hidden="true" />
-                        </button>
+                        <EditorTooltip content={t('editor.deleteDataset')}>
+                            <button
+                                type="button"
+                                onClick={() => onRemoveDataset(dataset.datasetId)}
+                                disabled={isDatasetClearing}
+                                className="editor-icon-button editor-remove-dataset"
+                                aria-label={t('editor.deleteDataset')}
+                            >
+                                <X aria-hidden="true" />
+                            </button>
+                        </EditorTooltip>
                     </div>
                 ))}
 
@@ -73,27 +75,29 @@ const EditorHeader = ({
 
                 <div className="editor-header-divider"/>
 
-                <button
-                    type="button"
-                    onClick={onUndo}
-                    disabled={!canUndo}
-                    className="btn btn-secondary editor-action-button editor-history-button"
-                    title={t('editor.undoShortcut')}
-                    aria-label={t('editor.undo')}
-                >
-                    <Undo2 aria-hidden="true" />
-                </button>
+                <EditorTooltip content={t('editor.undoShortcut')}>
+                    <button
+                        type="button"
+                        onClick={onUndo}
+                        disabled={!canUndo}
+                        className="btn btn-secondary editor-action-button editor-history-button"
+                        aria-label={t('editor.undo')}
+                    >
+                        <Undo2 aria-hidden="true" />
+                    </button>
+                </EditorTooltip>
 
-                <button
-                    type="button"
-                    onClick={onRedo}
-                    disabled={!canRedo}
-                    className="btn btn-secondary editor-action-button editor-history-button"
-                    title={t('editor.redoShortcut')}
-                    aria-label={t('editor.redo')}
-                >
-                    <Redo2 aria-hidden="true" />
-                </button>
+                <EditorTooltip content={t('editor.redoShortcut')}>
+                    <button
+                        type="button"
+                        onClick={onRedo}
+                        disabled={!canRedo}
+                        className="btn btn-secondary editor-action-button editor-history-button"
+                        aria-label={t('editor.redo')}
+                    >
+                        <Redo2 aria-hidden="true" />
+                    </button>
+                </EditorTooltip>
 
                 <button
                     type="button"
@@ -129,25 +133,27 @@ const EditorHeader = ({
                     {isGenerating ? t('editor.generating') : t('editor.download')}
                 </button>
 
-                <button
-                    type="button"
-                    onClick={onClearCanvas}
-                    className="editor-icon-button editor-clear-button"
-                    title={t('editor.clearCanvas')}
-                    aria-label={t('editor.clearCanvas')}
-                >
-                    <Trash2 aria-hidden="true" />
-                </button>
+                <EditorTooltip content={t('editor.clearCanvas')}>
+                    <button
+                        type="button"
+                        onClick={onClearCanvas}
+                        className="editor-icon-button editor-clear-button"
+                        aria-label={t('editor.clearCanvas')}
+                    >
+                        <Trash2 aria-hidden="true" />
+                    </button>
+                </EditorTooltip>
 
-                <button
-                    type="button"
-                    onClick={onGoHome}
-                    className="editor-icon-button"
-                    title={t('editor.goHome')}
-                    aria-label={t('editor.goHome')}
-                >
-                    <House aria-hidden="true" />
-                </button>
+                <EditorTooltip content={t('editor.goHome')}>
+                    <button
+                        type="button"
+                        onClick={onGoHome}
+                        className="editor-icon-button"
+                        aria-label={t('editor.goHome')}
+                    >
+                        <House aria-hidden="true" />
+                    </button>
+                </EditorTooltip>
             </div>
         </header>
     );

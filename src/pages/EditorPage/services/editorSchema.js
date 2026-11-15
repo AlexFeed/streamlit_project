@@ -149,7 +149,7 @@ export const buildDashboardSchema = (snapshot, t = (key) => key) => {
                 fontSize: component.config?.fontSize || 16,
                 fontWeight: component.config?.fontWeight || 'normal',
                 fontStyle: component.config?.fontStyle || 'normal',
-                color: component.config?.color || '#d4d4d8',
+                color: component.config?.color || '#342f2b',
                 textAlign: component.config?.textAlign || 'left',
             });
         }
@@ -383,7 +383,7 @@ export const validateSchema = (snapshot, t = (key) => key) => {
             const fontSize = Number(component.config?.fontSize || 16);
             const fontWeight = component.config?.fontWeight || 'normal';
             const fontStyle = component.config?.fontStyle || 'normal';
-            const color = component.config?.color || '#d4d4d8';
+            const color = component.config?.color || '#342f2b';
             const textAlign = component.config?.textAlign || 'left';
 
             if (!component.config?.content?.trim() && !component.config?.contentKey) {
