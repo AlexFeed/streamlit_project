@@ -5,11 +5,13 @@ import { paletteItems } from '../../data/paletteItems';
 import { getAppearanceDefaults } from '../../services/componentAppearance.js';
 import useTranslation from '../../../../shared/translation/useTranslation.js';
 import useTheme from '../../../../shared/theme/useTheme.js';
+import EditorTooltip from '../EditorTooltip.jsx';
 
 import LiveComponentPreview from './LiveComponentPreview';
 
 const ContainerChild = ({ child, parent, rows, value, onChange, onSelect, isSelected, pages, onMove, onReorder, onResize, onDuplicate, onDelete }) => {
     const nodeRef = useRef(null);
+    const { t } = useTranslation();
     const meta = paletteItems[child.type];
     const appearance = getAppearanceDefaults(child.type, child.config);
     const isLarge = Boolean(meta?.isChart || child.type === 'table');
@@ -164,6 +166,7 @@ const ContainerChild = ({ child, parent, rows, value, onChange, onSelect, isSele
             ref={nodeRef}
             data-container-child
             data-container-child-id={child.id}
+            data-container-child-type={child.type}
             onPointerDown={beginChildDrag}
             onClick={(event) => {
                 event.stopPropagation();
@@ -185,11 +188,19 @@ const ContainerChild = ({ child, parent, rows, value, onChange, onSelect, isSele
             }}
         >
             <LiveComponentPreview item={child} height={previewHeight} rows={rows} value={value} onChange={onChange} pages={pages} />
-            <div className="absolute right-1 top-1 z-30 flex rounded-lg border bg-black/70 opacity-0 transition-opacity group-hover/child:opacity-100" data-no-canvas-drag>
-                <button type="button" className="p-1.5" title="Копировать" onClick={(event) => { event.stopPropagation(); onDuplicate(child.id); }}><Copy className="h-3.5 w-3.5" /></button>
-                <button type="button" className="p-1.5" title="Удалить" onClick={(event) => { event.stopPropagation(); onDelete(child.id); }}><Trash2 className="h-3.5 w-3.5" /></button>
+            <div className="dashboard-container-child-actions absolute right-1 top-1 z-30 flex rounded-lg border opacity-0 transition-opacity group-hover/child:opacity-100" data-no-canvas-drag>
+                <EditorTooltip content={t('editor.duplicate')}>
+                    <button type="button" className="dashboard-container-child-action p-1.5" aria-label={t('editor.duplicate')} onClick={(event) => { event.stopPropagation(); onDuplicate(child.id); }}><Copy className="h-3.5 w-3.5" /></button>
+                </EditorTooltip>
+                <EditorTooltip content={t('common.delete')}>
+                    <button type="button" className="dashboard-container-child-action p-1.5" aria-label={t('common.delete')} onClick={(event) => { event.stopPropagation(); onDelete(child.id); }}><Trash2 className="h-3.5 w-3.5" /></button>
+                </EditorTooltip>
             </div>
-            {isTabChild && <button type="button" data-no-canvas-drag aria-label="Изменить размер" onClick={(event) => event.stopPropagation()} onPointerDown={beginChildResize} className="canvas-resize-handle absolute bottom-1 right-1 z-40 flex h-9 w-9 touch-none cursor-se-resize items-end justify-end rounded-lg bg-blue-500/10 p-2 text-blue-300 opacity-80 hover:opacity-100"><MoveDiagonal2 className="h-4 w-4" /></button>}
+            {isTabChild && (
+                <EditorTooltip content={t('editor.resizeHint')} className="editor-child-resize-tooltip-anchor">
+                    <button type="button" data-no-canvas-drag aria-label={t('editor.resize')} onClick={(event) => event.stopPropagation()} onPointerDown={beginChildResize} className="canvas-resize-handle flex h-9 w-9 touch-none cursor-se-resize items-end justify-end rounded-lg bg-blue-500/10 p-2 text-blue-300 opacity-80 hover:opacity-100"><MoveDiagonal2 className="h-4 w-4" /></button>
+                </EditorTooltip>
+            )}
         </div>
     );
 };
@@ -286,7 +297,7 @@ const CanvasItem = ({
                     ? `canvas-item-compact-actions absolute -top-10 right-0 z-30 flex touch-none items-center rounded-xl border p-0.5 shadow-lg backdrop-blur transition-opacity ${isSelected || actionsVisible ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'}`
                     : 'canvas-item-header canvas-drag-handle flex shrink-0 touch-none cursor-grab items-center justify-between gap-3 border-b px-4 py-3 active:cursor-grabbing'}
                 onPointerDown={usesFloatingChrome || managedByGridStack ? undefined : (event) => onBeginInteraction(event, item.id, 'drag')}
-                title={usesFloatingChrome ? undefined : t('editor.dragCard')}
+                aria-label={usesFloatingChrome ? undefined : t('editor.dragCard')}
             >
                 {!usesFloatingChrome && (
                     <div className="flex min-w-0 items-center gap-3">
@@ -295,8 +306,12 @@ const CanvasItem = ({
                     </div>
                 )}
                 <div className="flex shrink-0 items-center gap-0.5">
-                    <button type="button" title={t('editor.duplicate')} aria-label={t('editor.duplicate')} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => { event.stopPropagation(); onDuplicate(item.id); }} className="canvas-item-action rounded-lg p-2 transition"><Copy className="h-4 w-4" /></button>
-                    <button type="button" title={t('common.delete')} aria-label={t('common.delete')} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => { event.stopPropagation(); onDelete(item.id); }} className="canvas-item-action canvas-item-delete rounded-lg p-2 transition"><Trash2 className="h-4 w-4" /></button>
+                    <EditorTooltip content={t('editor.duplicate')}>
+                        <button type="button" aria-label={t('editor.duplicate')} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => { event.stopPropagation(); onDuplicate(item.id); }} className="canvas-item-action rounded-lg p-2 transition"><Copy className="h-4 w-4" /></button>
+                    </EditorTooltip>
+                    <EditorTooltip content={t('common.delete')}>
+                        <button type="button" aria-label={t('common.delete')} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => { event.stopPropagation(); onDelete(item.id); }} className="canvas-item-action canvas-item-delete rounded-lg p-2 transition"><Trash2 className="h-4 w-4" /></button>
+                    </EditorTooltip>
                 </div>
             </header>
 
@@ -341,7 +356,7 @@ const CanvasItem = ({
                         className="dashboard-layout-group flex h-full min-h-0 w-full flex-col overflow-hidden rounded-xl"
                         style={{ gap: Number(item.config?.gap ?? 8), padding: Number(item.config?.padding ?? 8) }}
                     >
-                        <div className="flex shrink-0 cursor-grab items-center gap-1 border-b active:cursor-grabbing" data-canvas-drag-surface title={t('editor.dragCard')}>
+                        <div className="flex shrink-0 cursor-grab items-center gap-1 border-b active:cursor-grabbing" data-canvas-drag-surface>
                             {tabs.map((tab) => (
                                 <button
                                     key={tab.id}
@@ -352,9 +367,11 @@ const CanvasItem = ({
                                     {tab.label}
                                 </button>
                             ))}
-                            <div className="ml-auto flex h-9 w-9 shrink-0 items-center justify-center opacity-55" aria-hidden="true">
-                                <GripVertical className="h-4 w-4" />
-                            </div>
+                            <EditorTooltip content={t('editor.dragCard')} className="ml-auto">
+                                <div className="flex h-9 w-9 shrink-0 items-center justify-center" aria-hidden="true">
+                                    <GripVertical className="h-4 w-4" />
+                                </div>
+                            </EditorTooltip>
                         </div>
                         <div className="grid min-h-0 flex-1 grid-cols-12 content-start gap-2 overflow-hidden">
                             {children.filter(({ item: child }) => resolveChildTabId(child) === resolvedActiveTabId).length === 0 ? (
@@ -374,9 +391,11 @@ const CanvasItem = ({
             </div>
 
             {!managedByGridStack && (
-                <button type="button" aria-label={t('editor.resize')} title={t('editor.resizeHint')} onClick={(event) => event.stopPropagation()} onPointerDown={(event) => onBeginInteraction(event, item.id, 'resize')} className={`canvas-resize-handle absolute bottom-1 right-1 z-20 flex touch-none cursor-se-resize items-end justify-end rounded-xl p-2 text-blue-300 transition hover:bg-blue-500/15 hover:text-blue-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 ${isCompact ? `h-8 w-8 ${isSelected ? 'opacity-100' : 'pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100'}` : 'h-9 w-9'}`}>
+                <EditorTooltip content={t('editor.resizeHint')} className={`editor-resize-tooltip-anchor ${isCompact ? `h-8 w-8 ${isSelected ? 'opacity-100' : 'pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100'}` : 'h-9 w-9'}`}>
+                    <button type="button" aria-label={t('editor.resize')} onClick={(event) => event.stopPropagation()} onPointerDown={(event) => onBeginInteraction(event, item.id, 'resize')} className="canvas-resize-handle flex h-full w-full touch-none cursor-se-resize items-end justify-end rounded-xl p-2 text-blue-300 transition hover:bg-blue-500/15 hover:text-blue-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400">
                     <MoveDiagonal2 className="h-4 w-4" />
-                </button>
+                    </button>
+                </EditorTooltip>
             )}
         </article>
     );

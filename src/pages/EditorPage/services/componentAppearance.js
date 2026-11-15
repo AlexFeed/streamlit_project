@@ -1,9 +1,7 @@
 const compactTypes = new Set(['text', 'metric', 'selectbox', 'data_control', 'progress', 'page_link']);
 
 export const getAppearanceDefaults = (type, config = {}) => {
-    const surface = config.surface || (
-        ['text', 'page_link'].includes(type) ? 'none' : 'card'
-    );
+    const surface = config.surface || (type === 'page_link' ? 'none' : 'card');
     const isMetric = ['metric', 'progress'].includes(type);
     const isFilter = ['selectbox', 'data_control'].includes(type);
 
@@ -17,7 +15,7 @@ export const getAppearanceDefaults = (type, config = {}) => {
             ['metric', 'progress', 'selectbox', 'data_control', 'page_link'].includes(type) ? 'center' : 'top'
         ),
         padding: Number(config.padding ?? (
-            ['text', 'page_link'].includes(type) ? 0 : (isFilter || isMetric) ? 8 : 12
+            type === 'page_link' ? 0 : (isFilter || isMetric) ? 8 : 12
         )),
         spacing: Number(config.spacing ?? 0),
         contentWidth: config.contentWidth || (
@@ -31,7 +29,7 @@ export const getAppearanceDefaults = (type, config = {}) => {
             compactTypes.has(type) ? 'auto' : 'fixed'
         ),
         elementFontSize: config.elementFontSize || 'auto',
-        elementTextColor: config.elementTextColor || '#d4d4d8',
+        elementTextColor: config.elementTextColor || (type === 'text' ? '#342f2b' : '#d4d4d8'),
         elementFontWeight: config.elementFontWeight || 'normal',
         elementFontStyle: config.elementFontStyle || 'normal',
     };
@@ -41,11 +39,11 @@ export const withAppearanceDefaults = (type, config = {}) => {
     const next = {
         ...getAppearanceDefaults(type, config),
         ...config,
-        appearanceVersion: 6,
+        appearanceVersion: 7,
     };
 
     if (!config.appearanceVersion) {
-        if (['text', 'page_link'].includes(type)) {
+        if (type === 'page_link') {
             next.showBackground = false;
             next.padding = 0;
             next.verticalAlignment = 'top';

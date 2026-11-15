@@ -67,6 +67,7 @@ const Canvas = ({
                     isProjectLoading = false,
                     canvasRef,
                     pages = [],
+                    theme = 'light',
                 }) => {
     const { t } = useTranslation();
     const [filterValues, setFilterValues] = useState({});
@@ -311,6 +312,7 @@ const Canvas = ({
                 }
             }}
             data-dashboard-canvas
+            data-canvas-theme={theme}
             onClick={(event) => {
                 if (!event.target.closest(
                     '[data-canvas-item], [data-canvas-grid-item], .ui-resizable-handle'

@@ -31,13 +31,13 @@ import useTheme from '../../../../shared/theme/useTheme.js';
 
 const previewThemes = {
     light: {
-        background: '#fbf7f0',
+        background: '#ffffff',
         foreground: '#342f2b',
         muted: '#766d66',
-        border: '#dfd4c8',
-        grid: '#e7ddd2',
-        tooltip: 'rgba(255, 252, 247, 0.97)',
-        tooltipShadow: '0 12px 30px rgba(93, 65, 54, 0.14)',
+        border: '#dee2e6',
+        grid: '#e5e9ed',
+        tooltip: 'rgba(255, 255, 255, 0.98)',
+        tooltipShadow: '0 12px 30px rgba(52, 58, 64, 0.12)',
     },
     dark: {
         background: '#181614',
@@ -163,18 +163,26 @@ const LiveChart = ({ item, rows, height, t, theme }) => {
                 type={item.type === 'scatter_plot' ? 'number' : 'category'}
                 tick={axisTick}
                 tickLine={false}
+                tickMargin={8}
                 axisLine={{ stroke: theme.border }}
                 minTickGap={24}
-                label={{ value: xField, position: 'insideBottom', offset: -5, style: axisTitle }}
+                label={{ value: xField, position: 'insideBottom', offset: -18, style: axisTitle }}
             />
             <YAxis
                 dataKey={item.type === 'scatter_plot' ? 'y' : undefined}
                 type="number"
                 tick={axisTick}
                 tickLine={false}
+                tickMargin={8}
                 axisLine={false}
-                width={46}
-                label={{ value: yField, angle: -90, position: 'insideLeft', style: axisTitle }}
+                width={item.type === 'bar_chart' ? 68 : 56}
+                label={{
+                    value: yField,
+                    angle: -90,
+                    position: 'insideLeft',
+                    offset: item.type === 'bar_chart' ? -12 : 8,
+                    style: axisTitle,
+                }}
             />
             <Tooltip
                 isAnimationActive={false}
@@ -197,7 +205,7 @@ const LiveChart = ({ item, rows, height, t, theme }) => {
         </>
     );
 
-    const CHART_MARGIN = { top: 12, right: 12, left: 8, bottom: 24 };
+    const CHART_MARGIN = { top: 16, right: 16, left: 24, bottom: 40 };
 
     return (
         <div

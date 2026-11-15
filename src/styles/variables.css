@@ -1,8 +1,8 @@
 :root {
   color-scheme: light;
-  --color-bg: #f4eee5;
-  --color-surface: #fbf7f0;
-  --color-surface-raised: #eee5da;
+  --color-bg: #f8f9fa;
+  --color-surface: #ffffff;
+  --color-surface-raised: #f1f3f5;
   --color-text: #342f2b;
   --color-text-muted: #766d66;
   --color-border: #dfd4c8;
@@ -24,14 +24,14 @@
     radial-gradient(ellipse at 12% 0%, rgb(255 255 255 / 62%), transparent 48%),
     linear-gradient(145deg, rgb(255 255 255 / 24%), transparent 60%);
   --page-texture:
-    radial-gradient(ellipse at 8% 0%, rgb(232 120 54 / 8%), transparent 34%),
-    radial-gradient(ellipse at 100% 92%, rgb(218 167 119 / 14%), transparent 42%);
+    radial-gradient(ellipse at 8% 0%, rgb(148 163 184 / 2%), transparent 34%),
+    radial-gradient(ellipse at 100% 92%, rgb(148 163 184 / 3%), transparent 42%);
   --canvas-dot: rgb(118 99 81 / 24%);
-  --glass-hover: linear-gradient(125deg, #fff0dc 0%, #fff6cf 48%, #eed8ba 100%);
-  --glass-border: rgba(252, 147, 55, 0.62);
-  --glass-glow: 0 6px 18px rgb(132 85 48 / 14%), inset 0 1px 0 rgb(255 255 255 / 84%);
-  --warm-glow: 0 8px 18px rgb(139 89 52 / 18%), inset 0 2px 0 rgb(255 255 255 / 86%), inset 0 -2px 4px rgb(125 93 74 / 8%);
-  --material-highlight: inset 0 1px 0 rgb(255 255 255 / 62%), inset 0 -1px 0 rgb(125 93 74 / 5%);
+  --glass-hover: linear-gradient(125deg, #fffaf5 0%, #f8f7f4 48%, #eeece8 100%);
+  --glass-border: rgba(218, 133, 73, 0.5);
+  --glass-glow: 0 6px 18px rgb(80 65 52 / 9%), inset 0 1px 0 rgb(255 255 255 / 84%);
+  --warm-glow: 0 8px 18px rgb(75 60 48 / 10%), inset 0 2px 0 rgb(255 255 255 / 82%), inset 0 -2px 4px rgb(80 65 52 / 4%);
+  --material-highlight: inset 0 1px 0 rgb(255 255 255 / 62%), inset 0 -1px 0 rgb(80 65 52 / 3%);
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;

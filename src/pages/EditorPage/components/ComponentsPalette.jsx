@@ -2,6 +2,7 @@ import {
     GripVertical,
     LayoutDashboard,
 } from 'lucide-react';
+import EditorTooltip from './EditorTooltip.jsx';
 import { useDraggable } from '@dnd-kit/core';
 import { PALETTE_GROUPS, paletteItems } from '../data/paletteItems';
 import ThemeToggle from '../../../shared/theme/ThemeToggle.jsx';
@@ -25,24 +26,27 @@ const PaletteItem = ({ item, onAddComponent }) => {
     });
 
     return (
-        <button
-            ref={setNodeRef}
-            type="button"
-            onClick={() => onAddComponent(item)}
-            className={`palette-item${isDragging ? ' is-dragging' : ''}`}
-            {...listeners}
-            {...attributes}
-        >
-            <div className="palette-item-content">
-                <div className={`palette-item-icon ${item.accentClass || ''}`}>
-                    <Icon aria-hidden="true" />
+        <EditorTooltip content={t(item.labelKey)} placement="right">
+            <button
+                ref={setNodeRef}
+                type="button"
+                onClick={() => onAddComponent(item)}
+                className={`palette-item${isDragging ? ' is-dragging' : ''}`}
+                aria-label={t(item.labelKey)}
+                {...listeners}
+                {...attributes}
+            >
+                <div className="palette-item-content">
+                    <div className={`palette-item-icon ${item.accentClass || ''}`}>
+                        <Icon aria-hidden="true" />
+                    </div>
+                    <div className="palette-item-details">
+                        <span className="palette-item-label">{t(item.labelKey)}</span>
+                        <GripVertical className="palette-item-grip" aria-hidden="true" />
+                    </div>
                 </div>
-                <div className="palette-item-details">
-                    <span className="palette-item-label">{t(item.labelKey)}</span>
-                    <GripVertical className="palette-item-grip" aria-hidden="true" />
-                </div>
-            </div>
-        </button>
+            </button>
+        </EditorTooltip>
     );
 };
 
@@ -56,7 +60,7 @@ const ComponentsPalette = ({ onAddComponent, onGoHome }) => {
                 type="button"
                 onClick={onGoHome}
                 className="editor-brand-button"
-                title={t('editor.goHomeTitle')}
+                aria-label={t('editor.goHomeTitle')}
             >
                 <div className="editor-brand-icon">
                     <LayoutDashboard aria-hidden="true" />

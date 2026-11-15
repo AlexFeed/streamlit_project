@@ -1,5 +1,6 @@
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import useTranslation from '../../../shared/translation/useTranslation.js';
+import EditorTooltip from './EditorTooltip.jsx';
 
 const PageTabs = ({ pages, activePageId, onSelect, onAdd, onRename, onDelete }) => {
     const { t } = useTranslation();
@@ -22,15 +23,15 @@ const PageTabs = ({ pages, activePageId, onSelect, onAdd, onRename, onDelete }) 
         <div className="editor-page-tabs" data-preview-exclude>
             <div className="editor-page-tabs-list">
                 {pages.map((page) => (
-                    <button
-                        key={page.id}
-                        type="button"
-                        onClick={() => onSelect(page.id)}
-                        className={`editor-page-tab ${page.id === activePageId ? 'is-active' : ''}`}
-                        title={page.title}
-                    >
-                        {page.title}
-                    </button>
+                    <EditorTooltip key={page.id} content={page.title}>
+                        <button
+                            type="button"
+                            onClick={() => onSelect(page.id)}
+                            className={`editor-page-tab ${page.id === activePageId ? 'is-active' : ''}`}
+                        >
+                            {page.title}
+                        </button>
+                    </EditorTooltip>
                 ))}
                 <button type="button" onClick={onAdd} className="editor-page-tab editor-page-tab-add">
                     <Plus aria-hidden="true" />
@@ -38,12 +39,16 @@ const PageTabs = ({ pages, activePageId, onSelect, onAdd, onRename, onDelete }) 
                 </button>
             </div>
             <div className="editor-page-tabs-actions">
-                <button type="button" onClick={handleRename} className="canvas-item-action" title={t('editor.renamePage')} aria-label={t('editor.renamePage')}>
-                    <Pencil aria-hidden="true" />
-                </button>
-                <button type="button" onClick={handleDelete} disabled={pages.length <= 1} className="canvas-item-action canvas-item-delete" title={t('editor.deletePage')} aria-label={t('editor.deletePage')}>
-                    <Trash2 aria-hidden="true" />
-                </button>
+                <EditorTooltip content={t('editor.renamePage')}>
+                    <button type="button" onClick={handleRename} className="canvas-item-action" aria-label={t('editor.renamePage')}>
+                        <Pencil aria-hidden="true" />
+                    </button>
+                </EditorTooltip>
+                <EditorTooltip content={t('editor.deletePage')}>
+                    <button type="button" onClick={handleDelete} disabled={pages.length <= 1} className="canvas-item-action canvas-item-delete" aria-label={t('editor.deletePage')}>
+                        <Trash2 aria-hidden="true" />
+                    </button>
+                </EditorTooltip>
             </div>
         </div>
     );
