@@ -298,7 +298,7 @@ const EditorPage = () => {
         });
     };
 
-    const getProjectSnapshot = (overrideTitle, overrideDescription, previewImage) => ({
+    const getProjectSnapshot = useCallback((overrideTitle, overrideDescription, previewImage) => ({
         title: overrideTitle ?? project?.title ?? 'Untitled dashboard',
         description: overrideDescription ?? project?.description ?? '',
         previewImage,
@@ -309,7 +309,7 @@ const EditorPage = () => {
             delete metadata.sampleRows;
             return metadata;
         })
-    });
+    }), [components, datasets, pages, project?.description, project?.title]);
 
 
     const handleGoHome = () => {
@@ -328,7 +328,7 @@ const EditorPage = () => {
     };
 
     // Save for existing project
-    const handleSaveClick = async () => {
+    const handleSaveClick = useCallback(async () => {
         if (isDraftMode) {
             setIsSaveModalOpen(true);
             return;
@@ -352,7 +352,35 @@ const EditorPage = () => {
                 }
             });
         }
-    };
+    }, [
+        getProjectSnapshot,
+        isDraftMode,
+        markAsSaved,
+        project?.previewImage,
+        saveExistingProject,
+        updatePreviewImage,
+    ]);
+
+    useEffect(() => {
+        const handleSaveShortcut = (event) => {
+            if (
+                event.defaultPrevented
+                || event.altKey
+                || !(event.ctrlKey || event.metaKey)
+                || (event.code !== 'KeyS' && event.key.toLowerCase() !== 's')
+            ) {
+                return;
+            }
+
+            event.preventDefault();
+            if (!isProjectSaving) {
+                void handleSaveClick();
+            }
+        };
+
+        window.addEventListener('keydown', handleSaveShortcut);
+        return () => window.removeEventListener('keydown', handleSaveShortcut);
+    }, [handleSaveClick, isProjectSaving]);
 
     // Save modal for draft project
     const handleConfirmSave = async ({ title, description }) => {
