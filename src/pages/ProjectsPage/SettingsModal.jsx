@@ -1,10 +1,16 @@
 import { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import useAuth from '../../shared/hooks/useAuth.js';
+import useTheme from '../../shared/theme/useTheme.js';
 import useTranslation from '../../shared/translation/useTranslation.js';
 
 const SettingsModal = ({ onClose }) => {
   const { language, setLanguage, t } = useTranslation();
+  const {
+    theme,
+    isExperimentalLightTheme,
+    setIsExperimentalLightTheme,
+  } = useTheme();
   const {
     profile,
     isProfileLoading,
@@ -119,6 +125,21 @@ const SettingsModal = ({ onClose }) => {
                   </select>
                 </label>
               </section>
+
+              {theme === 'light' && (
+                <section className="sp-settings-section" aria-label={t('settings.experimentalLightTheme')}>
+                  <label className="sp-settings-experimental-toggle">
+                    <span>{t('settings.experimentalLightTheme')}</span>
+                    <input
+                        type="checkbox"
+                        role="switch"
+                        checked={isExperimentalLightTheme}
+                        onChange={(event) => setIsExperimentalLightTheme(event.target.checked)}
+                    />
+                    <span className="sp-settings-toggle-track" aria-hidden="true" />
+                  </label>
+                </section>
+              )}
             </div>
 
             <section

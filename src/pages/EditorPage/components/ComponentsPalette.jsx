@@ -1,7 +1,5 @@
-import {
-    GripVertical,
-    LayoutDashboard,
-} from 'lucide-react';
+import { GripVertical, LayoutDashboard } from 'lucide-react';
+import streamlitLogo from '../../../../streamlit.svg';
 import EditorTooltip from './EditorTooltip.jsx';
 import { useDraggable } from '@dnd-kit/core';
 import { PALETTE_GROUPS, paletteItems } from '../data/paletteItems';
@@ -63,7 +61,12 @@ const ComponentsPalette = ({ onAddComponent, onGoHome }) => {
                 aria-label={t('editor.goHomeTitle')}
             >
                 <div className="editor-brand-icon">
-                    <LayoutDashboard aria-hidden="true" />
+                    <img
+                        className="editor-brand-mark"
+                        src={streamlitLogo}
+                        alt=""
+                        aria-hidden="true"
+                    />
                 </div>
                 <StreamlitWordmark />
             </button>

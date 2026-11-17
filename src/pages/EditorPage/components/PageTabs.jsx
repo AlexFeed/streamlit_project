@@ -39,16 +39,25 @@ const PageTabs = ({ pages, activePageId, onSelect, onAdd, onRename, onDelete }) 
                 </button>
             </div>
             <div className="editor-page-tabs-actions">
-                <EditorTooltip content={t('editor.renamePage')}>
-                    <button type="button" onClick={handleRename} className="canvas-item-action" aria-label={t('editor.renamePage')}>
-                        <Pencil aria-hidden="true" />
-                    </button>
-                </EditorTooltip>
-                <EditorTooltip content={t('editor.deletePage')}>
-                    <button type="button" onClick={handleDelete} disabled={pages.length <= 1} className="canvas-item-action canvas-item-delete" aria-label={t('editor.deletePage')}>
-                        <Trash2 aria-hidden="true" />
-                    </button>
-                </EditorTooltip>
+                <button
+                    type="button"
+                    onClick={handleRename}
+                    className="canvas-item-action"
+                    aria-label={t('editor.renamePage')}
+                    title={t('editor.renamePage')}
+                >
+                    <Pencil aria-hidden="true" />
+                </button>
+                <button
+                    type="button"
+                    onClick={handleDelete}
+                    disabled={pages.length <= 1}
+                    className="canvas-item-action canvas-item-delete"
+                    aria-label={t('editor.deletePage')}
+                    title={t('editor.deletePage')}
+                >
+                    <Trash2 aria-hidden="true" />
+                </button>
             </div>
         </div>
     );

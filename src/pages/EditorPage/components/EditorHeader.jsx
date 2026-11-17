@@ -133,27 +133,23 @@ const EditorHeader = ({
                     {isGenerating ? t('editor.generating') : t('editor.download')}
                 </button>
 
-                <EditorTooltip content={t('editor.clearCanvas')}>
-                    <button
-                        type="button"
-                        onClick={onClearCanvas}
-                        className="editor-icon-button editor-clear-button"
-                        aria-label={t('editor.clearCanvas')}
-                    >
-                        <Trash2 aria-hidden="true" />
-                    </button>
-                </EditorTooltip>
+                <button
+                    type="button"
+                    onClick={onClearCanvas}
+                    className="editor-icon-button editor-clear-button"
+                    aria-label={t('editor.clearCanvas')}
+                >
+                    <Trash2 aria-hidden="true" />
+                </button>
 
-                <EditorTooltip content={t('editor.goHome')}>
-                    <button
-                        type="button"
-                        onClick={onGoHome}
-                        className="editor-icon-button"
-                        aria-label={t('editor.goHome')}
-                    >
-                        <House aria-hidden="true" />
-                    </button>
-                </EditorTooltip>
+                <button
+                    type="button"
+                    onClick={onGoHome}
+                    className="editor-icon-button"
+                    aria-label={t('editor.goHome')}
+                >
+                    <House aria-hidden="true" />
+                </button>
             </div>
         </header>
     );

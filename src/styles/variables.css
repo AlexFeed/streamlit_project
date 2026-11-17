@@ -6,13 +6,14 @@
   --color-text: #342f2b;
   --color-text-muted: #766d66;
   --color-border: #dfd4c8;
-  --color-accent: #f47721;
-  --color-accent-end: #f5d17a;
-  --color-accent-hover: #ee6b1b;
-  --color-accent-soft: rgb(244 119 33 / 14%);
+  --color-accent: #ff8a36;
+  --color-accent-end: #ffd070;
+  --color-accent-hover: #f57924;
+  --color-accent-soft: rgb(255 138 54 / 16%);
   --color-accent-contrast: #432510;
-  --button-gradient: linear-gradient(135deg, #f47721 0%, #ffb52f 58%, #f5d17a 100%);
-  --button-gradient-hover: linear-gradient(135deg, #ee6b1b 0%, #ffa91c 58%, #f2c65e 100%);
+  --button-gradient: linear-gradient(135deg, #ff8a36 0%, #ffb943 58%, #ffd070 100%);
+  --button-gradient-hover: linear-gradient(135deg, #f57924 0%, #ffa92e 58%, #f5c45b 100%);
+  --editor-page-active: #ff8a36;
   --color-danger: #dc2626;
   --color-destructive: #8d68ad;
   --color-destructive-hover: #75518f;
@@ -60,6 +61,7 @@
   --color-accent-contrast: #ffffff;
   --button-gradient: linear-gradient(135deg, #f07b28 0%, #a63d16 45%, #4a1e0f 100%);
   --button-gradient-hover: linear-gradient(135deg, #f4863c 0%, #b54820 45%, #572718 100%);
+  --editor-page-active: #b85c24;
   --color-danger: #f87171;
   --color-destructive: #c09bdc;
   --color-destructive-hover: #d4b5e8;
@@ -76,4 +78,39 @@
   --glass-glow: 0 4px 12px rgb(0 0 0 / 26%), inset 0 1px 0 rgb(245 235 230 / 5%);
   --warm-glow: 0 5px 14px rgb(0 0 0 / 32%), inset 0 1px 0 rgb(255 230 208 / 10%), inset 0 -2px 3px rgb(0 0 0 / 20%);
   --material-highlight: inset 0 1px 0 rgb(245 235 230 / 5%), inset 0 -1px 0 rgb(0 0 0 / 20%);
+}
+
+:root[data-theme="light"][data-light-theme="experimental"] {
+  color-scheme: light;
+  --color-bg: #faf7f4;
+  --color-surface: #fffdfb;
+  --color-surface-raised: #f5f0ec;
+  --color-text: #4b433d;
+  --color-text-muted: #786b61;
+  --color-border: #e9ded5;
+  --color-accent: #f57c00;
+  --color-accent-end: rgb(255 255 255 / 88%);
+  --color-accent-hover: #e96f00;
+  --color-accent-soft: rgb(245 124 0 / 14%);
+  --color-accent-contrast: #55351e;
+  --button-gradient: linear-gradient(135deg, #f57c00 0%, #ffb15e 58%, rgb(255 255 255 / 92%) 100%);
+  --button-gradient-hover: linear-gradient(135deg, #e96f00 0%, #ffa84d 58%, #fffaf5 100%);
+  --editor-page-active: #f57c00;
+  --canvas-background: #f3efeb;
+  --color-shadow: rgb(164 105 65 / 14%);
+  --surface-texture:
+    radial-gradient(ellipse at 10% 0%, rgb(255 255 255 / 88%), transparent 58%),
+    linear-gradient(145deg, rgb(255 255 255 / 50%), rgb(255 241 226 / 32%));
+  --page-texture:
+    radial-gradient(ellipse at 8% 0%, rgb(255 255 255 / 70%), transparent 42%),
+    radial-gradient(ellipse at 100% 100%, rgb(245 124 0 / 4%), transparent 45%);
+  --canvas-dot: rgb(145 118 98 / 24%);
+  --glass-hover: linear-gradient(135deg, #fffdfa 0%, #fff3e5 100%);
+  --glass-border: rgb(214 141 88 / 36%);
+  --glass-glow: 0 8px 20px rgb(169 111 68 / 12%), inset 0 1px 0 rgb(255 255 255 / 88%);
+  --warm-glow: 0 10px 24px rgb(178 111 64 / 16%), inset 0 1px 0 rgb(255 255 255 / 92%), inset 0 -2px 4px rgb(160 98 57 / 5%);
+  --material-highlight: inset 0 1px 0 rgb(255 255 255 / 88%), inset 0 -1px 0 rgb(160 98 57 / 5%);
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
 }

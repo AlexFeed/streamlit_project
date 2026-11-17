@@ -66,6 +66,7 @@ export default {
   "settings.language": "Interface language",
   "settings.language.ru": "Russian",
   "settings.language.en": "English",
+  "settings.experimentalLightTheme": "Experimental Light Theme",
   "settings.changePassword": "Change password",
   "settings.currentPassword": "Current password",
   "settings.newPassword": "New password",

@@ -352,6 +352,16 @@
   pointer-events: none;
 }
 
+[data-theme="light"] .sp-settings-modal {
+  border-color: #ebe5de;
+  background: #ffffff;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow:
+    0 24px 64px rgb(83 61 41 / 16%),
+    0 4px 16px rgb(114 87 61 / 8%);
+}
+
 .sp-settings-modal-header {
   display: flex;
   align-items: center;
@@ -389,6 +399,71 @@
 .sp-settings-close:hover {
   transform: translateY(-1px);
   box-shadow: 0 6px 14px rgb(114 87 61 / 12%), inset 0 1px 0 rgb(255 255 255 / 92%);
+}
+
+.sp-settings-experimental-toggle {
+  position: relative;
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid #e6ddd3;
+  border-radius: 14px;
+  padding: 10px 12px;
+  background: #fffdfa;
+  color: var(--color-text);
+  box-shadow: 4px 4px 10px rgb(114 87 61 / 7%), -3px -3px 8px rgb(255 255 255 / 86%);
+  cursor: pointer;
+}
+
+.sp-settings-experimental-toggle input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
+
+.sp-settings-toggle-track {
+  position: relative;
+  width: 42px;
+  height: 24px;
+  flex: 0 0 auto;
+  border: 1px solid #dfd4c8;
+  border-radius: 999px;
+  background: #f0e9e1;
+  box-shadow: inset 0 2px 4px rgb(83 61 41 / 12%);
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+
+.sp-settings-toggle-track::before {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 4px rgb(83 61 41 / 22%);
+  content: '';
+  transition: transform 160ms ease;
+}
+
+.sp-settings-experimental-toggle input:checked + .sp-settings-toggle-track {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+}
+
+.sp-settings-experimental-toggle input:checked + .sp-settings-toggle-track::before {
+  transform: translateX(18px);
+}
+
+.sp-settings-experimental-toggle input:focus-visible + .sp-settings-toggle-track {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
 }
 
 .sp-settings-columns {
@@ -457,6 +532,19 @@
 
 .sp-settings-modal .sp-settings-field input[readonly] {
   opacity: 0.8;
+}
+
+[data-theme="light"] .sp-settings-modal .sp-settings-field input,
+[data-theme="light"] .sp-settings-modal .sp-settings-field select {
+  border-color: #e6e0d9;
+  background: #fbfaf8;
+  box-shadow: inset 0 1px 2px rgb(83 61 41 / 5%);
+}
+
+[data-theme="light"] .sp-settings-close {
+  border-color: #e6e0d9;
+  background: #f8f6f3;
+  box-shadow: none;
 }
 
 .sp-settings-password-form {
