@@ -34,7 +34,13 @@ body {
   background-image: var(--page-texture);
   color: var(--color-text);
   font-family: var(--font-family);
-  transition: background-color 160ms ease, color 160ms ease;
+}
+
+.theme-switching,
+.theme-switching *,
+.theme-switching *::before,
+.theme-switching *::after {
+  transition: none !important;
 }
 
 button,
@@ -436,30 +442,46 @@ button:disabled {
 .editor-page .editor-palette-footer {
   margin-top: auto;
   border-top: 1px solid var(--color-border);
-  padding: var(--space-3);
+  padding: var(--space-2) 2px;
   background-image: var(--surface-texture);
 }
 
-.editor-page .editor-header,
+.editor-page .editor-header {
+  background-image: var(--surface-texture);
+}
+
 .editor-page .properties-panel-header,
 .editor-page .properties-panel-footer {
-  background-image: var(--surface-texture);
+  background-color: var(--color-bg);
+  background-image: none;
 }
 
-.editor-page .properties-panel,
+.editor-page .properties-panel {
+  background-color: var(--color-bg);
+  background-image: none;
+  box-shadow: 0 24px 48px var(--color-shadow);
+}
+
 .editor-page .dashboard-stat,
 .editor-page .editor-dataset-badge {
   background-image: var(--surface-texture);
   box-shadow: var(--material-highlight);
 }
 
-.editor-page .palette-item:hover,
+.editor-page .palette-item:hover {
+  border-color: var(--glass-border);
+  background: var(--glass-hover);
+  color: var(--color-text);
+  box-shadow: 0 3px 10px rgb(75 60 48 / 12%), 0 0 8px rgb(196 114 54 / 12%);
+  transform: scale(1.025);
+}
+
 .editor-page .editor-icon-button:hover,
 .editor-page .editor-action-button.btn-secondary:hover {
   border-color: var(--glass-border);
   background: var(--glass-hover);
   color: var(--color-text);
-  box-shadow: var(--glass-glow), var(--material-highlight);
+  box-shadow: none;
   transform: scale(1.025);
 }
 
@@ -743,9 +765,6 @@ button:disabled {
 [data-theme="dark"] .editor-page .editor-palette,
 [data-theme="dark"] .editor-page .editor-header,
 [data-theme="dark"] .editor-page .editor-palette-footer,
-[data-theme="dark"] .editor-page .properties-panel,
-[data-theme="dark"] .editor-page .properties-panel-header,
-[data-theme="dark"] .editor-page .properties-panel-footer,
 [data-theme="dark"] .editor-page .dashboard-canvas,
 [data-theme="dark"] .editor-page .dashboard-stat,
 [data-theme="dark"] .editor-page .editor-dataset-badge {
@@ -754,6 +773,15 @@ button:disabled {
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 3%);
+}
+
+[data-theme="dark"] .editor-page .properties-panel,
+[data-theme="dark"] .editor-page .properties-panel-header,
+[data-theme="dark"] .editor-page .properties-panel-footer {
+  background-color: var(--color-bg);
+  background-image: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 [data-theme="dark"] .editor-page .dashboard-canvas {
@@ -786,6 +814,13 @@ button:disabled {
   transform: none;
 }
 
+[data-theme="dark"] .editor-page .editor-icon-button:hover,
+[data-theme="dark"] .editor-page .editor-brand-button:hover,
+[data-theme="dark"] .editor-page .editor-action-button.btn-secondary:hover,
+[data-theme="dark"] .editor-page .properties-close-button:hover {
+  box-shadow: none;
+}
+
 [data-theme="dark"] .editor-page .palette-item {
   border-color: var(--color-border);
   background-color: #1f1c1a;
@@ -797,7 +832,7 @@ button:disabled {
   border-color: rgb(240 123 40 / 30%);
   background-color: #1f1c1a;
   background-image: linear-gradient(135deg, rgb(240 123 40 / 15%), rgb(240 123 40 / 2%));
-  box-shadow: 0 4px 15px rgb(240 123 40 / 10%), inset 0 1px 0 rgb(255 230 208 / 5%);
+  box-shadow: 0 3px 10px rgb(240 123 40 / 12%), 0 0 8px rgb(240 123 40 / 10%);
 }
 
 [data-theme="dark"] .editor-page .palette-item:hover .palette-item-icon {
@@ -856,6 +891,10 @@ button:disabled {
   color: #ead9f5;
 }
 
+.editor-page button:not(.palette-item):hover:not(:disabled) {
+  box-shadow: none;
+}
+
 [data-theme="dark"] body,
 [data-theme="dark"] .page-container,
 [data-theme="dark"] .editor-page {
@@ -865,4 +904,232 @@ button:disabled {
 
 [data-theme="dark"] .gradient-bg {
   background: none;
+}
+
+:root[data-theme="light"][data-light-theme="experimental"] body,
+:root[data-theme="light"][data-light-theme="experimental"] .page-container,
+:root[data-theme="light"][data-light-theme="experimental"] .editor-page {
+  background-color: var(--color-bg);
+  background-image: var(--page-texture);
+  color: var(--color-text);
+}
+
+:root[data-theme="light"][data-light-theme="experimental"] .page-container .sidebar,
+:root[data-theme="light"][data-light-theme="experimental"] .page-container .sp-projects-sidebar,
+:root[data-theme="light"][data-light-theme="experimental"] .editor-page .editor-palette,
+:root[data-theme="light"][data-light-theme="experimental"] .editor-page .editor-header,
+:root[data-theme="light"][data-light-theme="experimental"] .editor-page .properties-panel,
+:root[data-theme="light"][data-light-theme="experimental"] .editor-page .properties-panel-header,
+:root[data-theme="light"][data-light-theme="experimental"] .editor-page .properties-panel-footer,
+:root[data-theme="light"][data-light-theme="experimental"] .editor-page .dashboard-canvas {
+  border-color: var(--color-border);
+  background-color: var(--color-surface);
+  background-image: var(--surface-texture);
+  box-shadow: 8px 8px 22px rgb(169 111 68 / 10%), -6px -6px 18px rgb(255 255 255 / 82%);
+}
+
+:root[data-theme="light"][data-light-theme="experimental"] .editor-page .dashboard-canvas {
+  background-color: var(--canvas-background);
+  background-image: radial-gradient(var(--canvas-dot) 1px, transparent 1.15px);
+  background-size: 20px 20px;
+  box-shadow: none;
+}
+
+:root[data-theme="light"][data-light-theme="experimental"] .page-container .sp-project-card-grid,
+:root[data-theme="light"][data-light-theme="experimental"] .page-container .sp-project-card-list,
+:root[data-theme="light"][data-light-theme="experimental"] .page-container .extension-card,
+:root[data-theme="light"][data-light-theme="experimental"] .page-container .form-wrapper,
+:root[data-theme="light"][data-light-theme="experimental"] .editor-page .editor-page-tabs {
+  border-color: var(--color-border);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-surface);
+  background-image: var(--surface-texture);
+  box-shadow: 8px 8px 20px rgb(169 111 68 / 10%), -5px -5px 16px rgb(255 255 255 / 82%);
+}
+
+:root[data-theme="light"][data-light-theme="experimental"] .page-container .sp-menu-button,
+:root[data-theme="light"][data-light-theme="experimental"] .page-container .sp-tool-button,
+:root[data-theme="light"][data-light-theme="experimental"] .page-container .btn-secondary,
+:root[data-theme="light"][data-light-theme="experimental"] .editor-page .palette-item,
+:root[data-theme="light"][data-light-theme="experimental"] .editor-page .editor-icon-button,
+:root[data-theme="light"][data-light-theme="experimental"] .editor-page .editor-action-button.btn-secondary,
+:root[data-theme="light"][data-light-theme="experimental"] .editor-page .editor-page-tab,
+:root[data-theme="light"][data-light-theme="experimental"] .editor-page-tabs-actions .canvas-item-action {
+  border-color: var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+  background-image: linear-gradient(145deg, rgb(255 255 255 / 94%), rgb(255 241 226 / 76%));
+  color: var(--color-text);
+  box-shadow: 5px 5px 12px rgb(169 111 68 / 11%), -4px -4px 10px rgb(255 255 255 / 86%);
+}
+
+:root[data-theme="light"][data-light-theme="experimental"] .page-container .sp-menu-button.sp-active,
+:root[data-theme="light"][data-light-theme="experimental"] .page-container .btn-primary,
+:root[data-theme="light"][data-light-theme="experimental"] .editor-page .editor-page-tab.is-active,
+:root[data-theme="light"][data-light-theme="experimental"] .editor-page .live-preview-page-link-button {
+  border-color: var(--glass-border);
+  border-radius: var(--radius-md);
+  background: var(--button-gradient);
+  color: var(--color-accent-contrast);
+  box-shadow: var(--warm-glow);
+}
+
+:root[data-theme="light"][data-light-theme="experimental"] .editor-page .canvas-item-card[data-canvas-theme="light"] {
+  border-color: var(--color-border);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(145deg, #fffdfa, #fff2e3);
+  color: var(--color-text);
+  box-shadow: 8px 8px 20px rgb(169 111 68 / 12%), -5px -5px 16px rgb(255 255 255 / 82%);
+}
+
+:root[data-theme="light"][data-light-theme="experimental"] .editor-page .canvas-item-card[data-canvas-theme="light"] .canvas-item-header,
+:root[data-theme="light"][data-light-theme="experimental"] .editor-page .canvas-item-card[data-canvas-theme="light"] .canvas-item-icon,
+:root[data-theme="light"][data-light-theme="experimental"] .editor-page .canvas-item-card[data-canvas-theme="light"] .canvas-item-compact-actions {
+  border-color: var(--color-border);
+  background: linear-gradient(145deg, #fffaf3, #fff0e0);
+  color: var(--color-text);
+}
+
+:root[data-theme="light"][data-light-theme="experimental"] .editor-page .canvas-item-card[data-canvas-theme="light"] .canvas-item-title {
+  color: var(--color-text);
+}
+
+:root[data-theme="light"][data-light-theme="experimental"] .editor-page input,
+:root[data-theme="light"][data-light-theme="experimental"] .editor-page select,
+:root[data-theme="light"][data-light-theme="experimental"] .editor-page textarea,
+:root[data-theme="light"][data-light-theme="experimental"] .page-container input,
+:root[data-theme="light"][data-light-theme="experimental"] .page-container select,
+:root[data-theme="light"][data-light-theme="experimental"] .page-container textarea {
+  border-color: var(--color-border);
+  border-radius: var(--radius-md);
+  background: linear-gradient(145deg, #fffdfa, #fff4e8);
+  color: var(--color-text);
+  box-shadow: inset 3px 3px 7px rgb(169 111 68 / 7%), inset -2px -2px 6px rgb(255 255 255 / 88%);
+}
+
+:root[data-theme="light"][data-light-theme="experimental"] .sp-settings-modal {
+  border-color: var(--color-border);
+  border-radius: 26px;
+  background: linear-gradient(145deg, #fffdfa, #fff3e5);
+  box-shadow: 14px 14px 36px rgb(169 111 68 / 15%), -8px -8px 24px rgb(255 255 255 / 90%);
+}
+
+:root[data-theme="light"][data-light-theme="experimental"] .sp-settings-experimental-toggle {
+  border-color: var(--color-border);
+  border-radius: var(--radius-md);
+  background: linear-gradient(145deg, #fffdfa, #fff1e2);
+  box-shadow: 5px 5px 12px rgb(169 111 68 / 11%), -4px -4px 10px rgb(255 255 255 / 86%);
+}
+
+:root[data-theme="light"][data-light-theme="experimental"] .editor-page .canvas-item-card[data-canvas-theme="light"],
+:root[data-theme="light"][data-light-theme="experimental"] .editor-page .dashboard-container-child {
+  border-color: #e8dbce;
+  border-radius: 20px;
+  background-color: #fdfbf7;
+  background-image: none;
+  color: #4b433d;
+  box-shadow: 7px 8px 18px rgb(133 98 68 / 12%), -3px -3px 10px rgb(255 255 255 / 58%);
+}
+
+:root[data-theme="light"][data-light-theme="experimental"] .editor-page .canvas-item-card[data-canvas-theme="light"].is-selected,
+:root[data-theme="light"][data-light-theme="experimental"] .editor-page .dashboard-container-child.is-selected {
+  border-color: #d7bda5;
+  box-shadow: 8px 9px 20px rgb(133 98 68 / 15%), -3px -3px 10px rgb(255 255 255 / 58%);
+}
+
+:root[data-theme="light"][data-light-theme="experimental"] .editor-page .canvas-item-card[data-canvas-theme="light"] .canvas-item-header,
+:root[data-theme="light"][data-light-theme="experimental"] .editor-page .canvas-item-card[data-canvas-theme="light"] .canvas-item-icon,
+:root[data-theme="light"][data-light-theme="experimental"] .editor-page .canvas-item-card[data-canvas-theme="light"] .canvas-item-compact-actions,
+:root[data-theme="light"][data-light-theme="experimental"] .editor-page .dashboard-container-child-actions,
+:root[data-theme="light"][data-light-theme="experimental"] .editor-page .dashboard-layout-group-empty {
+  border-color: #e8dbce;
+  border-radius: 16px;
+  background-color: #faf6f0;
+  background-image: none;
+  color: #4b433d;
+  box-shadow: 4px 5px 12px rgb(133 98 68 / 10%);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+:root[data-theme="light"][data-light-theme="experimental"] .editor-page .canvas-item-card[data-canvas-theme="light"] .canvas-item-title {
+  color: #4b433d;
+}
+
+:root[data-theme="light"][data-light-theme="experimental"] .editor-page .canvas-item-card[data-canvas-theme="light"] .canvas-item-action,
+:root[data-theme="light"][data-light-theme="experimental"] .editor-page .canvas-item-card[data-canvas-theme="light"] .dashboard-container-child-action,
+:root[data-theme="light"][data-light-theme="experimental"] .editor-page .canvas-item-card[data-canvas-theme="light"] .editor-child-resize-tooltip-anchor button {
+  border-color: #e8dbce;
+  border-radius: 12px;
+  background-color: #faf6f0;
+  background-image: none;
+  color: #68584b;
+  box-shadow: 3px 4px 9px rgb(133 98 68 / 10%);
+  filter: none;
+}
+
+:root[data-theme="light"][data-light-theme="experimental"] .editor-page .canvas-item-card[data-canvas-theme="light"] .canvas-item-action:hover,
+:root[data-theme="light"][data-light-theme="experimental"] .editor-page .canvas-item-card[data-canvas-theme="light"] .dashboard-container-child-action:hover,
+:root[data-theme="light"][data-light-theme="experimental"] .editor-page .canvas-item-card[data-canvas-theme="light"] .editor-child-resize-tooltip-anchor button:hover {
+  border-color: #dfcbb7;
+  background-color: #f4ede5;
+  background-image: none;
+  box-shadow: 3px 4px 9px rgb(133 98 68 / 12%);
+}
+
+:root[data-theme="light"][data-light-theme="experimental"] .editor-page .dashboard-layout-group[data-active-tab] > [data-canvas-drag-surface] button {
+  border-color: transparent;
+  border-radius: 12px 12px 0 0;
+  background-color: #faf6f0;
+  background-image: none;
+  color: #68584b;
+  box-shadow: none;
+}
+
+:root[data-theme="light"][data-light-theme="experimental"] .editor-page .dashboard-layout-group[data-active-tab] > [data-canvas-drag-surface] button[class*="bg-blue-500"] {
+  border-color: #e8dbce;
+  background-color: #f2e8dc;
+  color: #4b433d;
+}
+
+:root[data-theme="light"][data-light-theme="experimental"] .editor-page .canvas-item-card[data-canvas-theme="light"] input,
+:root[data-theme="light"][data-light-theme="experimental"] .editor-page .canvas-item-card[data-canvas-theme="light"] select,
+:root[data-theme="light"][data-light-theme="experimental"] .editor-page .canvas-item-card[data-canvas-theme="light"] textarea,
+:root[data-theme="light"][data-light-theme="experimental"] .editor-page .canvas-item-card[data-canvas-theme="light"] .live-preview-select {
+  border-color: #e8dbce;
+  border-radius: 12px;
+  background-color: #faf6f0;
+  background-image: none;
+  color: #4b433d;
+  box-shadow: 3px 4px 9px rgb(133 98 68 / 8%);
+}
+
+:root[data-theme="light"][data-light-theme="experimental"] .editor-page .canvas-item-card[data-canvas-theme="light"] .live-preview-page-link-button {
+  border-radius: 14px;
+  background-image: none;
+  box-shadow: 4px 5px 12px rgb(133 98 68 / 12%);
+}
+
+:root[data-theme="light"][data-light-theme="experimental"] .editor-page .editor-page-tabs,
+:root[data-theme="light"][data-light-theme="experimental"] .editor-page .editor-page-tab {
+  background-color: #faf6f0;
+  background-image: none;
+  box-shadow: 4px 5px 12px rgb(133 98 68 / 10%);
+}
+
+:root[data-theme="light"][data-light-theme="experimental"] .editor-page .editor-page-tab.is-active {
+  border-color: #e08327;
+  background-color: #f57c00;
+  background-image: none;
+  color: #fffaf4;
+  box-shadow: 4px 5px 12px rgb(133 98 68 / 14%);
+}
+
+:root[data-theme="light"][data-light-theme="experimental"] .editor-page .canvas-item-card[data-canvas-theme="light"] .dashboard-container-child[data-container-child-type="text"] {
+  border-color: #e8dbce;
+  border-radius: 16px;
+  background-color: #fdfbf7;
+  background-image: none;
+  color: #4b433d;
+  box-shadow: 4px 5px 12px rgb(133 98 68 / 10%);
 }
