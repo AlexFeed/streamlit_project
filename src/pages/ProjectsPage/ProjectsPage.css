@@ -927,6 +927,7 @@
 
 /* ==================== КАРТОЧКА (СЕТКА) ==================== */
 .sp-project-card-grid {
+  position: relative;
   background: color-mix(in srgb, var(--color-surface) 94%, transparent);
   backdrop-filter: blur(12px);
   border-radius: 20px;
@@ -947,7 +948,7 @@
 }
 
 .sp-card-banner {
-  height: 120px;
+  height: 220px;
   position: relative;
   overflow: hidden;
   display: flex;
@@ -1005,7 +1006,7 @@
 
 .sp-card-body {
   flex: 1;
-  padding: 20px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
 }
@@ -1014,11 +1015,11 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .sp-card-title {
-  font-size: 1.125rem;
+  font-size: 1rem;
   font-weight: 600;
   color: var(--color-text);
   transition: color 0.2s;
@@ -1055,14 +1056,14 @@
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
   flex: 1;
 }
 
 .sp-card-desc {
   color: var(--color-text-muted);
-  font-size: 0.875rem;
-  line-height: 1.5;
+  font-size: 0.8125rem;
+  line-height: 1.4;
   overflow: hidden;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -1076,16 +1077,24 @@
   align-items: center;
   justify-content: space-between;
   margin-top: auto;
-  padding-top: 16px;
-  border-top: 1px solid rgba(249, 115, 22, 0.2);
 }
 
 .sp-project-date {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.75rem;
-  color: #6b7280;
+  padding: 5px 8px;
+  border: 1px solid rgb(255 255 255 / 28%);
+  border-radius: 8px;
+  background: rgb(24 23 22 / 48%);
+  color: #fff;
+  font-size: 0.6875rem;
+  white-space: nowrap;
+  backdrop-filter: blur(6px);
 }
 
 .sp-delete-card-btn,
