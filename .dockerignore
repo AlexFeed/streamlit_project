@@ -1,0 +1,14 @@
+.git/
+node_modules/
+dist/
+dist-ssr/
+test-results/
+playwright-report/
+tests/
+docs/
+.idea/
+.vscode/
+*.local
+*.log
+.env
+.env.*
