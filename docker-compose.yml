@@ -1,0 +1,22 @@
+services:
+  backend:
+    image: ghcr.io/alexfeed/streamlit_project_backend:latest
+    container_name: streamlit-builder-backend
+    ports:
+      - "8000:8000"
+      - "8501:8501"
+    volumes:
+      - streamlit_storage:/app/storage
+    restart: unless-stopped
+
+  frontend:
+    image: ghcr.io/alexfeed/streamlit_project:latest
+    container_name: streamlit-builder-frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  streamlit_storage:
