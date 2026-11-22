@@ -111,20 +111,54 @@ const ProjectsPage = () => {
             <h2 className="sp-section-title">{t('projects.documentation')}</h2>
             <p className="sp-section-subtitle">{t('projects.documentationIntro')}</p>
             <div className="sp-documentation-card">
-                <h3>{t('projects.documentation.createTitle')}</h3>
-                <p>{t('projects.documentation.createDescription')}</p>
+                <h3>{t('projects.documentation.step1Title')}</h3>
+                <p>{t('projects.documentation.step1Text')}</p>
+                <p>{t('projects.documentation.step1Note')}</p>
             </div>
             <div className="sp-documentation-card">
-                <h3>{t('projects.documentation.editTitle')}</h3>
-                <p>{t('projects.documentation.editDescription')}</p>
+                <h3>{t('projects.documentation.step2Title')}</h3>
+                <p>{t('projects.documentation.step2Text')}</p>
+                <p>{t('projects.documentation.step2Note')}</p>
             </div>
-            <button
-                type="button"
-                className="btn btn-primary"
-                onClick={handleOpenCreateModal}
-            >
-                {t('projects.new')}
-            </button>
+            <div className="sp-documentation-card">
+                <h3>{t('projects.documentation.step3Title')}</h3>
+                <p>{t('projects.documentation.step3Text')}</p>
+                <p>{t('projects.documentation.step3Note')}</p>
+            </div>
+            <div className="sp-documentation-card">
+                <h3>{t('projects.documentation.step4Title')}</h3>
+                <p>{t('projects.documentation.step4Text')}</p>
+                <p>{t('projects.documentation.step4Note')}</p>
+            </div>
+            <div className="sp-documentation-card">
+                <h3>{t('projects.documentation.step5Title')}</h3>
+                <ul className="sp-documentation-list">
+                    <li>{t('projects.documentation.step5Preview')}</li>
+                    <li>{t('projects.documentation.step5Save')}</li>
+                    <li>{t('projects.documentation.step5Draft')}</li>
+                </ul>
+            </div>
+            <div className="sp-documentation-card">
+                <h3>{t('projects.documentation.step6Title')}</h3>
+                <p>{t('projects.documentation.step6Text')}</p>
+            </div>
+            <div className="sp-documentation-card">
+                <h3>{t('projects.documentation.tipsTitle')}</h3>
+                <ul className="sp-documentation-list">
+                    <li>{t('projects.documentation.tipCanvas')}</li>
+                    <li>{t('projects.documentation.tipSave')}</li>
+                    <li>{t('projects.documentation.tipExtensions')}</li>
+                </ul>
+            </div>
+            <div className="sp-documentation-actions">
+                <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={handleOpenCreateModal}
+                >
+                    {t('projects.new')}
+                </button>
+            </div>
         </section>
     );
 

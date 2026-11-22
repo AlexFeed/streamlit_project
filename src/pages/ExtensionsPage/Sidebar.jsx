@@ -1,6 +1,7 @@
 import React from 'react';
-import { Plus, Zap, FolderOpen } from 'lucide-react';
+import { Plus, FolderOpen } from 'lucide-react';
 import * as Icons from 'lucide-react';
+import streamlitLogo from '../../../streamlit.svg';
 import ThemeToggle from '../../shared/theme/ThemeToggle.jsx';
 import StreamlitWordmark from '../../shared/components/StreamlitWordmark.jsx';
 import useTranslation from '../../shared/translation/useTranslation.js';
@@ -18,7 +19,12 @@ const Sidebar = ({ categories, selectedCategory, onSelectCategory, activeCount, 
 
       <div className="sidebar-header">
         <div className="sidebar-icon">
-          <Zap size={32} />
+          <img
+            className="sidebar-logo-mark"
+            src={streamlitLogo}
+            alt="streamlit logo"
+            aria-hidden="true"
+          />
         </div>
         <StreamlitWordmark />
         <div className="status-badge">

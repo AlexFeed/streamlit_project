@@ -1,5 +1,5 @@
 import React from 'react';
-import { Zap } from 'lucide-react';
+import streamlitLogo from '../../../../streamlit.svg';
 import ThemeToggle from '../../../shared/theme/ThemeToggle.jsx';
 import StreamlitWordmark from '../../../shared/components/StreamlitWordmark.jsx';
 import useTranslation from '../../../shared/translation/useTranslation.js';
@@ -13,7 +13,12 @@ const Sidebar = ({ isLogin }) => {
       {/* Brand */}
       <div className="logo-section">
         <div className="logo-icon">
-          <Zap size={32} className="text-white" />
+          <img
+            className="logo-mark"
+            src={streamlitLogo}
+            alt="streamlit logo"
+            aria-hidden="true"
+          />
         </div>
         <StreamlitWordmark />
         <div className="badge">

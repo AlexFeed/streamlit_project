@@ -1,5 +1,6 @@
 import React from 'react';
-import { BookOpen, Folder, Settings, Zap, Cpu, LogOut, Puzzle } from 'lucide-react';
+import { BookOpen, Folder, Settings, LogOut, Puzzle } from 'lucide-react';
+import streamlitLogo from '../../../streamlit.svg';
 import ThemeToggle from '../../shared/theme/ThemeToggle.jsx';
 import StreamlitWordmark from '../../shared/components/StreamlitWordmark.jsx';
 import useTranslation from '../../shared/translation/useTranslation.js';
@@ -42,11 +43,15 @@ const Sidebar = ({
     <aside className="sp-projects-sidebar">
       <div className="sp-sidebar-logo">
         <div className="sp-logo-icon">
-          <Zap size={32} style={{ color: 'white' }} />
+          <img
+            className="sp-logo-mark"
+            src={streamlitLogo}
+            alt="streamlit logo"
+            aria-hidden="true"
+          />
         </div>
         <StreamlitWordmark />
         <div className="sp-badge">
-          <Cpu size={12} className="sp-badge-text" style={{ color: '#f97316' }} />
           <span className="sp-badge-text">no-code builder</span>
         </div>
       </div>
