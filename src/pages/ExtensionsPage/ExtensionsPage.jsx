@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Zap } from 'lucide-react';
 import Sidebar from './Sidebar';
 import ExtensionHeader from './ExtensionHeader';
 import ExtensionGrid from './ExtensionGrid';
